@@ -23,12 +23,16 @@
   --text-secondary: #636E72;
   --text-light: #B2BEC3;
 
-  /* 稀有度颜色 */
-  --rarity-common: #95A5A6;
-  --rarity-rare: #3498DB;
+  /* 稀有度颜色 - 优化版 (设计系统v1.0) */
+  --rarity-common: #8D99AE;
+  --rarity-rare: #00B4D8;
   --rarity-epic: #9B59B6;
-  --rarity-legendary: #F1C40F;
-}
+  --rarity-legendary: #FFD700;
+  
+  /* 更多辅助色 */
+  --primary-light: #FFE066;
+  --secondary-dark: #5AB669;
+  --accent-dark: #E85555;
 
 body {
   background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
@@ -45,15 +49,20 @@ body {
     0 4px 0 rgba(0, 0, 0, 0.1),
     0 6px 20px rgba(0, 0, 0, 0.1);
   border: 3px solid #333;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, box-shadow;
 }
 
 .cartoon-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) rotate(0.5deg);
   box-shadow:
     0 8px 0 rgba(0, 0, 0, 0.1),
     0 12px 30px rgba(0, 0, 0, 0.15);
 }
+
+.cartoon-card:active {
+  transform: scale(0.98);
+  transition: all 0.1s ease;
 
 /* 卡通风格按钮 */
 .cartoon-btn {
@@ -63,12 +72,42 @@ body {
   padding: 12px 32px;
   border-radius: 50px;
   border: 3px solid #333;
-  box-shadow: 0 4px 0 #333;
-  transition: all 0.1s ease;
-  cursor: pointer;
-  text-transform: uppercase;
   letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
 }
+
+/* 按钮悬停 - 优化上浮效果 */
+.cartoon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #333, 0 8px 15px rgba(0,0,0,0.2);
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 按钮按下 - 优化点击反馈 */
+.cartoon-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #333, 0 2px 8px rgba(0,0,0,0.15);
+  transition: all 0.1s ease;
+}
+
+/* 按钮点击光环效果 */
+.cartoon-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.cartoon-btn:active::after {
+  width: 200px;
+  height: 200px;
 
 .cartoon-btn:hover {
   transform: translateY(-2px);
@@ -81,12 +120,29 @@ body {
 }
 
 .cartoon-btn-secondary {
-  background: linear-gradient(180deg, var(--secondary) 0%, #5AB669 100%);
+  background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  color: white;
 }
 
 .cartoon-btn-accent {
-  background: linear-gradient(180deg, var(--accent) 0%, #E85555 100%);
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
   color: white;
+}
+
+/* 按钮尺寸变体 */
+.cartoon-btn-sm {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.cartoon-btn-lg {
+  padding: 18px 48px;
+  font-size: 18px;
+}
+
+.cartoon-btn-icon {
+  padding: 12px;
+  font-size: 20px;
 }
 
 /* 输入框样式 */
@@ -135,7 +191,6 @@ body {
   text-transform: uppercase;
   border: 2px solid currentColor;
 }
-
 .cartoon-badge-common {
   background: var(--rarity-common);
   color: white;
@@ -144,16 +199,18 @@ body {
 .cartoon-badge-rare {
   background: var(--rarity-rare);
   color: white;
+  animation: rare-glow 2s infinite;
 }
 
 .cartoon-badge-epic {
   background: var(--rarity-epic);
   color: white;
+  animation: epic-glow 2s infinite;
 }
 
 .cartoon-badge-legendary {
-  background: linear-gradient(135deg, #F1C40F 0%, #F39C12 100%);
-  color: #333;
+  background: linear-gradient(135deg, var(--rarity-legendary) 0%, #F39C12 100%);
+  color: var(--text-primary);
   animation: legendary-glow 2s infinite;
 }
 
@@ -195,10 +252,86 @@ body {
 
 @keyframes legendary-glow {
   0%, 100% {
-    box-shadow: 0 0 5px #F1C40F, 0 0 10px #F1C40F;
+    box-shadow: 0 0 5px var(--rarity-legendary),
+                0 0 10px var(--rarity-legendary);
   }
   50% {
-    box-shadow: 0 0 20px #F1C40F, 0 0 30px #F39C12;
+    box-shadow: 0 0 20px var(--rarity-legendary),
+                0 0 30px var(--rarity-epic);
+  }
+}
+
+@keyframes rare-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--rarity-rare),
+                0 0 10px rgba(0, 180, 216, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--rarity-rare),
+                0 0 25px rgba(0, 180, 216, 0.7);
+  }
+}
+
+@keyframes epic-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--rarity-epic),
+                0 0 16px rgba(155, 89, 182, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--rarity-epic),
+                0 0 35px rgba(155, 89, 182, 0.8);
+  }
+}
+
+@keyframes collect-success {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes item-spawn {
+  0% {
+    opacity: 0;
+    transform: scale(0) translateY(20px);
+  }
+  50% {
+    transform: scale(1.1) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -218,7 +351,23 @@ body {
 }
 
 .animate-bounce-in {
-  animation: bounce-in 0.6s ease-out;
+  animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.animate-collect-success {
+  animation: collect-success 800ms cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.animate-item-spawn {
+  animation: item-spawn 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-pop {
+  animation: pop 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 300ms ease-out;
 }
 
 .animate-wiggle {
@@ -386,8 +535,21 @@ body {
 
 .collection-card:hover {
   transform: translateY(-8px) rotate(1deg);
-  box-shadow: 0 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 0 rgba(0, 0, 0, 0.1), 0 16px 40px rgba(0, 0, 0, 0.15);
 }
+
+.collection-card:active {
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+.collection-card-image {
+  background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-gradient-end) 100%);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
 
 .collection-card-image {
   background: linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%);
@@ -425,4 +587,206 @@ body {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+/* 统计卡片 */
+.stat-card {
+  background: linear-gradient(135deg, white 0%, #FFF8E7 100%);
+  border-radius: 20px;
+  border: 3px solid #333;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+/* ==================== 稀有度发光效果类 ==================== */
+.rarity-glow-common {
+  box-shadow: 0 2px 8px rgba(141, 153, 174, 0.3);
+}
+
+.rarity-glow-rare {
+  animation: rare-glow 2s ease-in-out infinite;
+}
+
+.rarity-glow-epic {
+  animation: epic-glow 2s ease-in-out infinite;
+}
+
+.rarity-glow-legendary {
+  animation: legendary-glow 2s ease-in-out infinite;
+}
+
+/* ==================== 收集动画类 ==================== */
+.collect-success {
+  animation: collect-success 800ms cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.item-spawn {
+  animation: item-spawn 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 收集按钮特殊样式 */
+.collect-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.collect-button::before {
+  content: '✨';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+}
+
+.collect-button:hover::before {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0.6;
+}
+
+/* 响应式减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================== DARK MODE ==================== */
+.dark {
+  --bg-light: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-gradient-start: #1a1a2e;
+  --bg-gradient-end: #0f0f1a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-light: #666666;
+}
+
+.dark body {
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  color: var(--text-primary);
+}
+
+.dark .bg-dark-300 {
+  background: #0f0f1a !important;
+}
+
+.dark .bg-dark-200 {
+  background: #1a1a2e !important;
+}
+
+.dark .bg-dark-100 {
+  background: #16213e !important;
+}
+
+.dark .text-gray-800 {
+  color: #ffffff !important;
+}
+
+.dark .text-gray-700 {
+  color: #e0e0e0 !important;
+}
+
+.dark .text-gray-600 {
+  color: #b0b0b0 !important;
+}
+
+.dark .text-gray-500 {
+  color: #888888 !important;
+}
+
+.dark .text-gray-400 {
+  color: #666666 !important;
+}
+
+.dark .border-gray-800 {
+  border-color: #444444 !important;
+}
+
+.dark .border-gray-700 {
+  border-color: #333333 !important;
+}
+
+.dark .cartoon-card {
+  background: #1a1a2e;
+  border-color: #444444;
+  box-shadow: 
+    0 4px 0 rgba(0, 0, 0, 0.3),
+    0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .cartoon-card:hover {
+  box-shadow: 
+    0 8px 0 rgba(0, 0, 0, 0.3),
+    0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.dark .cartoon-input {
+  background: #1a1a2e;
+  border-color: #444444;
+  color: #ffffff;
+}
+
+.dark .cartoon-input:focus {
+  border-color: var(--primary);
+}
+
+.dark .cartoon-input::placeholder {
+  color: #666666;
+}
+
+.dark .bottom-nav {
+  background: #1a1a2e;
+  border-color: #444444;
+}
+
+/* Dark mode gradient backgrounds for specific pages */
+.dark .min-h-screen[style*="linear-gradient"] {
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%) !important;
+}
+
+/* Dark mode map styles */
+.dark .leaflet-container {
+  background: #1a1a2e;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: #1a1a2e;
+  color: #ffffff;
+}
+
+.dark .leaflet-popup-tip {
+  background: #1a1a2e;
+}
+
+/* 暗色模式下的稀有度发光效果 */
+.dark .rarity-glow-rare {
+  animation: rare-glow 2s ease-in-out infinite;
+}
+
+.dark .rarity-glow-epic {
+  animation: epic-glow 2s ease-in-out infinite;
+}
+
+.dark .rarity-glow-legendary {
+  animation: legendary-glow 2s ease-in-out infinite;
 }

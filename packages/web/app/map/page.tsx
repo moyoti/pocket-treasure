@@ -5,9 +5,9 @@ import { useAuth } from '@/components/AuthProvider';
 import { getNearbyItems, collectItem } from '@/lib/api';
 import { SpawnedItem, ItemRarity } from '@/types';
 import { useRouter } from 'next/navigation';
-
-// 高德地图 API Key (Web 端专用)
-const AMAP_KEY = '68eb7700f1011a06dedbb0daabddd770';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const RARITY_COLORS: Record<ItemRarity, string> = {
   common: '#9ca3af',
@@ -23,26 +23,70 @@ const RARITY_NAMES: Record<ItemRarity, string> = {
   legendary: '传说',
 };
 
-// 声明高德地图全局对象
-declare global {
-  interface Window {
-    AMap: any;
-  }
+// Fix Leaflet marker icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Custom user marker icon
+const userIcon = L.divIcon({
+  className: 'custom-user-marker',
+  html: `<div style="
+    width: 24px;
+    height: 24px;
+    background: #3b82f6;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  "></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+// Custom item marker icons by rarity
+const createItemIcon = (rarity: ItemRarity) => {
+  const color = RARITY_COLORS[rarity];
+  return L.divIcon({
+    className: 'custom-item-marker',
+    html: `<div style="
+      width: 32px;
+      height: 32px;
+      background: ${color};
+      border: 3px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    ">💎</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+};
+
+// Map center updater component
+function MapCenterUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
 }
 
 export default function MapPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [location, setLocation] = useState<[number, number] | null>(null);
   const [items, setItems] = useState<SpawnedItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<SpawnedItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
 
-  // 重定向未登录用户
+  // Redirect unauthenticated users
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
@@ -61,6 +105,7 @@ export default function MapPage() {
     }
   }, []);
 
+  // Get user location
   useEffect(() => {
     if (!user) return;
 
@@ -68,15 +113,15 @@ export default function MapPage() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setLocation({ lat: latitude, lng: longitude });
+          setLocation([latitude, longitude]);
           fetchItems(latitude, longitude);
         },
         (err) => {
           console.error('Geolocation error:', err);
-          // 使用北京天安门作为默认位置
+          // Default to Beijing
           const defaultLat = 39.9087;
           const defaultLng = 116.3975;
-          setLocation({ lat: defaultLat, lng: defaultLng });
+          setLocation([defaultLat, defaultLng]);
           fetchItems(defaultLat, defaultLng);
           setError('无法获取位置，显示默认位置(北京天安门)');
         },
@@ -85,110 +130,20 @@ export default function MapPage() {
     } else {
       const defaultLat = 39.9087;
       const defaultLng = 116.3975;
-      setLocation({ lat: defaultLat, lng: defaultLng });
+      setLocation([defaultLat, defaultLng]);
       fetchItems(defaultLat, defaultLng);
     }
   }, [user, fetchItems]);
-
-  // 初始化高德地图
-  useEffect(() => {
-    if (!location || !mapRef.current || mapInstanceRef.current) return;
-
-    const initMap = () => {
-      if (!window.AMap) {
-        setTimeout(initMap, 100);
-        return;
-      }
-
-      try {
-        const map = new window.AMap.Map(mapRef.current, {
-          zoom: 15,
-          center: [location.lng, location.lat],
-          viewMode: '2D',
-        });
-
-        // 添加用户位置标记
-        const userMarker = new window.AMap.Marker({
-          position: [location.lng, location.lat],
-          icon: new window.AMap.Icon({
-            size: new window.AMap.Size(25, 34),
-            image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="25" height="34" viewBox="0 0 25 34">
-                <circle cx="12.5" cy="12.5" r="10" fill="#3b82f6" stroke="white" stroke-width="3"/>
-              </svg>
-            `),
-            imageSize: new window.AMap.Size(25, 34),
-          }),
-          offset: new window.AMap.Pixel(-12.5, -12.5),
-        });
-        userMarker.setMap(map);
-        userMarker.setLabel({
-          content: '📍 你的位置',
-          direction: 'top',
-        });
-
-        mapInstanceRef.current = map;
-      } catch (err) {
-        console.error('Map initialization error:', err);
-        setError('地图初始化失败');
-      }
-    };
-
-    initMap();
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.destroy();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [location]);
-
-  // 更新宝藏标记
-  useEffect(() => {
-    if (!mapInstanceRef.current || !window.AMap) return;
-
-    // 清除旧标记
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
-
-    // 添加新标记
-    items.forEach((item) => {
-      const marker = new window.AMap.Marker({
-        position: [item.longitude, item.latitude],
-        icon: new window.AMap.Icon({
-          size: new window.AMap.Size(36, 36),
-          image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15" fill="${RARITY_COLORS[item.itemRarity as ItemRarity]}" stroke="white" stroke-width="3"/>
-              <text x="18" y="23" text-anchor="middle" font-size="16">💎</text>
-            </svg>
-          `),
-          imageSize: new window.AMap.Size(36, 36),
-        }),
-        offset: new window.AMap.Pixel(-18, -18),
-      });
-
-      marker.setMap(mapInstanceRef.current);
-      marker.setLabel({
-        content: `<b>${item.itemName}</b><br/>${RARITY_NAMES[item.itemRarity as ItemRarity]}`,
-        direction: 'top',
-      });
-
-      marker.on('click', () => setSelectedItem(item));
-      markersRef.current.push(marker);
-    });
-  }, [items]);
 
   const handleCollect = async () => {
     if (!selectedItem || !location) return;
 
     try {
-      const result = await collectItem(selectedItem.id, location.lat, location.lng);
+      const result = await collectItem(selectedItem.id, location[0], location[1]);
       if (result.success) {
         alert(`🎉 收集成功！获得了 ${selectedItem.itemName}！`);
         setSelectedItem(null);
-        fetchItems(location.lat, location.lng);
+        fetchItems(location[0], location[1]);
       } else {
         alert(`📍 距离太远，还需要 ${Math.round(result.distance)} 米`);
       }
@@ -197,7 +152,7 @@ export default function MapPage() {
     }
   };
 
-  // 等待认证
+  // Loading state while authenticating
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -206,10 +161,12 @@ export default function MapPage() {
     );
   }
 
+  // Don't render if not authenticated
   if (!user) {
     return null;
   }
 
+  // Loading state for location
   if (loading || !location) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -223,7 +180,7 @@ export default function MapPage() {
 
   return (
     <div className="h-screen flex flex-col pb-20" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
-      {/* 顶部信息栏 */}
+      {/* Header info bar */}
       <div className="cartoon-card m-2 p-3 flex justify-between items-center">
         <div>
           <p className="text-xs text-gray-500">附近宝藏</p>
@@ -231,7 +188,7 @@ export default function MapPage() {
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-500">坐标</p>
-          <p className="text-sm font-bold text-gray-700">{location.lat.toFixed(4)}, {location.lng.toFixed(4)}</p>
+          <p className="text-sm font-bold text-gray-700">{location[0].toFixed(4)}, {location[1].toFixed(4)}</p>
         </div>
       </div>
 
@@ -241,23 +198,55 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* 地图容器 */}
+      {/* Map container */}
       <div className="flex-1 relative m-2">
-        <div
-          ref={mapRef}
-          className="w-full h-full rounded-2xl border-4 border-gray-800"
-          style={{ minHeight: '300px' }}
-        />
+        <div className="w-full h-full rounded-2xl border-4 border-gray-800 overflow-hidden">
+          <MapContainer
+            center={location}
+            zoom={15}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <MapCenterUpdater center={location} />
+            
+            {/* User location marker */}
+            <Marker position={location} icon={userIcon}>
+              <Popup>📍 你的位置</Popup>
+            </Marker>
 
-        {/* 刷新按钮 */}
+            {/* Item markers */}
+            {items.map((item) => (
+              <Marker
+                key={item.id}
+                position={[item.latitude, item.longitude]}
+                icon={createItemIcon(item.itemRarity as ItemRarity)}
+                eventHandlers={{
+                  click: () => setSelectedItem(item),
+                }}
+              >
+                <Popup>
+                  <div className="text-center">
+                    <b>{item.itemName}</b><br />
+                    {RARITY_NAMES[item.itemRarity as ItemRarity]}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+
+        {/* Refresh button */}
         <button
-          onClick={() => fetchItems(location.lat, location.lng)}
+          onClick={() => fetchItems(location[0], location[1])}
           className="cartoon-btn absolute top-4 right-4 z-[1000]"
         >
           🔄 刷新
         </button>
 
-        {/* 图例 */}
+        {/* Legend */}
         <div className="cartoon-card absolute bottom-4 left-4 p-3 z-[1000]">
           <p className="text-xs font-bold text-gray-700 mb-2">稀有度</p>
           {Object.entries(RARITY_NAMES).map(([rarity, name]) => (
@@ -272,7 +261,7 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* 收集弹窗 */}
+      {/* Collection popup */}
       {selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="cartoon-card max-w-md w-full p-6 animate-bounce-in">

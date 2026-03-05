@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Test Infrastructure matches snapshot 1`] = `
+<View>
+  <Text
+    testID="title-text"
+  >
+    Snapshot Test
+  </Text>
+</View>
+`;

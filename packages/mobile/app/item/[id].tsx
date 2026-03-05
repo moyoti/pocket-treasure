@@ -1,6 +1,8 @@
 import { useLocalSearchParams, router } from 'expo-router';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useEffect, useState } from 'react';
 import { InventoryItem, ItemRarity } from '@/types';
+import { getInventoryItem } from '@/api/inventory';
 
 const RARITY_COLORS: Record<ItemRarity, string> = {
   common: '#9ca3af',
@@ -16,33 +18,51 @@ const RARITY_NAMES: Record<ItemRarity, string> = {
   legendary: '传说',
 };
 
-// Mock data - In production, fetch from API
-const mockItem: InventoryItem = {
-  id: '1',
-  userId: 'user1',
-  itemId: 'item1',
-  quantity: 2,
-  collectedLatitude: 39.9087,
-  collectedLongitude: 116.3975,
-  poiName: '天安门广场',
-  collectedAt: new Date().toISOString(),
-  item: {
-    id: 'item1',
-    name: '水晶碎片',
-    description: '闪闪发光的水晶碎片，蕴含着神秘能量。',
-    rarity: 'rare',
-    type: 'collectible',
-    spawnWeight: 4,
-    maxStack: 20,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-};
-
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  // In production, fetch item data using id
-  const item = mockItem;
+  const [item, setItem] = useState<InventoryItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      fetchItem();
+    }
+  }, [id]);
+
+  const fetchItem = async () => {
+    try {
+      const data = await getInventoryItem(id!);
+      setItem(data);
+    } catch (error) {
+      console.error('Failed to fetch item:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ffd700" />
+          <Text style={styles.loadingText}>加载中...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!item) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>未找到物品</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>返回</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -90,6 +110,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0f0f1a',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0f0f1a',
+  },
+  loadingText: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 12,
   },
   header: {
     alignItems: 'center',

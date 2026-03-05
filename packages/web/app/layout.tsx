@@ -3,7 +3,9 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import { ToastProvider } from '@/components/ToastProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import BottomNav from '@/components/BottomNav';
+import { AmapProvider } from '@/components/AmapProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,23 +20,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        {/* 高德地图 JS API */}
-        <script
-          src="https://webapi.amap.com/maps?v=2.0&key=68eb7700f1011a06dedbb0daabddd770"
-          async
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className={`${inter.className} bg-dark-300 text-white`}>
-        <AuthProvider>
-          <ToastProvider>
-            <div className="min-h-screen bg-dark-300">
-              {children}
-            </div>
-            <BottomNav />
-          </ToastProvider>
-        </AuthProvider>
+      <body className={`${inter.className}`}>
+        <ThemeProvider>
+          <AmapProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <div className="min-h-screen transition-colors duration-200">
+                  {children}
+                </div>
+                <BottomNav />
+              </ToastProvider>
+            </AuthProvider>
+          </AmapProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -86,3 +86,32 @@ export async function getInventoryStats() {
   const response = await api.get('/inventory/stats');
   return response.data;
 }
+
+// User Settings API
+export interface UserSettings {
+  pushNotifications: boolean;
+  emailNotifications: boolean;
+  achievementNotifications: boolean;
+  rareItemAlerts: boolean;
+  showAllItems: boolean;
+  showRarityFilter: boolean;
+  autoCollectNearby: boolean;
+  defaultZoom: number;
+  publicProfile: boolean;
+  showOnLeaderboard: boolean;
+  shareLocation: boolean;
+  darkMode: boolean;
+  highContrast: boolean;
+  reducedMotion: boolean;
+  language: string;
+}
+
+export async function updateUserSettings(settings: Partial<UserSettings>) {
+  const response = await api.patch('/users/me', { preferences: settings });
+  return response.data;
+}
+
+export async function getUserSettings() {
+  const response = await api.get('/users/me');
+  return response.data.preferences || {};
+}

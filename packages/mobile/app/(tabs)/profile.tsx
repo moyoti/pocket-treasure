@@ -34,19 +34,19 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.menu}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/achievements')}>
           <Text style={styles.menuItemText}>🏆 成就</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/stats')}>
           <Text style={styles.menuItemText}>📊 统计</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/settings')}>
           <Text style={styles.menuItemText}>⚙️ 设置</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/help')}>
           <Text style={styles.menuItemText}>❓ 帮助</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/profile/about')}>
           <Text style={styles.menuItemText}>📜 关于</Text>
         </TouchableOpacity>
       </View>

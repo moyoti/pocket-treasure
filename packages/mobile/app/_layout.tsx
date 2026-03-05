@@ -34,6 +34,34 @@ export default function RootLayout() {
                 presentation: 'modal'
               }} 
             />
+            <Stack.Screen
+              name="profile/stats"
+              options={{
+                title: '统计',
+                headerBackTitle: '返回',
+              }}
+            />
+            <Stack.Screen
+              name="profile/settings"
+              options={{
+                title: '设置',
+                headerBackTitle: '返回',
+              }}
+            />
+            <Stack.Screen
+              name="profile/help"
+              options={{
+                title: '帮助',
+                headerBackTitle: '返回',
+              }}
+            />
+            <Stack.Screen
+              name="profile/about"
+              options={{
+                title: '关于',
+                headerBackTitle: '返回',
+              }}
+            />
           </Stack>
         </AuthProvider>
       </SafeAreaProvider>
