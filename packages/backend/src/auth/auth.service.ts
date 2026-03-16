@@ -1,5 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -7,6 +8,7 @@ import { User } from '../user/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { OAuthLoginDto } from './dto/oauth-login.dto';
+import { WechatLoginDto } from './dto/wechat-login.dto';
 import { LUCKY_VALUE_CONFIG } from '@treasure-hunt/shared';
 
 @Injectable()
@@ -17,6 +19,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ user: User; token: string }> {
@@ -204,6 +207,71 @@ export class AuthService {
     const token = this.generateToken(user);
 
     // Reload user to get updated values
+    const updatedUser = await this.userRepository.findOne({ where: { id: user.id } });
+    return { user: updatedUser!, token };
+  }
+
+  async wechatLogin(wechatLoginDto: WechatLoginDto): Promise<{ user: User; token: string }> {
+    const { code } = wechatLoginDto;
+    this.logger.debug(`WeChat login attempt with code: ${code.slice(0, 6)}...`);
+
+    const appId = this.configService.get<string>('wechat.appId');
+    const secret = this.configService.get<string>('wechat.secret');
+
+    if (!appId || !secret) {
+      this.logger.error('WeChat AppID or Secret not configured');
+      throw new UnauthorizedException('WeChat login is not configured');
+    }
+
+    // Exchange code for openid via WeChat jscode2session API
+    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
+
+    let openid: string;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.errcode) {
+        this.logger.warn(`WeChat API error: ${data.errcode} - ${data.errmsg}`);
+        throw new UnauthorizedException(`WeChat login failed: ${data.errmsg}`);
+      }
+
+      openid = data.openid;
+      if (!openid) {
+        throw new UnauthorizedException('WeChat login failed: no openid returned');
+      }
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
+      this.logger.error(`WeChat API request failed: ${error}`);
+      throw new UnauthorizedException('WeChat login failed: network error');
+    }
+
+    // Find or create user by openid
+    let user = await this.userRepository.findOne({ where: { wechatOpenId: openid } });
+
+    if (!user) {
+      // Generate random username
+      const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const username = `探险家${randomSuffix}`;
+
+      user = this.userRepository.create({
+        email: `wx_${openid.slice(0, 12)}@wechat.placeholder`,
+        username,
+        wechatOpenId: openid,
+        isVerified: true,
+        luckyPoints: 0,
+        loginStreak: 1,
+        lastLoginDate: new Date(),
+      });
+      await this.userRepository.save(user);
+      this.logger.log(`New user created via WeChat: ${username}`);
+    } else {
+      // Update login streak for existing user
+      await this.updateLoginStreakAndLuckyPoints(user);
+      this.logger.debug(`Existing user logged in via WeChat: ${user.username}`);
+    }
+
+    const token = this.generateToken(user);
     const updatedUser = await this.userRepository.findOne({ where: { id: user.id } });
     return { user: updatedUser!, token };
   }

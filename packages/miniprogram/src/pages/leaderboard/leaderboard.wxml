@@ -1,0 +1,35 @@
+<!--pages/leaderboard/leaderboard.wxml-->
+<view class="leaderboard-container">
+  <!-- 头部 -->
+  <view class="header cartoon-card">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <text class="header-title">📊 排行榜</text>
+    <view class="placeholder"></view>
+  </view>
+
+  <!-- 排行榜列表 -->
+  <view class="leaderboard-list">
+    <block wx:if="{{ leaderboard.length > 0 }}">
+      <view class="rank-card cartoon-card {{ index < 3 ? 'top-rank' : '' }}" wx:for="{{ leaderboard }}" wx:key="id">
+        <view class="rank-number">{{ index + 1 }}</view>
+        <view class="rank-avatar">{{ item.username[0] }}</view>
+        <view class="rank-info">
+          <view class="rank-name">{{ item.username }}</view>
+          <view class="rank-stats">收集 {{ item.collectionCount }} 件</view>
+        </view>
+        <view class="rank-score">{{ item.collectionCount }}</view>
+      </view>
+    </block>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:else>
+      <view class="empty-icon">📊</view>
+      <text class="empty-text">暂无排行数据</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-overlay" wx:if="{{ loading }}">
+    <view class="loading-spinner"></view>
+  </view>
+</view>

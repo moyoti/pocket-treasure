@@ -35,8 +35,16 @@ async function bootstrap() {
   );
 
   // Set global prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['health'],
+  });
   logger.log('API prefix set');
+
+  // Health check endpoint (required by cloud hosting)
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/health', (req: any, res: any) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
 
   const port = process.env.PORT || 3000;
   logger.log(`Preparing to listen on port: ${port}`);

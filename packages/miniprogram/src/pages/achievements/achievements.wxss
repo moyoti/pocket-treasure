@@ -1,0 +1,119 @@
+.container {
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: white;
+  padding: 30rpx;
+  border-bottom: 6rpx solid var(--border-color);
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.achievement-list {
+  padding: 20rpx;
+}
+
+.achievement-card {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  border: 6rpx solid var(--border-color);
+}
+
+.achievement-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.achievement-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  border: 4rpx solid #8B5CF6;
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.achievement-desc {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  margin-top: 8rpx;
+}
+
+.claim-btn {
+  padding: 12rpx 30rpx;
+  background: var(--primary-color);
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  border: 4rpx solid var(--border-color);
+}
+
+.claimed-badge {
+  padding: 12rpx 30rpx;
+  background: #D1FAE5;
+  color: #059669;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.achievement-progress {
+  margin-top: 20rpx;
+}
+
+.progress-bar {
+  height: 16rpx;
+  background: #E5E7EB;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8B5CF6 0%, #A78BFA 100%);
+  border-radius: 10rpx;
+}
+
+.progress-text {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-top: 8rpx;
+  text-align: right;
+}
+
+.achievement-rewards {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 4rpx solid #F3F4F6;
+}
+
+.reward-item {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  font-weight: bold;
+}

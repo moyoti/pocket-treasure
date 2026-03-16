@@ -2,6 +2,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -26,6 +27,7 @@ describe('AuthService', () => {
     avatar: null,
     googleId: null,
     appleId: null,
+    wechatOpenId: null,
     isVerified: false,
     role: 'user',
     inventoryItems: [],
@@ -49,6 +51,16 @@ describe('AuthService', () => {
     sign: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      const config: Record<string, string> = {
+        'wechat.appId': 'test-app-id',
+        'wechat.secret': 'test-secret',
+      };
+      return config[key];
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -61,12 +73,18 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: mockJwtService,
         },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     })
       .overrideProvider('UserRepository')
       .useValue(mockRepository)
       .overrideProvider(JwtService)
       .useValue(mockJwtService)
+      .overrideProvider(ConfigService)
+      .useValue(mockConfigService)
       .compile();
 
     authService = module.get<AuthService>(AuthService);
@@ -415,6 +433,103 @@ describe('AuthService', () => {
         expect.objectContaining({
           email: `${oauthDtoNoEmail.providerId}@google.placeholder`,
         }),
+      );
+    });
+  });
+
+  describe('wechatLogin', () => {
+    const mockFetch = jest.fn();
+
+    beforeEach(() => {
+      global.fetch = mockFetch as any;
+    });
+
+    afterEach(() => {
+      delete (global as any).fetch;
+    });
+
+    it('should create a new user on first WeChat login', async () => {
+      mockFetch.mockResolvedValue({
+        json: () => Promise.resolve({ openid: 'wx-openid-123', session_key: 'sk' }),
+      });
+      const newUser = {
+        ...mockUser,
+        wechatOpenId: 'wx-openid-123',
+        username: expect.stringMatching(/^探险家/),
+      } as unknown as User;
+      // findOne: 1st (openid lookup) -> null, 2nd (reload) -> newUser
+      mockRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(newUser);
+      mockRepository.create.mockReturnValue(newUser);
+      mockRepository.save.mockResolvedValue(newUser);
+      mockJwtService.sign.mockReturnValue('test-jwt-token');
+
+      const result = await authService.wechatLogin({ code: 'test-code-123' });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('jscode2session'),
+      );
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          wechatOpenId: 'wx-openid-123',
+          isVerified: true,
+          loginStreak: 1,
+        }),
+      );
+      expect(result).toEqual({ user: newUser, token: 'test-jwt-token' });
+    });
+
+    it('should return existing user on subsequent WeChat login', async () => {
+      mockFetch.mockResolvedValue({
+        json: () => Promise.resolve({ openid: 'wx-openid-123', session_key: 'sk' }),
+      });
+      const existingUser = {
+        ...mockUser,
+        wechatOpenId: 'wx-openid-123',
+      } as unknown as User;
+      // findOne: 1st (openid lookup) -> existing, 2nd (reload) -> existing
+      mockRepository.findOne.mockResolvedValue(existingUser);
+      mockJwtService.sign.mockReturnValue('test-jwt-token');
+
+      const result = await authService.wechatLogin({ code: 'test-code-123' });
+
+      expect(mockRepository.create).not.toHaveBeenCalled();
+      expect(result).toEqual({ user: existingUser, token: 'test-jwt-token' });
+    });
+
+    it('should throw UnauthorizedException on WeChat API error', async () => {
+      mockFetch.mockResolvedValue({
+        json: () => Promise.resolve({ errcode: 40029, errmsg: 'invalid code' }),
+      });
+
+      await expect(authService.wechatLogin({ code: 'bad-code' })).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException when WeChat config is missing', async () => {
+      mockConfigService.get.mockReturnValue('');
+
+      await expect(authService.wechatLogin({ code: 'test-code' })).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      // Restore config
+      mockConfigService.get.mockImplementation((key: string) => {
+        const config: Record<string, string> = {
+          'wechat.appId': 'test-app-id',
+          'wechat.secret': 'test-secret',
+        };
+        return config[key];
+      });
+    });
+
+    it('should throw UnauthorizedException on network error', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      await expect(authService.wechatLogin({ code: 'test-code' })).rejects.toThrow(
+        UnauthorizedException,
       );
     });
   });

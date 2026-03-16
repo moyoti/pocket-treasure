@@ -1,0 +1,272 @@
+/* pages/market/market.wxss */
+
+.market-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.back-btn {
+  font-size: 40rpx;
+  color: #333;
+  padding: 8rpx 16rpx;
+}
+
+.header-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.coin-display {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 3rpx solid #F59E0B;
+  border-radius: 32rpx;
+  padding: 12rpx 24rpx;
+}
+
+.coin-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.coin-icon-small {
+  width: 24rpx;
+  height: 24rpx;
+}
+
+.coin-amount {
+  font-weight: bold;
+  color: #D97706;
+}
+
+.tab-bar {
+  display: flex;
+  margin: 16rpx;
+  padding: 0;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  font-weight: bold;
+  color: #666;
+  border-bottom: 4rpx solid transparent;
+}
+
+.tab-item.active {
+  color: #FF6B35;
+  border-bottom-color: #FF6B35;
+}
+
+.listings-list, .my-items-list {
+  padding: 16rpx;
+}
+
+.listing-card, .my-item-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.listing-icon, .item-icon {
+  width: 64rpx;
+  height: 64rpx;
+  background: linear-gradient(135deg, #A855F7 0%, #C084FC 100%);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  border: 2rpx solid #333;
+}
+
+.listing-info, .item-info {
+  flex: 1;
+}
+
+.listing-name, .item-name {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.listing-meta {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 4rpx;
+}
+
+.listing-seller, .listing-qty, .item-qty {
+  font-size: 22rpx;
+  color: #666;
+}
+
+.listing-price {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-weight: bold;
+  color: #D97706;
+}
+
+.sell-btn {
+  padding: 12rpx 24rpx;
+  font-size: 24rpx;
+}
+
+/* 弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 85%;
+  max-width: 600rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.item-preview {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.preview-icon {
+  width: 56rpx;
+  height: 56rpx;
+  background: linear-gradient(135deg, #A855F7 0%, #C084FC 100%);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  border: 2rpx solid #333;
+}
+
+.preview-info {
+  flex: 1;
+}
+
+.preview-name {
+  display: block;
+  font-weight: bold;
+  color: #333;
+}
+
+.preview-qty {
+  display: block;
+  font-size: 22rpx;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 20rpx;
+}
+
+.form-label {
+  display: block;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.form-input {
+  width: 100%;
+  padding: 16rpx;
+  border: 3rpx solid #333;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.price-note {
+  display: flex;
+  justify-content: space-between;
+  font-size: 22rpx;
+  color: #666;
+  margin-bottom: 24rpx;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 16rpx;
+}
+
+.modal-buttons button {
+  flex: 1;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  display: block;
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #666;
+}
+
+/* 加载 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #f3f3f3;
+  border-top: 6rpx solid #FF6B35;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

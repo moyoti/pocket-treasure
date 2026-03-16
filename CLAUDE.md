@@ -14,6 +14,7 @@ treasure-hunt/
 │   ├── backend/     # NestJS API (port 3000)
 │   ├── mobile/      # React Native + Expo
 │   ├── web/         # Next.js 14 App Router (port 3001)
+│   ├── miniprogram/ # 微信小程序
 │   └── shared/      # Shared types, constants, utilities
 ```
 
@@ -24,13 +25,17 @@ treasure-hunt/
 yarn install
 
 # Development servers
-yarn dev:backend    # NestJS with hot reload
-yarn dev:web        # Next.js dev server
+yarn dev:backend    # NestJS with hot reload (port 3000)
+yarn dev:web        # Next.js dev server (port 3001)
 yarn dev:mobile     # Expo development server
 
 # Build
 yarn build:backend
 yarn build:web
+
+# Docker (development database)
+docker-compose -f docker-compose.dev.yml up -d   # PostgreSQL + PostGIS
+docker-compose -f docker-compose.dev.yml down
 
 # Docker (production)
 yarn docker:up
@@ -41,14 +46,20 @@ yarn lint
 yarn test
 
 # Backend-specific
-yarn workspace @treasure-hunt/backend test:watch      # Run tests in watch mode
-yarn workspace @treasure-hunt/backend test:e2e        # Run e2e tests
-yarn workspace @treasure-hunt/backend migration:run   # Run database migrations
-yarn workspace @treasure-hunt/backend seed            # Seed database with items
+yarn workspace @treasure-hunt/backend test                    # Run all tests
+yarn workspace @treasure-hunt/backend test:watch              # Run tests in watch mode
+yarn workspace @treasure-hunt/backend test -- path/to/test.spec.ts  # Run single test file
+yarn workspace @treasure-hunt/backend test:e2e                # Run e2e tests
+yarn workspace @treasure-hunt/backend migration:run           # Run database migrations
+yarn workspace @treasure-hunt/backend seed                    # Seed database with items
 
 # Mobile-specific
 yarn workspace @treasure-hunt/mobile ios              # Run on iOS simulator
 yarn workspace @treasure-hunt/mobile android          # Run on Android emulator
+
+# Miniprogram-specific
+yarn workspace @treasure-hunt/miniprogram compile     # Compile TypeScript
+# Open in WeChat DevTools: Import packages/miniprogram directory
 ```
 
 ## Backend Architecture (NestJS)
@@ -72,15 +83,48 @@ Configuration: `src/config/` exports `appConfig`, `databaseConfig`, `jwtConfig` 
 App Router pages in `packages/web/app/`:
 - `/login` - Email/password login
 - `/register` - User registration
-- `/map` - Core game: Leaflet map showing nearby items
+- `/map` - Core game: map showing nearby items
 - `/inventory` - User's collected items
 - `/profile` - User profile management
 - `/leaderboard` - User rankings
 - `/achievements` - Achievement tracking
 
-State management: Zustand stores in `packages/web/stores/`. Authentication via `AuthProvider.tsx` component which wraps the app in `layout.tsx`.
+Key providers wrap the app in `layout.tsx`: `ThemeProvider`, `AmapProvider`, `AuthProvider`, `ToastProvider`.
 
-Maps: Leaflet with react-leaflet. Mapbox GL is also available but Leaflet is actively used.
+Maps: Uses Amap (高德地图) via `AmapProvider.tsx` for China-compatible maps. The provider loads the AMap JS API v2.0.
+
+## Mobile Architecture (Expo Router)
+
+Uses Expo Router with file-based routing. Structure in `packages/mobile/app/`:
+- `(auth)/` - Authentication screens (login, register)
+- `(tabs)/` - Main app tabs: map, inventory, leaderboard, achievements, profile
+- `item/` - Item detail screens
+- `profile/` - Profile-related screens
+
+Maps: Uses `react-native-amap3d` for native Amap integration on iOS/Android.
+
+## Miniprogram Architecture (微信小程序)
+
+Uses native WeChat miniprogram framework with TypeScript. Structure in `packages/miniprogram/src/`:
+- `pages/` - Page files (login, map, inventory, shop, profile, achievements, leaderboard, gacha, market)
+- `utils/` - Utility functions including API wrapper
+- `assets/` - Static resources (icons)
+- `app.ts` - Application entry point
+- `app.json` - Application configuration including tabBar
+
+Key features:
+- **地图探索** - Uses WeChat map component with location services
+- **背包系统** - Item management and NPC trading
+- **商店** - Purchase items with coins
+- **抽奖** - Gacha system with pity mechanism
+- **市场** - Player-to-player trading
+- **成就/排行榜** - Achievement and ranking systems
+
+To develop:
+1. Install WeChat DevTools
+2. Import `packages/miniprogram` directory
+3. Configure `apiBaseUrl` in `app.ts`
+4. Set `appid` in `project.config.json`
 
 ## Key Game Mechanics
 
@@ -98,12 +142,14 @@ Maps: Leaflet with react-leaflet. Mapbox GL is also available but Leaflet is act
 
 ## Database Configuration
 
-Local development uses SQLite via `better-sqlite3`. The `TypeOrmModule.forRootAsync()` in `app.module.ts` handles this automatically.
+**Local development (default)**: Uses SQLite via `better-sqlite3` with no additional setup. Database file is `packages/backend/treasure_hunt.db`.
 
-For PostgreSQL with PostGIS (production):
-- Use `docker-compose up -d` to start postgres container
+**PostgreSQL with PostGIS (optional)**: For production or when PostGIS geospatial queries are needed:
+- Run `docker-compose -f docker-compose.dev.yml up -d` to start postgres container
 - Entity location fields use `geometry` type with PostGIS
-- For SQLite, location fields fall back to `decimal` for lat/lng
+- For SQLite, location fields use `decimal` for lat/lng columns instead
+
+The `TypeOrmModule.forRootAsync()` in `app.module.ts` automatically configures the database connection.
 
 ## API Endpoints
 
@@ -118,6 +164,10 @@ For PostgreSQL with PostGIS (production):
 
 ## Environment Setup
 
-Required environment variables (see `.env.example` files):
+Required environment variables (see `.env.example` files in each package):
 - Backend: `JWT_SECRET`, `MAPBOX_ACCESS_TOKEN`, OAuth credentials (optional)
 - Web: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_MAPBOX_TOKEN`
+
+Amap API keys are currently hardcoded in:
+- Web: `packages/web/components/AmapProvider.tsx`
+- Mobile: `packages/mobile/app/(tabs)/map.tsx`

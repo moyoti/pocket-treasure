@@ -37,3 +37,8 @@ export const oauthConfig = registerAs('oauth', () => ({
 export const mapboxConfig = registerAs('mapbox', () => ({
   accessToken: process.env.MAPBOX_ACCESS_TOKEN || '',
 }));
+
+export const wechatConfig = registerAs('wechat', () => ({
+  appId: process.env.WECHAT_APPID || '',
+  secret: process.env.WECHAT_SECRET || '',
+}));

@@ -16,13 +16,13 @@ import { TradeModule } from './trade/trade.module';
 import { DailyTaskModule } from './daily-task/daily-task.module';
 import { EconomyModule } from './economy/economy.module';
 import { EventModule } from './event/event.module';
-import { appConfig, databaseConfig, jwtConfig } from './config';
+import { appConfig, databaseConfig, jwtConfig, wechatConfig } from './config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, jwtConfig],
+      load: [appConfig, databaseConfig, jwtConfig, wechatConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 

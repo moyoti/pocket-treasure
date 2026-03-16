@@ -1,0 +1,84 @@
+<view class="container">
+  <!-- 标题 -->
+  <view class="header">
+    <view class="title">👥 好友</view>
+  </view>
+  
+  <!-- 标签切换 -->
+  <view class="tabs">
+    <view class="tab {{ activeTab === 'friends' ? 'active' : '' }}" bindtap="switchTab" data-tab="friends">
+      好友 {{ friends.length > 0 ? '(' + friends.length + ')' : '' }}
+    </view>
+    <view class="tab {{ activeTab === 'requests' ? 'active' : '' }}" bindtap="switchTab" data-tab="requests">
+      申请 {{ requests.length > 0 ? '(' + requests.length + ')' : '' }}
+    </view>
+  </view>
+  
+  <!-- 好友列表 -->
+  <view class="content" wx:if="{{ activeTab === 'friends' }}">
+    <!-- 搜索 -->
+    <view class="search-bar">
+      <input class="search-input" placeholder="搜索用户" value="{{ searchQuery }}" bindinput="onSearchInput" bindconfirm="handleSearch" />
+      <button class="search-btn" bindtap="handleSearch">搜索</button>
+    </view>
+    
+    <!-- 搜索结果 -->
+    <view class="search-results" wx:if="{{ searchResults.length > 0 }}">
+      <view class="result-item" wx:for="{{ searchResults }}" wx:key="id">
+        <view class="user-info">
+          <view class="user-avatar">{{ item.username[0].toUpperCase() }}</view>
+          <view class="user-name">{{ item.username }}</view>
+        </view>
+        <button 
+          class="add-btn" 
+          bindtap="handleSendRequest"
+          data-id="{{ item.id }}"
+          disabled="{{ item.isFriend || item.hasPendingRequest }}"
+        >
+          {{ item.isFriend ? '已是好友' : item.hasPendingRequest ? '已申请' : '添加' }}
+        </button>
+      </view>
+    </view>
+    
+    <!-- 好友列表 -->
+    <view class="friend-list" wx:if="{{ friends.length > 0 }}">
+      <view class="friend-item" wx:for="{{ friends }}" wx:key="id" bindtap="startChat" data-friend="{{ item }}">
+        <view class="friend-avatar">
+          {{ item.username[0].toUpperCase() }}
+          <view class="online-dot" wx:if="{{ item.isOnline }}"></view>
+        </view>
+        <view class="friend-info">
+          <view class="friend-name">{{ item.username }}</view>
+          <view class="friend-status">{{ item.isOnline ? '在线' : '离线' }}</view>
+        </view>
+        <view class="chat-icon">💬</view>
+      </view>
+    </view>
+    
+    <view class="empty-state" wx:else>
+      <view class="empty-state-icon">👥</view>
+      <view class="empty-state-text">暂无好友</view>
+    </view>
+  </view>
+  
+  <!-- 申请列表 -->
+  <view class="content" wx:if="{{ activeTab === 'requests' }}">
+    <view class="request-list" wx:if="{{ requests.length > 0 }}">
+      <view class="request-item" wx:for="{{ requests }}" wx:key="id">
+        <view class="user-info">
+          <view class="user-avatar">{{ item.requester.username[0].toUpperCase() }}</view>
+          <view class="user-name">{{ item.requester.username }}</view>
+        </view>
+        <view class="request-actions">
+          <button class="accept-btn" bindtap="handleAccept" data-id="{{ item.id }}">接受</button>
+          <button class="reject-btn" bindtap="handleReject" data-id="{{ item.id }}">拒绝</button>
+        </view>
+      </view>
+    </view>
+    
+    <view class="empty-state" wx:else>
+      <view class="empty-state-icon">📭</view>
+      <view class="empty-state-text">暂无好友申请</view>
+    </view>
+  </view>
+</view>

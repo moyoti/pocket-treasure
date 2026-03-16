@@ -1,0 +1,50 @@
+<view class="container">
+  <!-- 标题 -->
+  <view class="header">
+    <view class="title">🏆 成就</view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{ loading }}">
+    <view class="loading-spinner"></view>
+  </view>
+  
+  <!-- 空状态 -->
+  <view class="empty-state" wx:elif="{{ achievements.length === 0 }}">
+    <view class="empty-state-icon">🏆</view>
+    <view class="empty-state-text">暂无成就</view>
+    <view class="empty-state-subtext">开始收集宝藏来解锁成就</view>
+  </view>
+  
+  <!-- 成就列表 -->
+  <view class="achievement-list" wx:else>
+    <view class="achievement-card" wx:for="{{ achievements }}" wx:key="achievement.id">
+      <view class="achievement-header">
+        <view class="achievement-icon">{{ item.achievement.icon || '🏆' }}</view>
+        <view class="achievement-info">
+          <view class="achievement-name">{{ item.achievement.name }}</view>
+          <view class="achievement-desc">{{ item.achievement.description }}</view>
+        </view>
+        <button 
+          class="claim-btn" 
+          wx:if="{{ item.canClaim }}"
+          bindtap="handleClaim"
+          data-id="{{ item.achievement.id }}"
+        >领取</button>
+        <view class="claimed-badge" wx:if="{{ item.status === 'claimed' }}">✓ 已领取</view>
+      </view>
+      
+      <view class="achievement-progress">
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{ (item.progress / item.requirement) * 100 }}%"></view>
+        </view>
+        <view class="progress-text">{{ item.progress }} / {{ item.requirement }}</view>
+      </view>
+      
+      <view class="achievement-rewards" wx:if="{{ item.achievement.rewards }}">
+        <view class="reward-item">💰 {{ item.achievement.rewards.coins }}</view>
+        <view class="reward-item">⭐ {{ item.achievement.rewards.experience }}</view>
+      </view>
+    </view>
+  </view>
+</view>

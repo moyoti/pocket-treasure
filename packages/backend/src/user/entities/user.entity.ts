@@ -33,6 +33,10 @@ export class User {
   @Column({ nullable: true })
   appleId: string;
 
+  @Column({ nullable: true, unique: true })
+  @Index()
+  wechatOpenId: string;
+
   @Column({ default: false })
   isVerified: boolean;
 

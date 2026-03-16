@@ -1,0 +1,65 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/map/map",
+    "pages/inventory/inventory",
+    "pages/shop/shop",
+    "pages/gacha/gacha",
+    "pages/profile/profile",
+    "pages/achievements/achievements",
+    "pages/friends/friends",
+    "pages/chat/chat",
+    "pages/tasks/tasks"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTitleText": "寻宝记",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFF8E7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#6B7280",
+    "selectedColor": "#F59E0B",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/map/map",
+        "text": "地图",
+        "iconPath": "images/map.png",
+        "selectedIconPath": "images/map-active.png"
+      },
+      {
+        "pagePath": "pages/inventory/inventory",
+        "text": "背包",
+        "iconPath": "images/package.png",
+        "selectedIconPath": "images/package-active.png"
+      },
+      {
+        "pagePath": "pages/shop/shop",
+        "text": "商店",
+        "iconPath": "images/shop.png",
+        "selectedIconPath": "images/shop-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "images/user.png",
+        "selectedIconPath": "images/user-active.png"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "获取您的位置信息，用于显示附近的宝藏"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "cloud": true,
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

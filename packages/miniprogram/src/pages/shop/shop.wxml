@@ -1,0 +1,47 @@
+<view class="container">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="title">🏪 商店</view>
+    <view class="balance" wx:if="{{ isLoggedIn }}">
+      <text class="balance-icon">💰</text>
+      <text class="balance-value">{{ balance }}</text>
+    </view>
+    <view class="login-hint" wx:else bindtap="goToLogin">
+      <text class="login-icon">🔐</text>
+      <text class="login-text">登录购买</text>
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{ loading }}">
+    <view class="loading-spinner"></view>
+  </view>
+  
+  <!-- 空状态 -->
+  <view class="empty-state" wx:elif="{{ items.length === 0 }}">
+    <view class="empty-state-icon">🏪</view>
+    <view class="empty-state-text">商店暂无商品</view>
+    <view class="empty-state-subtext">请稍后再来</view>
+  </view>
+  
+  <!-- 商品列表 -->
+  <view class="item-list" wx:else>
+    <view class="item-card" wx:for="{{ items }}" wx:key="id">
+      <view class="item-icon" style="background-color: {{ item.backgroundColor || '#F3F4F6' }}">
+        <text class="icon-emoji">{{ item.icon || '🎁' }}</text>
+      </view>
+      
+      <view class="item-info">
+        <view class="item-name">{{ item.name }}</view>
+        <view class="item-desc">{{ item.description }}</view>
+      </view>
+      
+      <view class="item-right">
+        <view class="item-price">💰 {{ item.price }}</view>
+        <button class="cartoon-btn buy-btn" bindtap="handlePurchase" data-item="{{ item }}">
+          购买
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

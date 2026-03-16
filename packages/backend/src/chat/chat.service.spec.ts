@@ -24,12 +24,12 @@ describe('ChatService', () => {
     avatar: 'avatar1.png',
   } as User;
 
-  const mockUser2: User = {
+  const mockUser2 = {
     id: 'user-2',
     email: 'user2@test.com',
     username: 'user2',
     avatar: null,
-  } as User;
+  } as unknown as User;
 
   const mockConversation: Conversation = {
     id: 'conv-1',

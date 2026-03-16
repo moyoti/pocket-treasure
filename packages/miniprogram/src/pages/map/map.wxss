@@ -1,0 +1,258 @@
+.container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 30rpx;
+  padding-top: calc(20rpx + env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  z-index: 10;
+}
+
+.balance-card {
+  background: white;
+  border-radius: 50rpx;
+  padding: 16rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  border: 4rpx solid var(--border-color);
+  box-shadow: 0 4rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+.balance-icon {
+  font-size: 32rpx;
+}
+
+.balance-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.balance-unit {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.login-hint {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FCD34D 100%);
+  border-radius: 50rpx;
+  padding: 16rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  border: 4rpx solid #F59E0B;
+  box-shadow: 0 4rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+.login-icon {
+  font-size: 28rpx;
+}
+
+.login-text {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #92400E;
+}
+
+.item-count {
+  background: white;
+  border-radius: 50rpx;
+  padding: 16rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  border: 4rpx solid var(--border-color);
+  box-shadow: 0 4rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+.count-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.count-label {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.refresh-btn {
+  background: white;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid var(--border-color);
+  box-shadow: 0 4rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+.refresh-icon {
+  font-size: 36rpx;
+}
+
+.guest-hint {
+  position: absolute;
+  bottom: 200rpx;
+  left: 30rpx;
+  right: 30rpx;
+  z-index: 10;
+}
+
+.hint-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 24rpx 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  border: 4rpx solid var(--border-color);
+  box-shadow: 0 4rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+.hint-icon {
+  font-size: 36rpx;
+}
+
+.hint-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.hint-btn {
+  background: var(--primary-color);
+  color: var(--text-primary);
+  font-size: 24rpx;
+  font-weight: bold;
+  padding: 12rpx 24rpx;
+  border-radius: 30rpx;
+  border: 4rpx solid var(--border-color);
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.loading-text {
+  margin-top: 30rpx;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+/* 宝藏详情弹窗 */
+.item-modal {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 40rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  border-top: 6rpx solid var(--border-color);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.item-icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid var(--border-color);
+}
+
+.icon-emoji {
+  font-size: 48rpx;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.item-rarity {
+  font-size: 24rpx;
+  margin-top: 8rpx;
+  font-weight: bold;
+}
+
+.close-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: var(--text-muted);
+}
+
+.modal-body {
+  margin-top: 30rpx;
+}
+
+.item-desc {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.modal-footer {
+  margin-top: 40rpx;
+}
+
+.collect-btn {
+  width: 100%;
+}

@@ -1,0 +1,86 @@
+.container {
+  min-height: 100vh;
+  background: #F9FAFB;
+  padding-bottom: 120rpx;
+}
+
+.messages {
+  padding: 20rpx;
+  padding-bottom: 140rpx;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 20rpx;
+}
+
+.message.sent {
+  justify-content: flex-end;
+}
+
+.message.received {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 70%;
+  padding: 20rpx 30rpx;
+  border-radius: 20rpx;
+  border: 4rpx solid var(--border-color);
+}
+
+.message.sent .message-bubble {
+  background: var(--primary-color);
+}
+
+.message.received .message-bubble {
+  background: white;
+}
+
+.message-content {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.message-time {
+  font-size: 20rpx;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 8rpx;
+}
+
+.input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 16rpx;
+  padding: 20rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: white;
+  border-top: 6rpx solid var(--border-color);
+}
+
+.message-input {
+  flex: 1;
+  background: #F3F4F6;
+  border: 4rpx solid var(--border-color);
+  border-radius: 40rpx;
+  padding: 20rpx 30rpx;
+  font-size: 28rpx;
+}
+
+.send-btn {
+  padding: 20rpx 40rpx;
+  background: var(--primary-color);
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  border: 4rpx solid var(--border-color);
+}
+
+.send-btn[disabled] {
+  opacity: 0.5;
+}

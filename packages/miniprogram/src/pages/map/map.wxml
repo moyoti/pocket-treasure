@@ -1,0 +1,82 @@
+<view class="container">
+  <!-- 地图 -->
+  <map 
+    id="map"
+    class="map"
+    latitude="{{ latitude }}"
+    longitude="{{ longitude }}"
+    scale="{{ scale }}"
+    markers="{{ markers }}"
+    show-location="{{ hasLocation }}"
+    bindmarkertap="onMarkerTap"
+    bindtap="onMapTap"
+  />
+  
+  <!-- 顶部信息栏 -->
+  <view class="top-bar">
+    <view class="balance-card" wx:if="{{ isLoggedIn }}">
+      <text class="balance-icon">💰</text>
+      <text class="balance-value">{{ balance }}</text>
+      <text class="balance-unit">金币</text>
+    </view>
+    <view class="login-hint" wx:else bindtap="goToLogin">
+      <text class="login-icon">🔐</text>
+      <text class="login-text">点击登录</text>
+    </view>
+    <view class="item-count">
+      <text class="count-value">{{ items.length }}</text>
+      <text class="count-label">个宝藏</text>
+    </view>
+    <view class="refresh-btn" bindtap="onRefresh">
+      <text class="refresh-icon">🔄</text>
+    </view>
+  </view>
+  
+  <!-- 未登录提示 -->
+  <view class="guest-hint" wx:if="{{ !isLoggedIn }}">
+    <view class="hint-content">
+      <text class="hint-icon">💡</text>
+      <text class="hint-text">登录后可收集宝藏并保存进度</text>
+      <button class="hint-btn" bindtap="goToLogin">立即登录</button>
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view class="loading-overlay" wx:if="{{ loading }}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在寻找宝藏...</text>
+  </view>
+  
+  <!-- 宝藏详情弹窗 -->
+  <view class="item-modal" wx:if="{{ showItemModal && selectedItem }}">
+    <view class="modal-mask" bindtap="closeModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <view class="item-icon {{ 'rarity-bg-' + (selectedItem.item.rarity || 'common') }}">
+          <text class="icon-emoji">💎</text>
+        </view>
+        <view class="item-info">
+          <view class="item-name">{{ selectedItem.item.name }}</view>
+          <view class="item-rarity {{ 'rarity-' + (selectedItem.item.rarity || 'common') }}">
+            {{ selectedItem.item.rarity === 'common' ? '普通' : selectedItem.item.rarity === 'rare' ? '稀有' : selectedItem.item.rarity === 'epic' ? '史诗' : '传说' }}
+          </view>
+        </view>
+        <view class="close-btn" bindtap="closeModal">✕</view>
+      </view>
+      
+      <view class="modal-body">
+        <view class="item-desc">{{ selectedItem.item.description }}</view>
+      </view>
+      
+      <view class="modal-footer">
+        <button 
+          class="cartoon-btn collect-btn" 
+          bindtap="handleCollect"
+          disabled="{{ collectLoading }}"
+        >
+          {{ collectLoading ? '收集中...' : '✨ 收集宝藏' }}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

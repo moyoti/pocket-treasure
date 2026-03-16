@@ -1,0 +1,213 @@
+.container {
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  background: white;
+  padding: 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 6rpx solid var(--border-color);
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.balance {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FCD34D 100%);
+  padding: 16rpx 30rpx;
+  border-radius: 50rpx;
+  border: 4rpx solid #F59E0B;
+}
+
+.balance-icon {
+  font-size: 32rpx;
+}
+
+.balance-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #92400E;
+}
+
+.login-hint {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FCD34D 100%);
+  padding: 16rpx 30rpx;
+  border-radius: 50rpx;
+  border: 4rpx solid #F59E0B;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.login-icon {
+  font-size: 28rpx;
+}
+
+.login-text {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #92400E;
+}
+
+.pool-list {
+  white-space: nowrap;
+  padding: 20rpx 30rpx;
+  background: white;
+}
+
+.pool-item {
+  display: inline-block;
+  padding: 16rpx 40rpx;
+  background: #F3F4F6;
+  border-radius: 40rpx;
+  margin-right: 20rpx;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  border: 4rpx solid #E5E7EB;
+}
+
+.pool-item.active {
+  background: #EDE9FE;
+  color: #5B21B6;
+  border-color: #8B5CF6;
+}
+
+.gacha-area {
+  background: white;
+  border-radius: 30rpx;
+  padding: 50rpx;
+  margin: 30rpx;
+  text-align: center;
+  border: 6rpx solid var(--border-color);
+}
+
+.gacha-icon {
+  font-size: 120rpx;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20rpx); }
+}
+
+.gacha-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-top: 20rpx;
+}
+
+.gacha-desc {
+  font-size: 26rpx;
+  color: var(--text-muted);
+  margin-top: 12rpx;
+}
+
+.gacha-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+
+.pull-btn {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.login-tip {
+  margin-top: 30rpx;
+  font-size: 26rpx;
+  color: var(--text-muted);
+  padding: 20rpx;
+  background: #FEF3C7;
+  border-radius: 20rpx;
+}
+
+.results-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.results-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.results-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 40rpx;
+  max-height: 70vh;
+}
+
+.results-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.results-list {
+  max-height: 500rpx;
+  margin-top: 30rpx;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx;
+  background: #F9FAFB;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+  border: 4rpx solid #E5E7EB;
+}
+
+.result-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.result-name {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.result-rarity {
+  font-size: 22rpx;
+  font-weight: bold;
+}
+
+.close-btn {
+  width: 100%;
+  margin-top: 30rpx;
+}

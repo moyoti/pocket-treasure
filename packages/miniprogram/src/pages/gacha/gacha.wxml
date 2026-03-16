@@ -1,0 +1,73 @@
+<view class="container">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="title">🎲 抽奖</view>
+    <view class="balance" wx:if="{{ isLoggedIn }}">
+      <text class="balance-icon">💰</text>
+      <text class="balance-value">{{ balance }}</text>
+    </view>
+    <view class="login-hint" wx:else bindtap="goToLogin">
+      <text class="login-icon">🔐</text>
+      <text class="login-text">登录抽奖</text>
+    </view>
+  </view>
+  
+  <!-- 抽奖池选择 -->
+  <scroll-view class="pool-list" scroll-x wx:if="{{ pools.length > 0 }}">
+    <view 
+      class="pool-item {{ selectedPool.id === item.id ? 'active' : '' }}"
+      wx:for="{{ pools }}"
+      wx:key="id"
+      bindtap="selectPool"
+      data-id="{{ item.id }}"
+    >
+      {{ item.name }}
+    </view>
+  </scroll-view>
+  
+  <!-- 抽奖区域 -->
+  <view class="gacha-area" wx:if="{{ selectedPool }}">
+    <view class="gacha-icon">🎁</view>
+    <view class="gacha-name">{{ selectedPool.name }}</view>
+    <view class="gacha-desc">{{ selectedPool.description }}</view>
+    
+    <view class="gacha-buttons">
+      <button 
+        class="cartoon-btn pull-btn" 
+        bindtap="handlePull"
+        data-type="single"
+        disabled="{{ pullLoading }}"
+      >
+        单抽 💰{{ selectedPool.cost }}
+      </button>
+      <button 
+        class="cartoon-btn pull-btn secondary" 
+        bindtap="handlePull"
+        data-type="ten"
+        disabled="{{ pullLoading }}"
+      >
+        十连 💰{{ selectedPool.costTen }}
+      </button>
+    </view>
+    
+    <view class="login-tip" wx:if="{{ !isLoggedIn }}" bindtap="goToLogin">
+      💡 登录后可进行抽奖
+    </view>
+  </view>
+  
+  <!-- 结果弹窗 -->
+  <view class="results-modal" wx:if="{{ showResults }}">
+    <view class="results-mask" bindtap="closeResults"></view>
+    <view class="results-content">
+      <view class="results-title">🎉 恭喜获得</view>
+      <scroll-view class="results-list" scroll-y>
+        <view class="result-item" wx:for="{{ results }}" wx:key="id">
+          <view class="result-icon rarity-bg-{{ item.rarity }}">💎</view>
+          <view class="result-name">{{ item.name }}</view>
+          <view class="result-rarity rarity-{{ item.rarity }}">{{ item.rarity === 'common' ? '普通' : item.rarity === 'rare' ? '稀有' : item.rarity === 'epic' ? '史诗' : '传说' }}</view>
+        </view>
+      </scroll-view>
+      <button class="cartoon-btn close-btn" bindtap="closeResults">确定</button>
+    </view>
+  </view>
+</view>

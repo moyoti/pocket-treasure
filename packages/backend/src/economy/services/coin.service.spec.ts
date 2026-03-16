@@ -135,7 +135,7 @@ describe('CoinService', () => {
       mockQueryRunner.manager.create.mockReturnValue({});
       mockQueryRunner.manager.save.mockResolvedValue({});
 
-      const result = await service.deductCoins('user-1', 100, CoinTransactionSource.SHOP);
+      const result = await service.deductCoins('user-1', 100, CoinTransactionSource.SHOP_PURCHASE);
 
       expect(result.success).toBe(true);
       expect(result.previousBalance).toBe(500);
@@ -146,13 +146,13 @@ describe('CoinService', () => {
       mockQueryRunner.manager.findOne.mockResolvedValue({ ...mockUser, coins: 50 });
 
       await expect(
-        service.deductCoins('user-1', 100, CoinTransactionSource.SHOP),
+        service.deductCoins('user-1', 100, CoinTransactionSource.SHOP_PURCHASE),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when amount is not positive', async () => {
       await expect(
-        service.deductCoins('user-1', 0, CoinTransactionSource.SHOP),
+        service.deductCoins('user-1', 0, CoinTransactionSource.SHOP_PURCHASE),
       ).rejects.toThrow(BadRequestException);
     });
   });
