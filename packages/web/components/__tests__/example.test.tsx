@@ -2,6 +2,8 @@
  * @jest-environment jsdom
  */
 
+import '@testing-library/jest-dom';
+
 describe('Test infrastructure', () => {
   it('should pass a basic test', () => {
     expect(true).toBe(true);
