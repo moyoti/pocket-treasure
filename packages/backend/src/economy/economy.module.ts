@@ -26,6 +26,7 @@ import { ItemModule } from '../item/item.module';
 
 @Module({
   imports: [
+    TypeOrmModule,
     TypeOrmModule.forFeature([
       ChestDefinition,
       UserChest,
