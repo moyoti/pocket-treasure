@@ -1,29 +1,43 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Platform, View, Text } from 'react-native';
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#FFF8E7',
-          borderTopColor: '#333',
-          borderTopWidth: 3,
-          height: 70,
-          paddingBottom: 10,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E0D5C0',
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          paddingTop: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 8,
         },
-        tabBarActiveTintColor: '#FFD93D',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: '#D4A017',
+        tabBarInactiveTintColor: '#AAAAAA',
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
+          fontSize: 10,
+          fontWeight: '600',
+          marginTop: 2,
         },
         headerStyle: {
           backgroundColor: '#FFF8E7',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
         },
-        headerTintColor: '#333',
+        headerTintColor: '#1A1A1A',
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: '700',
+          fontSize: 17,
         },
         headerShown: false,
       }}
@@ -31,46 +45,85 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="map"
         options={{
-          title: '地图',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size + 4} color={color} />
+          title: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'compass' : 'compass-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="inventory"
         options={{
-          title: '收藏',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cube" size={size + 4} color={color} />
+          title: 'Backpack',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'cube' : 'cube-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="achievements"
+        name="friends"
         options={{
-          title: '成就',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medal" size={size + 4} color={color} />
+          title: 'Social',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'people' : 'people-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="leaderboard"
+        name="tasks"
         options={{
-          title: '排行',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trophy" size={size + 4} color={color} />
+          title: 'Quests',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'flag' : 'flag-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: '我的',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size + 4} color={color} />
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'person-circle' : 'person-circle-outline'}
+              size={24}
+              color={color}
+            />
           ),
+        }}
+      />
+      {/* Hidden tabs - accessible via navigation but not shown in tab bar */}
+      <Tabs.Screen
+        name="chat"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="achievements"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

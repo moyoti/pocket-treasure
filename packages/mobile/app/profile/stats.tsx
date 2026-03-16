@@ -7,10 +7,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import api from '@/lib/api';
 import { Ionicons } from '@expo/vector-icons';
+import api from '@/lib/api';
 
 interface StatsData {
   totalItems: number;
@@ -22,6 +20,20 @@ interface AchievementProgress {
   total: number;
   completed: number;
 }
+
+const RARITY_COLORS: Record<string, string> = {
+  common: '#8D99AE',
+  rare: '#3b82f6',
+  epic: '#a855f7',
+  legendary: '#F59E0B',
+};
+
+const RARITY_NAMES: Record<string, string> = {
+  common: 'Common',
+  rare: 'Rare',
+  epic: 'Epic',
+  legendary: 'Legendary',
+};
 
 export default function StatsScreen() {
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -58,34 +70,14 @@ export default function StatsScreen() {
     fetchStats();
   };
 
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return '#9CA3AF';
-      case 'rare': return '#3B82F6';
-      case 'epic': return '#A855F7';
-      case 'legendary': return '#F59E0B';
-      default: return '#6B7280';
-    }
-  };
-
-  const getRarityName = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return '普通';
-      case 'rare': return '稀有';
-      case 'epic': return '史诗';
-      case 'legendary': return '传说';
-      default: return rarity;
-    }
-  };
-
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffd700" />
-          <Text style={styles.loadingText}>加载中...</Text>
+          <ActivityIndicator size="large" color="#D4A017" />
+          <Text style={styles.loadingText}>Loading stats...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -93,50 +85,42 @@ export default function StatsScreen() {
   const totalByRarity = Object.values(rarityData).reduce((a, b) => a + b, 0);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* 标题 */}
-        <View style={styles.header}>
-          <Text style={styles.title}>📊 我的统计</Text>
-          <Text style={styles.subtitle}>探索数据，见证成长</Text>
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {/* Main Stats */}
+      <View style={styles.mainStatsContainer}>
+        <View style={styles.statCard}>
+          <Ionicons name="layers-outline" size={28} color="#D4A017" />
+          <Text style={styles.statNumber}>{stats?.totalItems || 0}</Text>
+          <Text style={styles.statLabel}>Total Collected</Text>
         </View>
-
-        {/* 主要统计卡片 */}
-        <View style={styles.mainStatsContainer}>
-          <View style={[styles.statCard, styles.primaryCard]}>
-            <Ionicons name="cube" size={32} color="#ffd700" />
-            <Text style={styles.statNumber}>{stats?.totalItems || 0}</Text>
-            <Text style={styles.statLabel}>总收集数</Text>
-          </View>
-          <View style={[styles.statCard, styles.primaryCard]}>
-            <Ionicons name="layers" size={32} color="#3B82F6" />
-            <Text style={styles.statNumber}>{stats?.uniqueItems || 0}</Text>
-            <Text style={styles.statLabel}>物品种类</Text>
-          </View>
+        <View style={styles.statCard}>
+          <Ionicons name="apps-outline" size={28} color="#3b82f6" />
+          <Text style={styles.statNumber}>{stats?.uniqueItems || 0}</Text>
+          <Text style={styles.statLabel}>Unique Items</Text>
         </View>
+      </View>
 
-        {/* 稀有度分布 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="sparkles" size={20} color="#ffd700" />
-            <Text style={styles.sectionTitle}>稀有度分布</Text>
-          </View>
+      {/* Rarity Distribution */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>RARITY DISTRIBUTION</Text>
+        <View style={styles.sectionCard}>
           {Object.entries(rarityData).length > 0 ? (
             Object.entries(rarityData).map(([rarity, count]) => (
               <View key={rarity} style={styles.rarityItem}>
                 <View style={styles.rarityInfo}>
-                  <View style={[styles.rarityDot, { backgroundColor: getRarityColor(rarity) }]} />
-                  <Text style={styles.rarityName}>{getRarityName(rarity)}</Text>
+                  <View style={[styles.rarityDot, { backgroundColor: RARITY_COLORS[rarity] || '#999' }]} />
+                  <Text style={styles.rarityName}>{RARITY_NAMES[rarity] || rarity}</Text>
                 </View>
                 <View style={styles.rarityBarContainer}>
                   <View
                     style={[
                       styles.rarityBar,
                       {
-                        backgroundColor: getRarityColor(rarity),
+                        backgroundColor: RARITY_COLORS[rarity] || '#999',
                         width: `${totalByRarity > 0 ? (count / totalByRarity) * 100 : 0}%`,
                       },
                     ]}
@@ -147,67 +131,65 @@ export default function StatsScreen() {
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="search" size={40} color="#666" />
-              <Text style={styles.emptyText}>还没有收集任何物品</Text>
-              <Text style={styles.emptySubText}>快去地图上探索吧！</Text>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="search-outline" size={32} color="#CCC" />
+              </View>
+              <Text style={styles.emptyText}>No items collected yet</Text>
+              <Text style={styles.emptySubtext}>Explore the map to find treasures!</Text>
             </View>
           )}
         </View>
+      </View>
 
-        {/* 成就进度 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="trophy" size={20} color="#ffd700" />
-            <Text style={styles.sectionTitle}>成就进度</Text>
-          </View>
-          <View style={styles.achievementCard}>
-            <View style={styles.achievementProgress}>
-              <Text style={styles.achievementText}>
+      {/* Achievement Progress */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>ACHIEVEMENTS</Text>
+        <View style={styles.sectionCard}>
+          <View style={styles.achievementRow}>
+            <View>
+              <Text style={styles.achievementValue}>
                 {achievementProgress?.completed || 0} / {achievementProgress?.total || 0}
               </Text>
-              <Text style={styles.achievementSubtext}>已完成成就</Text>
+              <Text style={styles.achievementLabel}>Completed</Text>
             </View>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${achievementProgress?.total
-                        ? (achievementProgress.completed / achievementProgress.total) * 100
-                        : 0}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressText}>
-                {achievementProgress?.total
-                  ? Math.round((achievementProgress.completed / achievementProgress.total) * 100)
-                  : 0}% 完成
-              </Text>
+            <View style={styles.achievementIcon}>
+              <Ionicons name="medal" size={24} color="#9B59B6" />
             </View>
           </View>
+          <View style={styles.progressBar}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${achievementProgress?.total
+                    ? (achievementProgress.completed / achievementProgress.total) * 100
+                    : 0}%`,
+                },
+              ]}
+            />
+          </View>
         </View>
+      </View>
 
-        {/* 提示信息 */}
-        <View style={styles.tipCard}>
-          <Ionicons name="bulb" size={20} color="#ffd700" />
-          <Text style={styles.tipText}>
-            继续探索地图，收集更多稀有物品来提升你的统计数据！
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      {/* Tip */}
+      <View style={styles.tipCard}>
+        <Ionicons name="bulb-outline" size={18} color="#D4A017" />
+        <Text style={styles.tipText}>
+          Keep exploring the map and collecting items to improve your stats!
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#FFF8E7',
   },
   scrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
   loadingContainer: {
     flex: 1,
@@ -215,178 +197,165 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#888',
-  },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#888',
+    marginTop: 12,
+    fontSize: 15,
+    color: '#999',
   },
   mainStatsContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
     padding: 20,
     alignItems: 'center',
-  },
-  primaryCard: {
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#F0E8D8',
   },
   statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A1A1A',
     marginTop: 8,
   },
   statLabel: {
-    fontSize: 14,
-    color: '#888',
+    fontSize: 12,
+    color: '#999',
     marginTop: 4,
+    fontWeight: '600',
   },
   section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#AAA',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+    letterSpacing: 0.5,
+  },
+  sectionCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
   },
   rarityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   rarityInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 80,
+    width: 90,
   },
   rarityDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     marginRight: 8,
   },
   rarityName: {
-    fontSize: 14,
-    color: '#fff',
+    fontSize: 13,
+    color: '#1A1A1A',
+    fontWeight: '600',
   },
   rarityBarContainer: {
     flex: 1,
-    height: 8,
-    backgroundColor: '#333',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: '#F0E8D8',
+    borderRadius: 3,
     marginHorizontal: 12,
   },
   rarityBar: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
   rarityCount: {
-    width: 40,
+    width: 32,
     textAlign: 'right',
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '700',
+    color: '#1A1A1A',
   },
   emptyState: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    padding: 32,
     alignItems: 'center',
+    paddingVertical: 20,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 12,
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  achievementCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  achievementProgress: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F5F0E5',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  achievementText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ffd700',
+  emptyText: {
+    fontSize: 15,
+    color: '#666',
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  achievementSubtext: {
-    fontSize: 14,
-    color: '#888',
-    marginLeft: 8,
+  emptySubtext: {
+    fontSize: 13,
+    color: '#AAA',
   },
-  progressBarContainer: {
+  achievementRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  achievementValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1A1A1A',
+  },
+  achievementLabel: {
+    fontSize: 12,
+    color: '#AAA',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  achievementIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#333',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: '#F0E8D8',
+    borderRadius: 3,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#ffd700',
-    borderRadius: 4,
-  },
-  progressText: {
-    width: 60,
-    textAlign: 'right',
-    fontSize: 14,
-    color: '#ffd700',
-    fontWeight: '600',
+    backgroundColor: '#9B59B6',
+    borderRadius: 3,
   },
   tipCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    borderRadius: 12,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: '#F0E8D8',
     gap: 12,
+    marginBottom: 16,
   },
   tipText: {
     flex: 1,
-    fontSize: 14,
-    color: '#ccc',
+    fontSize: 13,
+    color: '#888',
     lineHeight: 20,
   },
 });

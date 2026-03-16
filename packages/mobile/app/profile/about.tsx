@@ -7,12 +7,11 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 const developers = [
-  { name: '寻宝记团队', role: '开发与维护' },
-  { name: '开源社区', role: '贡献者' },
+  { name: 'Treasure Hunt Team', role: 'Development & Maintenance' },
+  { name: 'Open Source Community', role: 'Contributors' },
 ];
 
 const licenses = [
@@ -34,240 +33,230 @@ export default function AboutScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 应用信息卡片 */}
-        <View style={styles.appCard}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <Ionicons name="diamond" size={48} color="#ffd700" />
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      {/* App Info */}
+      <View style={styles.appCard}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logo}>
+            <Ionicons name="diamond" size={48} color="#D4A017" />
+          </View>
+        </View>
+        <Text style={styles.appName}>Treasure Hunt</Text>
+        <Text style={styles.appTagline}>Explore the world, collect treasures</Text>
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>Version {APP_VERSION}</Text>
+          <Text style={styles.buildText}>Build {BUILD_NUMBER}</Text>
+        </View>
+      </View>
+
+      {/* About */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>ABOUT</Text>
+        <View style={styles.card}>
+          <Text style={styles.aboutText}>
+            Treasure Hunt is a location-based item collection game inspired by Pokemon GO.
+            Players explore the real world to discover and collect virtual treasures at landmark locations.
+          </Text>
+          <Text style={styles.aboutText}>
+            We believe games can make life more fun and exploration an adventure.
+          </Text>
+        </View>
+      </View>
+
+      {/* Team */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>TEAM</Text>
+        <View style={styles.card}>
+          {developers.map((dev, index) => (
+            <View key={index} style={[styles.devItem, index < developers.length - 1 && styles.devItemBorder]}>
+              <View style={styles.devAvatar}>
+                <Ionicons name="person-circle-outline" size={32} color="#D4A017" />
+              </View>
+              <View style={styles.devInfo}>
+                <Text style={styles.devName}>{dev.name}</Text>
+                <Text style={styles.devRole}>{dev.role}</Text>
+              </View>
             </View>
-          </View>
-          <Text style={styles.appName}>寻宝记</Text>
-          <Text style={styles.appTagline}>探索世界，收集宝藏</Text>
-          <View style={styles.versionContainer}>
-            <Text style={styles.versionText}>版本 {APP_VERSION}</Text>
-            <Text style={styles.buildText}>Build {BUILD_NUMBER}</Text>
-          </View>
+          ))}
         </View>
+      </View>
 
-        {/* 项目信息 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle" size={18} color="#888" />
-            <Text style={styles.sectionTitle}>关于项目</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.aboutText}>
-              寻宝记是一个基于地理位置的物品收集游戏，灵感来源于 Pokémon GO。
-              玩家可以在真实世界中探索，在各个地标位置收集虚拟宝藏物品。
-            </Text>
-            <Text style={styles.aboutText}>
-              我们相信游戏可以让生活更有趣，让探索成为一种乐趣。
-            </Text>
-          </View>
+      {/* Links */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>LINKS</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.linkItem} onPress={handleOpenGitHub}>
+            <View style={[styles.linkIcon, { backgroundColor: '#F5F0E5' }]}>
+              <Ionicons name="logo-github" size={20} color="#1A1A1A" />
+            </View>
+            <View style={styles.linkContent}>
+              <Text style={styles.linkTitle}>GitHub</Text>
+              <Text style={styles.linkSubtitle}>View source code</Text>
+            </View>
+            <Ionicons name="open-outline" size={18} color="#CCC" />
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity style={styles.linkItem} onPress={handleOpenWebsite}>
+            <View style={[styles.linkIcon, { backgroundColor: '#EBF5FF' }]}>
+              <Ionicons name="globe-outline" size={20} color="#3b82f6" />
+            </View>
+            <View style={styles.linkContent}>
+              <Text style={styles.linkTitle}>Website</Text>
+              <Text style={styles.linkSubtitle}>Learn more</Text>
+            </View>
+            <Ionicons name="open-outline" size={18} color="#CCC" />
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* 开发者 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="people" size={18} color="#888" />
-            <Text style={styles.sectionTitle}>开发团队</Text>
-          </View>
-          <View style={styles.card}>
-            {developers.map((dev, index) => (
-              <View key={index} style={styles.devItem}>
-                <Ionicons name="person-circle" size={36} color="#ffd700" />
-                <View style={styles.devInfo}>
-                  <Text style={styles.devName}>{dev.name}</Text>
-                  <Text style={styles.devRole}>{dev.role}</Text>
+      {/* Licenses */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OPEN SOURCE</Text>
+        <View style={styles.card}>
+          {licenses.map((item, index) => (
+            <View key={index}>
+              <View style={styles.licenseItem}>
+                <Text style={styles.licenseName}>{item.name}</Text>
+                <View style={styles.licenseBadge}>
+                  <Text style={styles.licenseText}>{item.license}</Text>
                 </View>
               </View>
-            ))}
-          </View>
+              {index < licenses.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
         </View>
+      </View>
 
-        {/* 链接 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="link" size={18} color="#888" />
-            <Text style={styles.sectionTitle}>相关链接</Text>
-          </View>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.linkItem} onPress={handleOpenGitHub}>
-              <View style={[styles.linkIcon, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Ionicons name="logo-github" size={22} color="#fff" />
-              </View>
-              <View style={styles.linkContent}>
-                <Text style={styles.linkTitle}>GitHub</Text>
-                <Text style={styles.linkSubtitle}>查看源代码</Text>
-              </View>
-              <Ionicons name="open-outline" size={20} color="#666" />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.linkItem} onPress={handleOpenWebsite}>
-              <View style={[styles.linkIcon, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
-                <Ionicons name="globe" size={22} color="#3B82F6" />
-              </View>
-              <View style={styles.linkContent}>
-                <Text style={styles.linkTitle}>官方网站</Text>
-                <Text style={styles.linkSubtitle}>了解更多信息</Text>
-              </View>
-              <Ionicons name="open-outline" size={20} color="#666" />
-            </TouchableOpacity>
-          </View>
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.copyright}>2024 Treasure Hunt Team</Text>
+        <Text style={styles.rights}>All rights reserved</Text>
+        <View style={styles.legalLinks}>
+          <TouchableOpacity>
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalDot}>  </Text>
+          <TouchableOpacity>
+            <Text style={styles.legalLink}>Terms of Service</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* 开源许可 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="document-text" size={18} color="#888" />
-            <Text style={styles.sectionTitle}>开源许可</Text>
-          </View>
-          <View style={styles.card}>
-            {licenses.map((item, index) => (
-              <View key={index}>
-                <View style={styles.licenseItem}>
-                  <Text style={styles.licenseName}>{item.name}</Text>
-                  <View style={styles.licenseBadge}>
-                    <Text style={styles.licenseText}>{item.license}</Text>
-                  </View>
-                </View>
-                {index < licenses.length - 1 && <View style={styles.divider} />}
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* 版权信息 */}
-        <View style={styles.footer}>
-          <Text style={styles.copyright}>© 2024 寻宝记团队</Text>
-          <Text style={styles.rights}>保留所有权利</Text>
-          <View style={styles.legalLinks}>
-            <TouchableOpacity>
-              <Text style={styles.legalLink}>隐私政策</Text>
-            </TouchableOpacity>
-            <Text style={styles.legalDot}>·</Text>
-            <TouchableOpacity>
-              <Text style={styles.legalLink}>服务条款</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#FFF8E7',
   },
   scrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
   appCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
-    marginBottom: 24,
+    borderColor: '#F0E8D8',
+    marginBottom: 20,
   },
   logoContainer: {
     marginBottom: 16,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 96,
+    height: 96,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: '#FFF8E7',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: '#F0E8D8',
   },
   appName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1A1A1A',
     marginBottom: 4,
   },
   appTagline: {
     fontSize: 14,
-    color: '#888',
+    color: '#999',
     marginBottom: 16,
   },
   versionContainer: {
     alignItems: 'center',
   },
   versionText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#ffd700',
+    color: '#D4A017',
   },
   buildText: {
     fontSize: 12,
-    color: '#666',
+    color: '#CCC',
     marginTop: 4,
   },
   section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 4,
-    gap: 8,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#888',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#AAA',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+    letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#F0E8D8',
   },
   aboutText: {
     fontSize: 14,
-    color: '#aaa',
+    color: '#666',
     lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   devItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingVertical: 10,
+  },
+  devItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F0E5',
+  },
+  devAvatar: {
+    marginRight: 12,
   },
   devInfo: {
-    marginLeft: 12,
+    flex: 1,
   },
   devName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
   devRole: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 12,
+    color: '#999',
     marginTop: 2,
   },
   linkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   linkIcon: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -277,52 +266,53 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   linkTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
   linkSubtitle: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 12,
+    color: '#999',
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: '#F5F0E5',
   },
   licenseItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   licenseName: {
-    fontSize: 15,
-    color: '#fff',
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
   },
   licenseBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    backgroundColor: '#FFF8E7',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   licenseText: {
-    fontSize: 12,
-    color: '#ffd700',
-    fontWeight: '500',
+    fontSize: 11,
+    color: '#D4A017',
+    fontWeight: '600',
   },
   footer: {
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   copyright: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#AAA',
   },
   rights: {
     fontSize: 12,
-    color: '#555',
+    color: '#CCC',
     marginTop: 4,
   },
   legalLinks: {
@@ -332,11 +322,11 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     fontSize: 13,
-    color: '#888',
+    color: '#D4A017',
+    fontWeight: '500',
   },
   legalDot: {
     fontSize: 13,
-    color: '#666',
-    marginHorizontal: 8,
+    color: '#CCC',
   },
 });

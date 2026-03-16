@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,18 +9,18 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { MapView, Marker, MapViewProps } from 'react-native-amap3d';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { MapView, Marker, Circle } from 'react-native-amap3d';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
 import { getNearbyItems, collectItem } from '@/api/items';
 import { ItemRarity } from '@/types';
+import { COLLECTION_RADIUS_METERS, RARITY_COLORS as SHARED_RARITY_COLORS } from '@treasure-hunt/shared';
+import { ApiError } from '@/lib/api';
 
 const { width, height } = Dimensions.get('window');
 
-// 高德地图 API Key
-const AMAP_API_KEY = '897b2837359811602eb5d7b8d38af011';
-
-// 默认位置 (北京)
 const DEFAULT_REGION = {
   latitude: 39.9042,
   longitude: 116.4074,
@@ -39,30 +39,39 @@ interface SpawnedItem {
 }
 
 const RARITY_COLORS: Record<ItemRarity, string> = {
-  common: '#9ca3af',
+  common: '#8D99AE',
   rare: '#3b82f6',
   epic: '#a855f7',
-  legendary: '#fbbf24',
+  legendary: '#F59E0B',
 };
 
-const RARITY_EMOJI: Record<ItemRarity, string> = {
-  common: '💎',
-  rare: '💠',
-  epic: '💜',
-  legendary: '👑',
+const RARITY_LABEL: Record<ItemRarity, string> = {
+  common: 'Common',
+  rare: 'Rare',
+  epic: 'Epic',
+  legendary: 'Legendary',
+};
+
+const RARITY_ICON: Record<ItemRarity, string> = {
+  common: 'diamond-outline',
+  rare: 'diamond',
+  epic: 'star',
+  legendary: 'trophy',
 };
 
 export default function MapScreen() {
+  const insets = useSafeAreaInsets();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [items, setItems] = useState<SpawnedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<SpawnedItem | null>(null);
+  const [collecting, setCollecting] = useState(false);
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
 
   const requestLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('提示', '需要位置权限才能显示附近宝藏');
+      Alert.alert('Permission needed', 'Location access is required to find nearby treasures.');
       setLoading(false);
       return;
     }
@@ -90,6 +99,15 @@ export default function MapScreen() {
       setItems(nearbyItems);
     } catch (error) {
       console.error('Failed to fetch nearby items:', error);
+      if (error instanceof ApiError) {
+        if (error.statusCode === 401) {
+          Alert.alert('Session expired', 'Please log in again.');
+        } else {
+          Alert.alert('Load failed', error.message);
+        }
+      } else {
+        Alert.alert('Load failed', 'Unable to fetch nearby treasures. Check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -108,8 +126,9 @@ export default function MapScreen() {
   }, [location]);
 
   const handleCollect = async (item: SpawnedItem) => {
-    if (!location) return;
+    if (!location || collecting) return;
 
+    setCollecting(true);
     try {
       const result = await collectItem(
         item.id,
@@ -119,20 +138,31 @@ export default function MapScreen() {
 
       if (result.success) {
         Alert.alert(
-          '收集成功！',
-          `你获得了 ${item.itemName}！\n稀有度: ${item.itemRarity}`,
-          [{ text: '太棒了', onPress: () => setSelectedItem(null) }]
+          'Collected!',
+          `You found ${item.itemName}!\nRarity: ${RARITY_LABEL[item.itemRarity]}`,
+          [{ text: 'Awesome', onPress: () => setSelectedItem(null) }]
         );
         fetchNearbyItems();
       } else {
         Alert.alert(
-          '距离太远',
-          `需要靠近 ${Math.round(result.distance)} 米才能收集`,
-          [{ text: '知道了', onPress: () => setSelectedItem(null) }]
+          'Too far away',
+          `Move ${Math.round(result.distance)}m closer to collect.`,
+          [{ text: 'OK' }]
         );
       }
     } catch (error: any) {
-      Alert.alert('收集失败', error.message || '请稍后重试');
+      console.error('Collect item error:', error);
+      if (error instanceof ApiError) {
+        if (error.statusCode === 401) {
+          Alert.alert('Session expired', 'Please log in again.');
+        } else {
+          Alert.alert('Collection failed', error.message);
+        }
+      } else {
+        Alert.alert('Collection failed', error.message || 'Please try again.');
+      }
+    } finally {
+      setCollecting(false);
     }
   };
 
@@ -143,8 +173,11 @@ export default function MapScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#ffd700" />
-        <Text style={styles.loadingText}>正在获取你的位置...</Text>
+        <View style={styles.loadingContent}>
+          <Ionicons name="compass-outline" size={48} color="#D4A017" />
+          <ActivityIndicator size="large" color="#D4A017" style={{ marginTop: 16 }} />
+          <Text style={styles.loadingText}>Finding your location...</Text>
+        </View>
       </View>
     );
   }
@@ -176,73 +209,117 @@ export default function MapScreen() {
         }}
       >
         {items.map((item) => (
-          <Marker
-            key={item.id}
-            position={{
-              latitude: item.latitude,
-              longitude: item.longitude,
-            }}
-            title={item.itemName}
-            snippet={`${item.itemRarity} - ${item.poiName || '宝藏'}`}
-            onPress={() => handleMarkerPress(item)}
-          >
-            <View
-              style={[
-                styles.markerContainer,
-                { borderColor: RARITY_COLORS[item.itemRarity] },
-              ]}
+          <React.Fragment key={item.id}>
+            <Circle
+              center={{
+                latitude: item.latitude,
+                longitude: item.longitude,
+              }}
+              radius={COLLECTION_RADIUS_METERS}
+              strokeWidth={1.5}
+              strokeColor={`${RARITY_COLORS[item.itemRarity]}80`}
+              fillColor={`${RARITY_COLORS[item.itemRarity]}15`}
+            />
+            <Marker
+              position={{
+                latitude: item.latitude,
+                longitude: item.longitude,
+              }}
+              title={item.itemName}
+              snippet={`${RARITY_LABEL[item.itemRarity]} - ${item.poiName || 'Treasure'}`}
+              onPress={() => handleMarkerPress(item)}
             >
-              <Text style={styles.markerEmoji}>
-                {RARITY_EMOJI[item.itemRarity]}
-              </Text>
-            </View>
-          </Marker>
+              <View
+                style={[
+                  styles.markerContainer,
+                  { borderColor: RARITY_COLORS[item.itemRarity] },
+                ]}
+              >
+                <Ionicons
+                  name={RARITY_ICON[item.itemRarity] as any}
+                  size={18}
+                  color={RARITY_COLORS[item.itemRarity]}
+                />
+              </View>
+              <View style={[styles.markerArrow, { borderTopColor: RARITY_COLORS[item.itemRarity] }]} />
+            </Marker>
+          </React.Fragment>
         ))}
       </MapView>
 
-      {/* Selected item modal */}
-      {selectedItem && (
-        <View style={styles.modal}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{selectedItem.itemName}</Text>
-            <Text
-              style={[
-                styles.modalRarity,
-                { color: RARITY_COLORS[selectedItem.itemRarity] },
-              ]}
-            >
-              稀有度: {selectedItem.itemRarity}
-            </Text>
-            {selectedItem.poiName && (
-              <Text style={styles.modalLocation}>位置: {selectedItem.poiName}</Text>
-            )}
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.collectButton]}
-                onPress={() => handleCollect(selectedItem)}
-              >
-                <Text style={styles.collectButtonText}>收集</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setSelectedItem(null)}
-              >
-                <Text style={styles.cancelButtonText}>关闭</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* Top overlay - nearby count */}
+      <View style={[styles.topOverlay, { top: insets.top + 12 }]}>
+        <View style={styles.countPill}>
+          <Ionicons name="compass" size={16} color="#D4A017" />
+          <Text style={styles.countText}>
+            {items.length} treasure{items.length !== 1 ? 's' : ''} nearby
+          </Text>
         </View>
-      )}
-
-      {/* Nearby items count */}
-      <View style={styles.itemsCount}>
-        <Text style={styles.itemsCountText}>附近有 {items.length} 个宝藏</Text>
       </View>
 
       {/* Refresh button */}
-      <TouchableOpacity style={styles.refreshButton} onPress={fetchNearbyItems}>
-        <Text style={styles.refreshButtonText}>刷新</Text>
+      <TouchableOpacity
+        style={[styles.refreshButton, { bottom: Platform.OS === 'ios' ? 108 : 80 }]}
+        onPress={fetchNearbyItems}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="refresh" size={22} color="#1A1A1A" />
       </TouchableOpacity>
+
+      {/* Selected item bottom sheet */}
+      {selectedItem && (
+        <View style={styles.bottomSheet}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetContent}>
+            <View style={styles.sheetHeader}>
+              <View style={[styles.sheetIcon, { backgroundColor: `${RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
+                <Ionicons
+                  name={RARITY_ICON[selectedItem.itemRarity] as any}
+                  size={28}
+                  color={RARITY_COLORS[selectedItem.itemRarity]}
+                />
+              </View>
+              <View style={styles.sheetInfo}>
+                <Text style={styles.sheetTitle}>{selectedItem.itemName}</Text>
+                <View style={[styles.sheetRarityBadge, { backgroundColor: `${RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
+                  <Text style={[styles.sheetRarityText, { color: RARITY_COLORS[selectedItem.itemRarity] }]}>
+                    {RARITY_LABEL[selectedItem.itemRarity]}
+                  </Text>
+                </View>
+                {selectedItem.poiName && (
+                  <View style={styles.sheetLocationRow}>
+                    <Ionicons name="location-outline" size={13} color="#999" />
+                    <Text style={styles.sheetLocation}>{selectedItem.poiName}</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setSelectedItem(null)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="close" size={20} color="#999" />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.collectButton}
+              onPress={() => handleCollect(selectedItem)}
+              disabled={collecting}
+              activeOpacity={0.8}
+            >
+              {collecting ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <>
+                  <Ionicons name="hand-left" size={18} color="#FFF" />
+                  <Text style={styles.collectButtonText}>Collect Treasure</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -258,11 +335,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFF8E7',
   },
+  loadingContent: {
+    alignItems: 'center',
+  },
   loadingText: {
-    color: '#666',
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#999',
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: '500',
   },
   map: {
     width: width,
@@ -271,110 +351,152 @@ const styles = StyleSheet.create({
   markerContainer: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  markerEmoji: {
-    fontSize: 20,
+  markerArrow: {
+    alignSelf: 'center',
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    marginTop: -1,
   },
-  modal: {
+  topOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    left: 16,
   },
-  modalContent: {
+  countPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFF',
     borderRadius: 20,
-    padding: 24,
-    width: width - 64,
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#333',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#333',
-    marginBottom: 8,
-  },
-  modalRarity: {
-    fontSize: 16,
-    marginBottom: 8,
-    fontWeight: '700',
-  },
-  modalLocation: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 24,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    borderRadius: 25,
-    padding: 16,
-    paddingHorizontal: 32,
-    borderWidth: 3,
-    borderColor: '#333',
-  },
-  collectButton: {
-    backgroundColor: '#FFD93D',
-  },
-  collectButtonText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#333',
-  },
-  cancelButton: {
-    backgroundColor: '#FF6B6B',
-  },
-  cancelButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-  itemsCount: {
-    position: 'absolute',
-    top: 60,
-    left: 16,
-    backgroundColor: '#FFF',
-    borderRadius: 15,
-    padding: 12,
-    borderWidth: 3,
-    borderColor: '#333',
-  },
-  itemsCountText: {
-    color: '#333',
-    fontSize: 14,
-    fontWeight: '700',
+  countText: {
+    color: '#1A1A1A',
+    fontSize: 13,
+    fontWeight: '600',
   },
   refreshButton: {
     position: 'absolute',
-    bottom: 100,
     right: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#FFD93D',
-    borderRadius: 25,
-    padding: 12,
-    paddingHorizontal: 16,
-    borderWidth: 3,
-    borderColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  refreshButtonText: {
-    color: '#333',
-    fontWeight: '900',
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  sheetContent: {
+    paddingHorizontal: 20,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  sheetIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  sheetInfo: {
+    flex: 1,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginBottom: 6,
+  },
+  sheetRarityBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  sheetRarityText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sheetLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  sheetLocation: {
+    fontSize: 13,
+    color: '#999',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  collectButton: {
+    backgroundColor: '#D4A017',
+    borderRadius: 14,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  collectButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFF',
   },
 });

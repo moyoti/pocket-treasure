@@ -26,14 +26,44 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(),
+  getItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+  getAllKeys: jest.fn(),
+  multiGet: jest.fn(),
+  multiSet: jest.fn(),
+}));
+
 jest.mock('expo-location', () => ({
   getCurrentPositionAsync: jest.fn(),
   watchPositionAsync: jest.fn(),
   requestForegroundPermissionsAsync: jest.fn(),
   requestBackgroundPermissionsAsync: jest.fn(),
+  Accuracy: {
+    High: 3,
+  },
 }));
 
 jest.mock('react-native-amap3d', () => ({
   MapView: jest.fn().mockReturnValue(null),
   Marker: jest.fn().mockReturnValue(null),
+  Circle: jest.fn().mockReturnValue(null),
+}));
+jest.mock('react-native-amap3d', () => ({
+  MapView: jest.fn().mockReturnValue(null),
+  Marker: jest.fn().mockReturnValue(null),
+  Circle: jest.fn().mockReturnValue(null),
+}));
+
+// Mock expo-router
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn((callback) => callback()),
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+  })),
+  useLocalSearchParams: jest.fn(() => ({})),
 }));

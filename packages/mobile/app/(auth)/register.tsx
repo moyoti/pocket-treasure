@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { register } from '@/api/auth';
 
@@ -21,23 +22,23 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!email || !password || !username) {
-      Alert.alert('错误', '请填写所有字段');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('错误', '密码至少需要6位');
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
     try {
       await register(email, password, username);
-      Alert.alert('成功', '注册成功，请登录', [
-        { text: '确定', onPress: () => router.back() },
+      Alert.alert('Success', 'Registration complete. Please sign in.', [
+        { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error: any) {
-      Alert.alert('注册失败', error.message || '请稍后重试');
+      Alert.alert('Registration Failed', error.message || 'Please try again');
     } finally {
       setLoading(false);
     }
@@ -49,46 +50,56 @@ export default function RegisterScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>创建账号</Text>
-        <Text style={styles.subtitle}>开始你的寻宝之旅</Text>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Start your treasure hunting journey</Text>
 
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="用户名"
-            placeholderTextColor="#666"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="邮箱"
-            placeholderTextColor="#666"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="密码 (至少6位)"
-            placeholderTextColor="#666"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.inputWrapper}>
+            <Ionicons name="person-outline" size={20} color="#AAA" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              placeholderTextColor="#AAA"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Ionicons name="mail-outline" size={20} color="#AAA" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#AAA"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Ionicons name="lock-closed-outline" size={20} color="#AAA" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password (min 6 characters)"
+              placeholderTextColor="#AAA"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
         </View>
 
         <TouchableOpacity
           style={[styles.button, styles.primaryButton]}
           onPress={handleRegister}
           disabled={loading}
+          activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#1a1a2e" />
+            <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.primaryButtonText}>注册</Text>
+            <Text style={styles.primaryButtonText}>Create Account</Text>
           )}
         </TouchableOpacity>
 
@@ -97,7 +108,7 @@ export default function RegisterScreen() {
           onPress={() => router.back()}
         >
           <Text style={styles.linkText}>
-            已有账号？<Text style={styles.linkTextHighlight}>立即登录</Text>
+            Already have an account? <Text style={styles.linkTextHighlight}>Sign In</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -108,7 +119,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#FFF8E7',
   },
   content: {
     flex: 1,
@@ -116,55 +127,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1A1A1A',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#888',
+    fontSize: 15,
+    color: '#999',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: 40,
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
+    gap: 12,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+    paddingHorizontal: 14,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    padding: 16,
+    flex: 1,
+    paddingVertical: 16,
     fontSize: 16,
-    color: '#fff',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333',
+    color: '#1A1A1A',
   },
   button: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
   },
   primaryButton: {
-    backgroundColor: '#ffd700',
+    backgroundColor: '#D4A017',
   },
   primaryButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a2e',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFF',
   },
   linkButton: {
-    marginTop: 24,
+    marginTop: 20,
     alignItems: 'center',
   },
   linkText: {
-    color: '#888',
+    color: '#999',
     fontSize: 14,
   },
   linkTextHighlight: {
-    color: '#ffd700',
-    fontWeight: 'bold',
+    color: '#D4A017',
+    fontWeight: '700',
   },
 });

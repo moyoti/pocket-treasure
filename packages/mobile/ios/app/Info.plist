@@ -34,8 +34,6 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
-    <key>AMapApiKey</key>
-    <string>897b2837359811602eb5d7b8d38af011</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -55,6 +53,7 @@
     <string>我们需要您的位置来显示附近的宝藏</string>
     <key>NSUserActivityTypes</key>
     <array>
+      <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>UIBackgroundModes</key>

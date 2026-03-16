@@ -9,57 +9,62 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
           <Stack
             screenOptions={{
               headerStyle: {
-                backgroundColor: '#1a1a2e',
+                backgroundColor: '#FFF8E7',
               },
-              headerTintColor: '#fff',
+              headerTintColor: '#1A1A1A',
               headerTitleStyle: {
-                fontWeight: 'bold',
+                fontWeight: '700',
+                fontSize: 17,
               },
+              headerShadowVisible: false,
               contentStyle: {
-                backgroundColor: '#0f0f1a',
+                backgroundColor: '#FFF8E7',
               },
+              headerBackTitle: 'Back',
             }}
           >
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen 
-              name="item/[id]" 
-              options={{ 
-                title: '物品详情',
-                presentation: 'modal'
-              }} 
+            <Stack.Screen
+              name="item/[id]"
+              options={{
+                title: 'Item Details',
+                presentation: 'modal',
+              }}
+            />
+            <Stack.Screen
+              name="chat/[userId]"
+              options={{
+                title: 'Chat',
+              }}
             />
             <Stack.Screen
               name="profile/stats"
               options={{
-                title: '统计',
-                headerBackTitle: '返回',
+                title: 'Statistics',
               }}
             />
             <Stack.Screen
               name="profile/settings"
               options={{
-                title: '设置',
-                headerBackTitle: '返回',
+                title: 'Settings',
               }}
             />
             <Stack.Screen
               name="profile/help"
               options={{
-                title: '帮助',
-                headerBackTitle: '返回',
+                title: 'Help',
               }}
             />
             <Stack.Screen
               name="profile/about"
               options={{
-                title: '关于',
-                headerBackTitle: '返回',
+                title: 'About',
               }}
             />
           </Stack>

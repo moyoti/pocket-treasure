@@ -1,29 +1,45 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Image,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { getInventory, getInventoryStats } from '@/api/inventory';
 import { InventoryItem, ItemRarity } from '@/types';
 
 const RARITY_COLORS: Record<ItemRarity, string> = {
-  common: '#9ca3af',
+  common: '#8D99AE',
   rare: '#3b82f6',
   epic: '#a855f7',
-  legendary: '#fbbf24',
+  legendary: '#F59E0B',
+};
+
+const RARITY_BG: Record<ItemRarity, string> = {
+  common: '#F1F3F5',
+  rare: '#EBF5FF',
+  epic: '#F5F0FF',
+  legendary: '#FFFBEB',
 };
 
 const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
+  common: 'Common',
+  rare: 'Rare',
+  epic: 'Epic',
+  legendary: 'Legendary',
+};
+
+const RARITY_ICONS: Record<ItemRarity, string> = {
+  common: 'diamond-outline',
+  rare: 'diamond',
+  epic: 'star',
+  legendary: 'trophy',
 };
 
 export default function InventoryScreen() {
@@ -59,49 +75,84 @@ export default function InventoryScreen() {
     fetchData();
   };
 
-  const renderItem = ({ item }: { item: InventoryItem }) => (
-    <TouchableOpacity
-      style={styles.itemCard}
-      onPress={() => router.push(`/item/${item.id}`)}
-    >
-      <View style={styles.itemIconContainer}>
-        <Text style={styles.itemIcon}>💎</Text>
-      </View>
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName}>{item.item.name}</Text>
-        <Text
-          style={[
-            styles.itemRarity,
-            { color: RARITY_COLORS[item.item.rarity as ItemRarity] },
-          ]}
-        >
-          {RARITY_NAMES[item.item.rarity as ItemRarity]}
-        </Text>
-        {item.poiName && (
-          <Text style={styles.itemLocation}>📍 {item.poiName}</Text>
-        )}
-      </View>
-      <View style={styles.itemQuantity}>
-        <Text style={styles.quantityText}>x{item.quantity}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#D4A017" />
+          <Text style={styles.loadingText}>Loading backpack...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const renderItem = ({ item }: { item: InventoryItem }) => {
+    const rarity = item.item.rarity as ItemRarity;
+    return (
+      <TouchableOpacity
+        style={[styles.itemCard, { borderLeftColor: RARITY_COLORS[rarity] }]}
+        onPress={() => router.push(`/item/${item.id}`)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.itemIconContainer, { backgroundColor: RARITY_BG[rarity] }]}>
+          <Ionicons
+            name={RARITY_ICONS[rarity] as any}
+            size={24}
+            color={RARITY_COLORS[rarity]}
+          />
+        </View>
+        <View style={styles.itemInfo}>
+          <Text style={styles.itemName} numberOfLines={1}>{item.item.name}</Text>
+          <View style={styles.rarityRow}>
+            <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
+              <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
+                {RARITY_NAMES[rarity]}
+              </Text>
+            </View>
+          </View>
+          {item.poiName && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={12} color="#999" />
+              <Text style={styles.itemLocation} numberOfLines={1}>{item.poiName}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.quantityContainer}>
+          <Text style={styles.quantityText}>x{item.quantity}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color="#CCC" />
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Backpack</Text>
+        <Text style={styles.subtitle}>Your collected treasures</Text>
+      </View>
+
       {/* Stats section */}
       {stats && (
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
+          <View style={styles.statCard}>
+            <Ionicons name="layers-outline" size={20} color="#D4A017" />
             <Text style={styles.statValue}>{stats.totalItems}</Text>
-            <Text style={styles.statLabel}>总物品</Text>
+            <Text style={styles.statLabel}>Total</Text>
           </View>
-          <View style={styles.statItem}>
+          <View style={styles.statCard}>
+            <Ionicons name="apps-outline" size={20} color="#3b82f6" />
             <Text style={styles.statValue}>{stats.uniqueItems}</Text>
-            <Text style={styles.statLabel}>种类</Text>
+            <Text style={styles.statLabel}>Unique</Text>
           </View>
-          {Object.entries(stats.byRarity).map(([rarity, count]) => (
-            <View key={rarity} style={styles.statItem}>
+          {stats.byRarity && Object.entries(stats.byRarity).map(([rarity, count]) => (
+            <View key={rarity} style={styles.statCard}>
+              <Ionicons
+                name={RARITY_ICONS[rarity as ItemRarity] as any}
+                size={20}
+                color={RARITY_COLORS[rarity as ItemRarity]}
+              />
               <Text style={[styles.statValue, { color: RARITY_COLORS[rarity as ItemRarity] }]}>
                 {count as number}
               </Text>
@@ -121,115 +172,176 @@ export default function InventoryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#ffd700"
+            tintColor="#D4A017"
+            colors={['#D4A017']}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📦</Text>
-            <Text style={styles.emptyText}>还没有收集任何物品</Text>
-            <Text style={styles.emptySubtext}>去地图上寻找宝藏吧！</Text>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="cube-outline" size={48} color="#CCC" />
+            </View>
+            <Text style={styles.emptyText}>No items yet</Text>
+            <Text style={styles.emptySubtext}>Explore the map to find and collect treasures!</Text>
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#FFF8E7',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#1a1a2e',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  statItem: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+  loadingText: {
+    color: '#999',
+    marginTop: 12,
+    fontSize: 14,
   },
-  statLabel: {
-    fontSize: 12,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A1A1A',
+  },
+  subtitle: {
+    fontSize: 14,
     color: '#888',
     marginTop: 4,
   },
+  statsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 8,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginTop: 4,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: '#999',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
   listContainer: {
     padding: 16,
+    paddingTop: 4,
   },
   itemCard: {
     flexDirection: 'row',
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
     alignItems: 'center',
+    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   itemIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#2a2a3e',
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-  },
-  itemIcon: {
-    fontSize: 24,
   },
   itemInfo: {
     flex: 1,
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1A1A1A',
     marginBottom: 4,
   },
-  itemRarity: {
-    fontSize: 12,
-    fontWeight: '500',
+  rarityRow: {
+    flexDirection: 'row',
+  },
+  rarityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  rarityText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 3,
   },
   itemLocation: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    fontSize: 11,
+    color: '#999',
   },
-  itemQuantity: {
-    backgroundColor: '#2a2a3e',
+  quantityContainer: {
+    backgroundColor: '#FFF8E7',
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 8,
   },
   quantityText: {
-    color: '#ffd700',
-    fontWeight: 'bold',
+    color: '#D4A017',
+    fontWeight: '700',
     fontSize: 14,
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 48,
+    paddingVertical: 60,
   },
-  emptyIcon: {
-    fontSize: 64,
+  emptyIconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#F5F0E5',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 18,
-    color: '#888',
+    color: '#666',
+    fontWeight: '700',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: '#999',
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });

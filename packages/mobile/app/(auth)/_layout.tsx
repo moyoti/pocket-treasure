@@ -5,19 +5,20 @@ export default function AuthLayout() {
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#1a1a2e',
+          backgroundColor: '#FFF8E7',
         },
-        headerTintColor: '#fff',
+        headerTintColor: '#1A1A1A',
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: '700',
         },
         contentStyle: {
-          backgroundColor: '#0f0f1a',
+          backgroundColor: '#FFF8E7',
         },
+        headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="login" options={{ title: '登录' }} />
-      <Stack.Screen name="register" options={{ title: '注册' }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ title: 'Create Account' }} />
     </Stack>
   );
 }

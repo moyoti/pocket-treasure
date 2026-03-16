@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/components/AuthProvider';
 import { login } from '@/api/auth';
@@ -22,7 +23,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('错误', '请填写邮箱和密码');
+      Alert.alert('Error', 'Please enter email and password');
       return;
     }
 
@@ -32,20 +33,18 @@ export default function LoginScreen() {
       setUser(user);
       router.replace('/(tabs)/map');
     } catch (error: any) {
-      Alert.alert('登录失败', error.message || '请检查邮箱和密码');
+      Alert.alert('Login Failed', error.message || 'Please check your credentials');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    // Google OAuth implementation
-    Alert.alert('提示', 'Google 登录功能即将推出');
+    Alert.alert('Coming Soon', 'Google login is coming soon');
   };
 
   const handleAppleLogin = async () => {
-    // Apple OAuth implementation
-    Alert.alert('提示', 'Apple 登录功能即将推出');
+    Alert.alert('Coming Soon', 'Apple login is coming soon');
   };
 
   return (
@@ -54,59 +53,75 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>寻宝记</Text>
-        <Text style={styles.subtitle}>探索世界，收集宝藏</Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoCircle}>
+            <Ionicons name="diamond" size={48} color="#D4A017" />
+          </View>
+        </View>
+        <Text style={styles.title}>Treasure Hunt</Text>
+        <Text style={styles.subtitle}>Explore the world, collect treasures</Text>
 
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="邮箱"
-            placeholderTextColor="#666"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="密码"
-            placeholderTextColor="#666"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.inputWrapper}>
+            <Ionicons name="mail-outline" size={20} color="#AAA" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#AAA"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Ionicons name="lock-closed-outline" size={20} color="#AAA" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#AAA"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
         </View>
 
         <TouchableOpacity
           style={[styles.button, styles.primaryButton]}
           onPress={handleLogin}
           disabled={loading}
+          activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#1a1a2e" />
+            <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.primaryButtonText}>登录</Text>
+            <Text style={styles.primaryButtonText}>Sign In</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>或</Text>
+          <Text style={styles.dividerText}>or</Text>
           <View style={styles.dividerLine} />
         </View>
 
         <TouchableOpacity
           style={[styles.button, styles.socialButton]}
           onPress={handleGoogleLogin}
+          activeOpacity={0.7}
         >
-          <Text style={styles.socialButtonText}>使用 Google 登录</Text>
+          <Ionicons name="logo-google" size={20} color="#1A1A1A" />
+          <Text style={styles.socialButtonText}>Continue with Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.socialButton]}
           onPress={handleAppleLogin}
+          activeOpacity={0.7}
         >
-          <Text style={styles.socialButtonText}>使用 Apple 登录</Text>
+          <Ionicons name="logo-apple" size={20} color="#1A1A1A" />
+          <Text style={styles.socialButtonText}>Continue with Apple</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -114,7 +129,7 @@ export default function LoginScreen() {
           onPress={() => router.push('/register')}
         >
           <Text style={styles.linkText}>
-            还没有账号？<Text style={styles.linkTextHighlight}>立即注册</Text>
+            Don't have an account? <Text style={styles.linkTextHighlight}>Sign Up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -125,86 +140,119 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#FFF8E7',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logoCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F0E8D8',
+    shadowColor: '#D4A017',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
   title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#ffd700',
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#1A1A1A',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#888',
+    fontSize: 16,
+    color: '#999',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: 40,
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
+    gap: 12,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+    paddingHorizontal: 14,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    padding: 16,
+    flex: 1,
+    paddingVertical: 16,
     fontSize: 16,
-    color: '#fff',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333',
+    color: '#1A1A1A',
   },
   button: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   primaryButton: {
-    backgroundColor: '#ffd700',
+    backgroundColor: '#D4A017',
   },
   primaryButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a2e',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFF',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 20,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: '#F0E8D8',
   },
   dividerText: {
-    color: '#666',
+    color: '#AAA',
     paddingHorizontal: 16,
+    fontSize: 13,
   },
   socialButton: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#F0E8D8',
   },
   socialButtonText: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 15,
+    color: '#1A1A1A',
+    fontWeight: '600',
   },
   linkButton: {
-    marginTop: 24,
+    marginTop: 20,
     alignItems: 'center',
   },
   linkText: {
-    color: '#888',
+    color: '#999',
     fontSize: 14,
   },
   linkTextHighlight: {
-    color: '#ffd700',
-    fontWeight: 'bold',
+    color: '#D4A017',
+    fontWeight: '700',
   },
 });
