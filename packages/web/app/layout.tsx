@@ -6,6 +6,8 @@ import { ToastProvider } from '@/components/ToastProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import BottomNav from '@/components/BottomNav';
 import { AmapProvider } from '@/components/AmapProvider';
+import { LocaleProvider } from '@/contexts/LocaleContext';
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,14 +29,18 @@ export default function RootLayout({
       <body className={`${inter.className}`}>
         <ThemeProvider>
           <AmapProvider>
-            <AuthProvider>
-              <ToastProvider>
-                <div className="min-h-screen transition-colors duration-200">
-                  {children}
-                </div>
-                <BottomNav />
-              </ToastProvider>
-            </AuthProvider>
+            <LocaleProvider>
+              <AccessibilityProvider>
+                <AuthProvider>
+                  <ToastProvider>
+                    <div className="min-h-screen transition-colors duration-200">
+                      {children}
+                    </div>
+                    <BottomNav />
+                  </ToastProvider>
+                </AuthProvider>
+              </AccessibilityProvider>
+            </LocaleProvider>
           </AmapProvider>
         </ThemeProvider>
       </body>

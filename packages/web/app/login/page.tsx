@@ -1,12 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { login } from '@/lib/api';
+import {
+  Map,
+  Gem,
+  AlertTriangle,
+  Check,
+  Mail,
+  Lock,
+  Loader2,
+  Rocket,
+  Chrome,
+  Apple
+} from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +39,7 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
         <div className="cartoon-loader"></div>
       </div>
     );
@@ -47,18 +59,25 @@ export default function LoginPage() {
       setUser(user);
       router.push('/map');
     } catch (err: any) {
-      setError(err.response?.data?.message || '登录失败，请检查邮箱和密码');
+      setError(err.message || '登录失败，请检查邮箱和密码');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
       <div className="w-full max-w-md animate-bounce-in">
         {/* Logo和标题 */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4 animate-float">🗺️💎</div>
+          <div className="flex items-center justify-center gap-2 mb-4 animate-float">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg border-4 border-gray-800">
+              <Map size={36} className="text-gray-800" />
+            </div>
+            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg border-3 border-gray-800 -ml-4 mt-6">
+              <Gem size={24} className="text-gray-800" />
+            </div>
+          </div>
           <h1 className="cartoon-title text-4xl md:text-5xl mb-2">寻宝记</h1>
           <p className="text-lg text-gray-600 font-semibold">探索世界，收集宝藏</p>
         </div>
@@ -67,20 +86,20 @@ export default function LoginPage() {
         <div className="cartoon-card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="cartoon-alert cartoon-alert-error animate-shake">
-                ⚠️ {error}
+              <div className="cartoon-alert cartoon-alert-error animate-shake flex items-center gap-2">
+                <AlertTriangle size={18} /> {error}
               </div>
             )}
 
             {success && (
-              <div className="cartoon-alert cartoon-alert-success">
-                ✅ {success}
+              <div className="cartoon-alert cartoon-alert-success flex items-center gap-2">
+                <Check size={18} /> {success}
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
-                📧 邮箱
+              <label htmlFor="email" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <Mail size={16} /> 邮箱
               </label>
               <input
                 type="email"
@@ -94,8 +113,8 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
-                🔐 密码
+              <label htmlFor="password" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <Lock size={16} /> 密码
               </label>
               <input
                 type="password"
@@ -111,14 +130,16 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="cartoon-btn w-full text-lg"
+              className="cartoon-btn w-full text-lg flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin">⏳</span> 登录中...
-                </span>
+                <>
+                  <Loader2 size={20} className="animate-spin" /> 登录中...
+                </>
               ) : (
-                '🚀 开始探险'
+                <>
+                  <Rocket size={20} /> 开始探险
+                </>
               )}
             </button>
           </form>
@@ -137,7 +158,7 @@ export default function LoginPage() {
               className="cartoon-btn cartoon-btn-secondary w-full flex items-center justify-center gap-2"
               disabled
             >
-              <span>🌐</span>
+              <Chrome size={20} />
               <span>Google 登录</span>
               <span className="text-xs opacity-60">(即将开放)</span>
             </button>
@@ -147,7 +168,7 @@ export default function LoginPage() {
               style={{ background: 'linear-gradient(180deg, #333 0%, #111 100%)', color: 'white' }}
               disabled
             >
-              <span>🍎</span>
+              <Apple size={20} />
               <span>Apple 登录</span>
               <span className="text-xs opacity-60">(即将开放)</span>
             </button>
@@ -163,5 +184,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
+        <div className="cartoon-loader"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

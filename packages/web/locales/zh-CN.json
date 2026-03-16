@@ -1,0 +1,192 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "back": "返回",
+    "success": "操作成功",
+    "error": "操作失败",
+    "retry": "重试",
+    "close": "关闭"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出登录",
+    "email": "邮箱",
+    "password": "密码",
+    "username": "用户名",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码？",
+    "noAccount": "还没有账号？",
+    "hasAccount": "已有账号？",
+    "loginSuccess": "登录成功",
+    "registerSuccess": "注册成功",
+    "loginFailed": "登录失败",
+    "registerFailed": "注册失败"
+  },
+  "nav": {
+    "map": "地图",
+    "inventory": "背包",
+    "shop": "商店",
+    "gacha": "抽奖",
+    "market": "市场",
+    "profile": "我的"
+  },
+  "map": {
+    "title": "寻宝地图",
+    "nearbyTreasures": "附近宝藏",
+    "noTreasures": "附近没有宝藏",
+    "collectSuccess": "收集成功！",
+    "collectFailed": "收集失败",
+    "tooFar": "距离太远，请靠近宝藏",
+    "refreshing": "刷新中...",
+    "myLocation": "我的位置"
+  },
+  "inventory": {
+    "title": "我的背包",
+    "empty": "背包是空的",
+    "totalCount": "总计 {count} 件",
+    "rarity": {
+      "common": "普通",
+      "rare": "稀有",
+      "epic": "史诗",
+      "legendary": "传说"
+    },
+    "sell": "出售",
+    "sellConfirm": "确定出售 {name} x{count}？"
+  },
+  "shop": {
+    "title": "商店",
+    "buy": "购买",
+    "price": "价格",
+    "owned": "已拥有",
+    "buySuccess": "购买成功！",
+    "buyFailed": "购买失败",
+    "insufficientCoins": "金币不足"
+  },
+  "gacha": {
+    "title": "幸运抽奖",
+    "singlePull": "单抽",
+    "tenPull": "十连",
+    "pulling": "抽奖中...",
+    "results": "抽奖结果",
+    "pityProgress": "保底进度",
+    "pityTriggered": "保底触发！",
+    "dropRates": "掉落概率",
+    "coins": "金币",
+    "discount": "9折优惠！",
+    "noPool": "暂无奖池"
+  },
+  "market": {
+    "title": "交易市场",
+    "myListings": "我的上架",
+    "listItem": "上架物品",
+    "buy": "购买",
+    "cancel": "下架",
+    "price": "价格",
+    "quantity": "数量",
+    "listSuccess": "上架成功",
+    "buySuccess": "购买成功",
+    "noListings": "暂无商品"
+  },
+  "profile": {
+    "title": "个人中心",
+    "settings": "设置",
+    "achievements": "成就",
+    "friends": "好友",
+    "stats": {
+      "level": "等级",
+      "coins": "金币",
+      "collections": "收藏",
+      "streak": "连续登录"
+    },
+    "editProfile": "编辑资料"
+  },
+  "settings": {
+    "title": "设置",
+    "notifications": "通知设置",
+    "pushNotifications": "推送通知",
+    "pushNotificationsDesc": "接收宝藏刷新和收集提醒",
+    "emailNotifications": "邮件通知",
+    "emailNotificationsDesc": "接收每周总结和重要更新",
+    "achievementNotifications": "成就通知",
+    "achievementNotificationsDesc": "解锁成就时收到祝贺消息",
+    "rareItemAlerts": "稀有物品提醒",
+    "rareItemAlertsDesc": "附近出现史诗或传说物品时提醒",
+    "mapSettings": "地图设置",
+    "showAllItems": "显示所有物品",
+    "showAllItemsDesc": "地图上显示所有稀有度的物品",
+    "showRarityFilter": "稀有度筛选",
+    "showRarityFilterDesc": "显示稀有度筛选按钮",
+    "autoCollect": "自动收集",
+    "autoCollectDesc": "接近物品时自动收集（需开启位置）",
+    "defaultZoom": "默认缩放级别",
+    "defaultZoomDesc": "地图初始显示范围",
+    "privacy": "隐私设置",
+    "publicProfile": "公开资料",
+    "publicProfileDesc": "其他用户可以查看你的收藏和成就",
+    "showOnLeaderboard": "排行榜显示",
+    "showOnLeaderboardDesc": "在排行榜上显示你的用户名",
+    "shareLocation": "位置分享",
+    "shareLocationDesc": "分享你的大致位置用于附近宝藏发现",
+    "display": "显示设置",
+    "darkMode": "深色模式",
+    "darkModeDesc": "使用深色主题减少眼睛疲劳",
+    "highContrast": "高对比度",
+    "highContrastDesc": "增强文字和元素的对比度",
+    "reducedMotion": "减少动画",
+    "reducedMotionDesc": "禁用非必要动画效果",
+    "language": "语言设置",
+    "saveSuccess": "设置已保存！",
+    "saveFailed": "保存设置失败，请稍后重试",
+    "resetSettings": "重置所有设置",
+    "resetConfirm": "确定要清除所有本地设置吗？此操作不可撤销。"
+  },
+  "achievements": {
+    "title": "成就",
+    "unlocked": "已解锁",
+    "locked": "未解锁",
+    "progress": "进度",
+    "claimReward": "领取奖励",
+    "claimed": "已领取",
+    "noAchievements": "暂无成就"
+  },
+  "leaderboard": {
+    "title": "排行榜",
+    "myRank": "我的排名",
+    "noData": "暂无排行数据",
+    "goCollect": "去收集宝藏"
+  },
+  "friends": {
+    "title": "好友",
+    "addFriend": "添加好友",
+    "searchPlaceholder": "搜索用户...",
+    "sentRequests": "已发送请求",
+    "receivedRequests": "收到的好友请求",
+    "accept": "接受",
+    "reject": "拒绝",
+    "noFriends": "暂无好友",
+    "noRequests": "暂无好友请求",
+    "chat": "聊天",
+    "online": "在线",
+    "offline": "离线"
+  },
+  "chat": {
+    "title": "聊天",
+    "placeholder": "输入消息...",
+    "send": "发送",
+    "noMessages": "暂无消息",
+    "noConversations": "暂无对话"
+  },
+  "tasks": {
+    "title": "每日任务",
+    "completed": "已完成",
+    "claimReward": "领取奖励",
+    "refresh": "刷新任务",
+    "noTasks": "暂无任务"
+  }
+}

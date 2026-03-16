@@ -1,54 +1,75 @@
-# Web Package - AGENTS.md
+# WEB PACKAGE
 
-**Package:** `@treasure-hunt/web`  
-**Framework:** Next.js 14 App Router  
-**Port:** 3001 (dev)
+**Generated:** 2026-03-13
+**Commit:** 0ad1388
+**Package:** @treasure-hunt/web
+**Framework:** Next.js 14 App Router
+**Port:** 3001
 
 ## OVERVIEW
 
-Next.js 14 web frontend for the treasure hunt game with Leaflet map integration and Zustand state management.
+Next.js 14 web frontend with Leaflet map integration. Uses React Context for auth state (Zustand listed but not used).
 
 ## STRUCTURE
 
 ```
 web/
-├── app/            # App Router routes (login, register, map, inventory, profile, leaderboard, achievements)
-├── components/     # UI components (AuthProvider, ToastProvider, BottomNav, map components)
-├── hooks/          # Custom React hooks
-├── lib/            # Utilities and helpers
-├── store/          # Zustand state stores
-├── types/          # TypeScript type definitions
-└── public/         # Static assets
+├── app/              # App Router routes
+│   ├── layout.tsx    # Root: ThemeProvider, AmapProvider, AuthProvider, ToastProvider
+│   ├── page.tsx      # Home redirect to /map
+│   ├── login/        # Email/password login
+│   ├── register/     # User registration
+│   ├── map/          # Core game: Leaflet map with nearby items
+│   ├── inventory/    # User's collected items
+│   ├── profile/      # User profile + settings, stats, about, help
+│   ├── leaderboard/  # User rankings
+│   └── achievements/ # Achievement tracking
+├── components/       # UI components
+│   ├── AuthProvider.tsx    # React Context for auth state
+│   ├── AmapProvider.tsx    # 高德地图 loader
+│   ├── ToastProvider.tsx   # Toast notifications
+│   ├── ThemeProvider.tsx   # Dark/light theme
+│   ├── BottomNav.tsx       # Mobile-style navigation
+│   ├── MapContent.tsx      # Leaflet map component
+│   └── ItemModal.tsx       # Item detail modal
+├── lib/
+│   ├── api.ts        # Axios instance + domain functions (mixed concern)
+│   └── session.ts    # Cookie-based session helpers
+├── types/            # Duplicate types (should use @treasure-hunt/shared)
+├── hooks/            # Empty placeholder
+└── store/            # Empty placeholder (Zustand not used)
 ```
 
 ## WHERE TO LOOK
 
 | Task | Location |
 |------|----------|
-| Map integration | `app/map/`, `components/` (Leaflet) |
+| Map rendering | `app/map/page.tsx`, `components/MapContent.tsx` |
 | Auth state | `components/AuthProvider.tsx` |
-| Global state | `store/` (Zustand stores) |
-| API calls | `hooks/`, `lib/` |
-| UI components | `components/`, `app/*/page.tsx` |
-| Tailwind config | `tailwind.config.js` |
+| API calls | `lib/api.ts` |
+| Theme/styling | `tailwind.config.js`, `components/ThemeProvider.tsx` |
+| Bottom navigation | `components/BottomNav.tsx` |
 
 ## CONVENTIONS
 
-- **Routing**: Next.js 14 App Router with file-based routing in `app/`
-- **State**: Zustand stores for global state (auth, inventory, map)
-- **Styling**: Tailwind CSS with custom dark theme (`bg-dark-300`)
-- **Maps**: Leaflet for map rendering, Amap (高德地图) JS API loaded in layout
-- **Layout**: Root layout wraps app with `AuthProvider` and `ToastProvider`
-- **Navigation**: BottomNav component for mobile-style navigation
+- **Routing**: Next.js 14 App Router with file-based routing
+- **State**: React Context (AuthProvider) - Zustand listed but not used
+- **Styling**: Tailwind CSS with custom dark theme (`dark-100`, `dark-200`, `dark-300`)
+- **Maps**: Leaflet for rendering, Amap JS API loaded in layout
+- **Layout**: Root wraps with ThemeProvider > AmapProvider > AuthProvider > ToastProvider
+- **Navigation**: BottomNav for mobile-style navigation
+- **Path alias**: `@/*` → `./*`
 
 ## ANTI-PATTERNS
 
-- **DO NOT** use `@ts-ignore` or `as any` for type assertions
+- **DO NOT** use `@ts-ignore` or `as any` (1 instance in MapContent.tsx for Leaflet)
 - **DO NOT** leave `console.log` in production code
-- **DO NOT** import from `packages/backend` directly (use `@treasure-hunt/shared`)
-- **DO NOT** use CSS modules (use Tailwind utility classes)
-- **DO NOT** hardcode API URLs (use environment variables)
+- **DO NOT** import from `packages/backend` - use `@treasure-hunt/shared`
+- **DO NOT** define types in `types/` - use shared package
+- **DO NOT** hardcode API URLs - use `NEXT_PUBLIC_API_URL`
 
-## ENTRY POINT
+## KNOWN ISSUES
 
-`packages/web/app/layout.tsx` - Root layout with providers and Amap script injection
+- **Duplicate types**: `types/index.ts` duplicates shared package
+- **Empty directories**: `store/`, `hooks/` are placeholders
+- **Mixed API concerns**: `lib/api.ts` mixes axios config + domain functions

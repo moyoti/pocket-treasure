@@ -1,0 +1,192 @@
+{
+  "common": {
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "delete": "削除",
+    "edit": "編集",
+    "back": "戻る",
+    "success": "成功",
+    "error": "エラー",
+    "retry": "再試行",
+    "close": "閉じる"
+  },
+  "auth": {
+    "login": "ログイン",
+    "register": "登録",
+    "logout": "ログアウト",
+    "email": "メール",
+    "password": "パスワード",
+    "username": "ユーザー名",
+    "confirmPassword": "パスワード確認",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "hasAccount": "すでにアカウントをお持ちですか？",
+    "loginSuccess": "ログイン成功",
+    "registerSuccess": "登録成功",
+    "loginFailed": "ログイン失敗",
+    "registerFailed": "登録失敗"
+  },
+  "nav": {
+    "map": "マップ",
+    "inventory": "バッグ",
+    "shop": "ショップ",
+    "gacha": "ガチャ",
+    "market": "市場",
+    "profile": "プロフィール"
+  },
+  "map": {
+    "title": "トレジャーマップ",
+    "nearbyTreasures": "近くの宝物",
+    "noTreasures": "近くに宝物はありません",
+    "collectSuccess": "収集成功！",
+    "collectFailed": "収集失敗",
+    "tooFar": "遠すぎます、近づいてください",
+    "refreshing": "更新中...",
+    "myLocation": "現在地"
+  },
+  "inventory": {
+    "title": "マイバッグ",
+    "empty": "バッグは空です",
+    "totalCount": "合計 {count} 個",
+    "rarity": {
+      "common": "コモン",
+      "rare": "レア",
+      "epic": "エピック",
+      "legendary": "レジェンダリー"
+    },
+    "sell": "売る",
+    "sellConfirm": "{name} x{count} を売りますか？"
+  },
+  "shop": {
+    "title": "ショップ",
+    "buy": "購入",
+    "price": "価格",
+    "owned": "所持済み",
+    "buySuccess": "購入成功！",
+    "buyFailed": "購入失敗",
+    "insufficientCoins": "コイン不足"
+  },
+  "gacha": {
+    "title": "ラッキーガチャ",
+    "singlePull": "単発",
+    "tenPull": "10連",
+    "pulling": "ガチャ中...",
+    "results": "結果",
+    "pityProgress": "天井進捗",
+    "pityTriggered": "天井発動！",
+    "dropRates": "排出率",
+    "coins": "コイン",
+    "discount": "10%オフ！",
+    "noPool": "プールがありません"
+  },
+  "market": {
+    "title": "取引市場",
+    "myListings": "出品一覧",
+    "listItem": "出品する",
+    "buy": "購入",
+    "cancel": "キャンセル",
+    "price": "価格",
+    "quantity": "数量",
+    "listSuccess": "出品成功",
+    "buySuccess": "購入成功",
+    "noListings": "商品がありません"
+  },
+  "profile": {
+    "title": "マイページ",
+    "settings": "設定",
+    "achievements": "実績",
+    "friends": "フレンド",
+    "stats": {
+      "level": "レベル",
+      "coins": "コイン",
+      "collections": "コレクション",
+      "streak": "連続ログイン"
+    },
+    "editProfile": "プロフィール編集"
+  },
+  "settings": {
+    "title": "設定",
+    "notifications": "通知設定",
+    "pushNotifications": "プッシュ通知",
+    "pushNotificationsDesc": "宝物の出現と収集のアラートを受け取る",
+    "emailNotifications": "メール通知",
+    "emailNotificationsDesc": "週間まとめと重要な更新を受け取る",
+    "achievementNotifications": "実績通知",
+    "achievementNotificationsDesc": "実績解除時にお祝いメッセージを受け取る",
+    "rareItemAlerts": "レアアイテムアラート",
+    "rareItemAlertsDesc": "近くにエピック以上のアイテムが出現した時に通知",
+    "mapSettings": "マップ設定",
+    "showAllItems": "全アイテム表示",
+    "showAllItemsDesc": "すべてのレアリティのアイテムをマップに表示",
+    "showRarityFilter": "レアリティフィルター",
+    "showRarityFilterDesc": "レアリティフィルターボタンを表示",
+    "autoCollect": "自動収集",
+    "autoCollectDesc": "近くのアイテムを自動収集（位置情報が必要）",
+    "defaultZoom": "デフォルトズームレベル",
+    "defaultZoomDesc": "マップの初期表示範囲",
+    "privacy": "プライバシー設定",
+    "publicProfile": "公開プロフィール",
+    "publicProfileDesc": "他のユーザーがコレクションと実績を閲覧可能",
+    "showOnLeaderboard": "ランキング表示",
+    "showOnLeaderboardDesc": "ユーザー名をランキングに表示",
+    "shareLocation": "位置情報共有",
+    "shareLocationDesc": "近くの宝物発見のため位置情報を共有",
+    "display": "表示設定",
+    "darkMode": "ダークモード",
+    "darkModeDesc": "目の疲れを軽減するダークテーマ",
+    "highContrast": "ハイコントラスト",
+    "highContrastDesc": "テキストと要素のコントラストを強化",
+    "reducedMotion": "モーション軽減",
+    "reducedMotionDesc": "不要なアニメーションを無効化",
+    "language": "言語設定",
+    "saveSuccess": "設定を保存しました！",
+    "saveFailed": "設定の保存に失敗しました",
+    "resetSettings": "すべての設定をリセット",
+    "resetConfirm": "すべてのローカル設定をクリアしますか？この操作は取り消せません。"
+  },
+  "achievements": {
+    "title": "実績",
+    "unlocked": "解除済み",
+    "locked": "未解除",
+    "progress": "進捗",
+    "claimReward": "報酬を受け取る",
+    "claimed": "受け取り済み",
+    "noAchievements": "実績がありません"
+  },
+  "leaderboard": {
+    "title": "ランキング",
+    "myRank": "自分の順位",
+    "noData": "ランキングデータがありません",
+    "goCollect": "宝物を集めに行く"
+  },
+  "friends": {
+    "title": "フレンド",
+    "addFriend": "フレンド追加",
+    "searchPlaceholder": "ユーザーを検索...",
+    "sentRequests": "送信したリクエスト",
+    "receivedRequests": "受け取ったリクエスト",
+    "accept": "承認",
+    "reject": "拒否",
+    "noFriends": "フレンドがいません",
+    "noRequests": "フレンドリクエストがありません",
+    "chat": "チャット",
+    "online": "オンライン",
+    "offline": "オフライン"
+  },
+  "chat": {
+    "title": "チャット",
+    "placeholder": "メッセージを入力...",
+    "send": "送信",
+    "noMessages": "メッセージがありません",
+    "noConversations": "会話がありません"
+  },
+  "tasks": {
+    "title": "デイリータスク",
+    "completed": "完了",
+    "claimReward": "報酬を受け取る",
+    "refresh": "タスク更新",
+    "noTasks": "タスクがありません"
+  }
+}

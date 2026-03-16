@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useTheme } from '@/components/ThemeProvider';
+import { useLocale } from '@/contexts/LocaleContext';
+import { useAccessibility } from '@/contexts/AccessibilityContext';
 import { updateUserSettings, getUserSettings } from '@/lib/api';
 import { ChevronLeft, Bell, Map as MapIcon, Lock, Palette, Moon, Globe, Shield } from 'lucide-react';
 
@@ -46,6 +48,8 @@ const defaultSettings: Settings = {
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const { setTheme } = useTheme();
+  const { t, locale, setLocale, localeNames } = useLocale();
+  const { settings: a11ySettings, setHighContrast, setReducedMotion } = useAccessibility();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -97,19 +101,31 @@ export default function SettingsPage() {
   }, [user]);
 
   const handleToggle = (key: keyof Settings) => {
+    const newValue = !settings[key];
+
     setSettings(prev => {
       const newSettings = { ...prev, [key]: !prev[key] };
-      
-      // Apply dark mode immediately when toggled
-      if (key === 'darkMode') {
-        setTheme(newSettings.darkMode ? 'dark' : 'light');
-      }
-      
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('userSettings', JSON.stringify(newSettings));
+        // Dispatch event for other components to listen
+        window.dispatchEvent(new CustomEvent('settingsChange', { detail: newSettings }));
       }
       return newSettings;
     });
+
+    // Apply settings immediately
+    if (key === 'darkMode') {
+      setTheme(newValue ? 'dark' : 'light');
+    }
+
+    if (key === 'highContrast') {
+      setHighContrast(newValue);
+    }
+
+    if (key === 'reducedMotion') {
+      setReducedMotion(newValue);
+    }
   };
 
   const handleSave = async () => {
@@ -118,18 +134,21 @@ export default function SettingsPage() {
       await updateUserSettings(settings);
       if (typeof window !== 'undefined') {
         localStorage.setItem('userSettings', JSON.stringify(settings));
+        // Dispatch event for other components
+        window.dispatchEvent(new CustomEvent('settingsChange', { detail: settings }));
       }
       setShowToast(true);
       setTimeout(() => setShowToast(false), 2000);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('保存设置失败，请稍后重试');
+      alert(t('settings.saveFailed'));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleLanguageChange = (lang: string) => {
+    setLocale(lang as 'zh-CN' | 'en' | 'ja');
     setSettings(prev => {
       const newSettings = { ...prev, language: lang };
       if (typeof window !== 'undefined') {
@@ -200,48 +219,48 @@ export default function SettingsPage() {
           >
             <ChevronLeft size={24} className="text-gray-700" />
           </button>
-          <h1 className="text-xl font-black text-gray-800">⚙️ 设置</h1>
+          <h1 className="text-xl font-black text-gray-800 flex items-center gap-2"><Lock className="w-5 h-5 text-gray-600" />{t('settings.title')}</h1>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6 animate-page-enter">
         {/* Notification Settings */}
         <section className="cartoon-card overflow-hidden">
           <div className="bg-gradient-to-r from-yellow-100 to-orange-100 px-4 py-3 border-b-2 border-gray-800">
             <div className="flex items-center gap-2">
               <Bell size={20} className="text-gray-700" />
-              <h2 className="font-black text-gray-800">🔔 通知设置</h2>
+              <h2 className="font-black text-gray-800">{t('settings.notifications')}</h2>
             </div>
           </div>
           <div className="p-4 space-y-2">
             <SettingItem
               icon={Bell}
-              title="推送通知"
-              description="接收宝藏刷新和收集提醒"
+              title={t('settings.pushNotifications')}
+              description={t('settings.pushNotificationsDesc')}
               checked={settings.pushNotifications}
               onChange={() => handleToggle('pushNotifications')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Globe}
-              title="邮件通知"
-              description="接收每周总结和重要更新"
+              title={t('settings.emailNotifications')}
+              description={t('settings.emailNotificationsDesc')}
               checked={settings.emailNotifications}
               onChange={() => handleToggle('emailNotifications')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Shield}
-              title="成就通知"
-              description="解锁成就时收到祝贺消息"
+              title={t('settings.achievementNotifications')}
+              description={t('settings.achievementNotificationsDesc')}
               checked={settings.achievementNotifications}
               onChange={() => handleToggle('achievementNotifications')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Palette}
-              title="稀有物品提醒"
-              description="附近出现史诗或传说物品时提醒"
+              title={t('settings.rareItemAlerts')}
+              description={t('settings.rareItemAlertsDesc')}
               checked={settings.rareItemAlerts}
               onChange={() => handleToggle('rareItemAlerts')}
             />
@@ -253,30 +272,30 @@ export default function SettingsPage() {
           <div className="bg-gradient-to-r from-green-100 to-teal-100 px-4 py-3 border-b-2 border-gray-800">
             <div className="flex items-center gap-2">
               <MapIcon size={20} className="text-gray-700" />
-              <h2 className="font-black text-gray-800">🗺️ 地图设置</h2>
+              <h2 className="font-black text-gray-800">{t('settings.mapSettings')}</h2>
             </div>
           </div>
           <div className="p-4 space-y-2">
             <SettingItem
               icon={MapIcon}
-              title="显示所有物品"
-              description="地图上显示所有稀有度的物品"
+              title={t('settings.showAllItems')}
+              description={t('settings.showAllItemsDesc')}
               checked={settings.showAllItems}
               onChange={() => handleToggle('showAllItems')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Palette}
-              title="稀有度筛选"
-              description="显示稀有度筛选按钮"
+              title={t('settings.showRarityFilter')}
+              description={t('settings.showRarityFilterDesc')}
               checked={settings.showRarityFilter}
               onChange={() => handleToggle('showRarityFilter')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Shield}
-              title="自动收集"
-              description="接近物品时自动收集（需开启位置）"
+              title={t('settings.autoCollect')}
+              description={t('settings.autoCollectDesc')}
               checked={settings.autoCollectNearby}
               onChange={() => handleToggle('autoCollectNearby')}
             />
@@ -288,8 +307,8 @@ export default function SettingsPage() {
                     <MapIcon size={20} className="text-gray-700" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-800">默认缩放级别</p>
-                    <p className="text-xs text-gray-500">地图初始显示范围</p>
+                    <p className="font-bold text-gray-800">{t('settings.defaultZoom')}</p>
+                    <p className="text-xs text-gray-500">{t('settings.defaultZoomDesc')}</p>
                   </div>
                 </div>
                 <span className="font-bold text-gray-800">{settings.defaultZoom}</span>
@@ -312,8 +331,8 @@ export default function SettingsPage() {
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>远</span>
-                <span>近</span>
+                <span>{t('map.noTreasures').charAt(0)}</span>
+                <span>{t('map.nearbyTreasures').charAt(0)}</span>
               </div>
             </div>
           </div>
@@ -324,30 +343,30 @@ export default function SettingsPage() {
           <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-3 border-b-2 border-gray-800">
             <div className="flex items-center gap-2">
               <Lock size={20} className="text-gray-700" />
-              <h2 className="font-black text-gray-800">🔒 隐私设置</h2>
+              <h2 className="font-black text-gray-800">🔒 {t('settings.privacy')}</h2>
             </div>
           </div>
           <div className="p-4 space-y-2">
             <SettingItem
               icon={Globe}
-              title="公开资料"
-              description="其他用户可以查看你的收藏和成就"
+              title={t('settings.publicProfile')}
+              description={t('settings.publicProfileDesc')}
               checked={settings.publicProfile}
               onChange={() => handleToggle('publicProfile')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Shield}
-              title="排行榜显示"
-              description="在排行榜上显示你的用户名"
+              title={t('settings.showOnLeaderboard')}
+              description={t('settings.showOnLeaderboardDesc')}
               checked={settings.showOnLeaderboard}
               onChange={() => handleToggle('showOnLeaderboard')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={MapIcon}
-              title="位置分享"
-              description="分享你的大致位置用于附近宝藏发现"
+              title={t('settings.shareLocation')}
+              description={t('settings.shareLocationDesc')}
               checked={settings.shareLocation}
               onChange={() => handleToggle('shareLocation')}
             />
@@ -359,30 +378,30 @@ export default function SettingsPage() {
           <div className="bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-3 border-b-2 border-gray-800">
             <div className="flex items-center gap-2">
               <Palette size={20} className="text-gray-700" />
-              <h2 className="font-black text-gray-800">🎨 显示设置</h2>
+              <h2 className="font-black text-gray-800">🎨 {t('settings.display')}</h2>
             </div>
           </div>
           <div className="p-4 space-y-2">
             <SettingItem
               icon={Moon}
-              title="深色模式"
-              description="使用深色主题减少眼睛疲劳"
+              title={t('settings.darkMode')}
+              description={t('settings.darkModeDesc')}
               checked={settings.darkMode}
               onChange={() => handleToggle('darkMode')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Palette}
-              title="高对比度"
-              description="增强文字和元素的对比度"
+              title={t('settings.highContrast')}
+              description={t('settings.highContrastDesc')}
               checked={settings.highContrast}
               onChange={() => handleToggle('highContrast')}
             />
             <div className="border-t border-gray-200" />
             <SettingItem
               icon={Shield}
-              title="减少动画"
-              description="禁用非必要动画效果"
+              title={t('settings.reducedMotion')}
+              description={t('settings.reducedMotionDesc')}
               checked={settings.reducedMotion}
               onChange={() => handleToggle('reducedMotion')}
             />
@@ -394,28 +413,23 @@ export default function SettingsPage() {
           <div className="bg-gradient-to-r from-red-100 to-orange-100 px-4 py-3 border-b-2 border-gray-800">
             <div className="flex items-center gap-2">
               <Globe size={20} className="text-gray-700" />
-              <h2 className="font-black text-gray-800">🌐 语言设置</h2>
+              <h2 className="font-black text-gray-800">🌐 {t('settings.language')}</h2>
             </div>
           </div>
           <div className="p-4">
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { code: 'zh-CN', name: '简体中文', flag: '🇨🇳' },
-                { code: 'zh-TW', name: '繁体中文', flag: '🇹🇼' },
-                { code: 'en', name: 'English', flag: '🇬🇧' },
-                { code: 'ja', name: '日本語', flag: '🇯🇵' },
-              ].map((lang) => (
+              {Object.entries(localeNames).map(([code, { name, flag }]) => (
                 <button
-                  key={lang.code}
-                  onClick={() => handleLanguageChange(lang.code)}
+                  key={code}
+                  onClick={() => handleLanguageChange(code)}
                   className={`p-3 rounded-xl border-2 border-gray-800 transition-all text-left ${
-                    settings.language === lang.code
+                    locale === code
                       ? 'bg-yellow-200 border-yellow-500'
                       : 'bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <span className="text-2xl mr-2">{lang.flag}</span>
-                  <span className="font-bold text-sm text-gray-800">{lang.name}</span>
+                  <span className="text-2xl mr-2">{flag}</span>
+                  <span className="font-bold text-sm text-gray-800">{name}</span>
                 </button>
               ))}
             </div>
@@ -428,13 +442,13 @@ export default function SettingsPage() {
           disabled={isSaving}
           className="w-full cartoon-btn disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSaving ? '💾 保存中...' : '💾 保存设置'}
+          {isSaving ? `💾 ${t('common.loading')}` : `💾 ${t('common.save')}${t('settings.title')}`}
         </button>
 
         {/* Reset Button */}
         <button
           onClick={() => {
-            if (confirm('确定要清除所有本地设置吗？此操作不可撤销。')) {
+            if (confirm(t('settings.resetConfirm'))) {
               localStorage.removeItem('userSettings');
               setSettings(defaultSettings);
               setTheme('light');
@@ -444,14 +458,14 @@ export default function SettingsPage() {
           }}
           className="w-full py-3 px-4 rounded-xl border-2 border-red-300 text-red-600 font-bold hover:bg-red-50 transition-colors"
         >
-          🗑️ 重置所有设置
+          🗑️ {t('settings.resetSettings')}
         </button>
       </div>
 
       {/* Toast */}
       {showToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg z-50 animate-bounce-in">
-          ✅ 设置已保存！
+          ✅ {t('settings.saveSuccess')}
         </div>
       )}
     </div>

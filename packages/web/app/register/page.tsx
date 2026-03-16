@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { register } from '@/lib/api';
+import {
+  Map,
+  Gem,
+  AlertTriangle,
+  User,
+  Mail,
+  Lock,
+  Loader2,
+  Rocket,
+} from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -16,22 +26,19 @@ export default function RegisterPage() {
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // 如果已登录，重定向到地图页面
     if (!authLoading && user) {
       router.push('/map');
     }
   }, [user, authLoading, router]);
 
-  // 等待认证状态加载完成
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-dark-300">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
+        <div className="cartoon-loader"></div>
       </div>
     );
   }
 
-  // 如果已登录，不渲染页面
   if (user) {
     return null;
   }
@@ -56,84 +63,126 @@ export default function RegisterPage() {
       await register(email, password, username);
       router.push('/login?registered=true');
     } catch (err: any) {
-      setError(err.response?.data?.message || '注册失败，请稍后重试');
+      setError(err.message || '注册失败，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-300 px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
+      <div className="w-full max-w-md animate-bounce-in">
+        {/* Logo and title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">创建账号</h1>
-          <p className="text-gray-400">开始你的寻宝之旅</p>
+          <div className="flex items-center justify-center gap-2 mb-4 animate-float">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg border-4 border-gray-800">
+              <Map size={36} className="text-gray-800" />
+            </div>
+            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg border-3 border-gray-800 -ml-4 mt-6">
+              <Gem size={24} className="text-gray-800" />
+            </div>
+          </div>
+          <h1 className="cartoon-title text-4xl md:text-5xl mb-2">创建账号</h1>
+          <p className="text-lg text-gray-600 font-semibold">开始你的寻宝之旅</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded-lg">
-              {error}
+        {/* Register card */}
+        <div className="cartoon-card p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="cartoon-alert cartoon-alert-error animate-shake flex items-center gap-2">
+                <AlertTriangle size={18} /> {error}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="username" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <User size={16} /> 用户名
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="cartoon-input w-full"
+                placeholder="探险家"
+                required
+              />
             </div>
-          )}
 
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-              用户名
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-white"
-              placeholder="探险家"
-              required
-            />
-          </div>
+            <div>
+              <label htmlFor="email" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <Mail size={16} /> 邮箱
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="cartoon-input w-full"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-              邮箱
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-white"
-              placeholder="your@email.com"
-              required
-            />
-          </div>
+            <div>
+              <label htmlFor="password" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                <Lock size={16} /> 密码 (至少6位)
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="cartoon-input w-full"
+                placeholder="••••••••"
+                required
+              />
+              {password.length > 0 && (
+                <div className="mt-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${
+                          password.length >= level * 3
+                            ? level <= 1 ? 'bg-red-400' : level <= 2 ? 'bg-yellow-400' : level <= 3 ? 'bg-green-400' : 'bg-green-500'
+                            : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className={`text-xs mt-1 font-medium ${
+                    password.length < 6 ? 'text-red-500' : password.length < 8 ? 'text-yellow-600' : 'text-green-600'
+                  }`}>
+                    {password.length < 6 ? '密码太短' : password.length < 8 ? '密码强度一般' : '密码强度良好'}
+                  </p>
+                </div>
+              )}
+            </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-              密码 (至少6位)
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-dark-200 border border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-white"
-              placeholder="********"
-              required
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="cartoon-btn w-full text-lg flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" /> 注册中...
+                </>
+              ) : (
+                <>
+                  <Rocket size={20} /> 开始探险
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-primary text-dark-300 font-bold rounded-lg hover:bg-yellow-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? '注册中...' : '注册'}
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-gray-400">
+        {/* Login link */}
+        <p className="mt-6 text-center text-gray-600 font-semibold">
           已有账号？{' '}
-          <Link href="/login" className="text-primary font-semibold hover:underline">
+          <Link href="/login" className="text-yellow-600 hover:text-yellow-700 font-bold underline decoration-2 underline-offset-2">
             立即登录
           </Link>
         </p>

@@ -1,0 +1,192 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "success": "Success",
+    "error": "Error",
+    "retry": "Retry",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Registration successful",
+    "loginFailed": "Login failed",
+    "registerFailed": "Registration failed"
+  },
+  "nav": {
+    "map": "Map",
+    "inventory": "Inventory",
+    "shop": "Shop",
+    "gacha": "Gacha",
+    "market": "Market",
+    "profile": "Profile"
+  },
+  "map": {
+    "title": "Treasure Map",
+    "nearbyTreasures": "Nearby Treasures",
+    "noTreasures": "No treasures nearby",
+    "collectSuccess": "Collected successfully!",
+    "collectFailed": "Collection failed",
+    "tooFar": "Too far, please get closer",
+    "refreshing": "Refreshing...",
+    "myLocation": "My Location"
+  },
+  "inventory": {
+    "title": "My Inventory",
+    "empty": "Inventory is empty",
+    "totalCount": "Total {count} items",
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    },
+    "sell": "Sell",
+    "sellConfirm": "Sell {name} x{count}?"
+  },
+  "shop": {
+    "title": "Shop",
+    "buy": "Buy",
+    "price": "Price",
+    "owned": "Owned",
+    "buySuccess": "Purchase successful!",
+    "buyFailed": "Purchase failed",
+    "insufficientCoins": "Insufficient coins"
+  },
+  "gacha": {
+    "title": "Lucky Gacha",
+    "singlePull": "Single Pull",
+    "tenPull": "10x Pull",
+    "pulling": "Pulling...",
+    "results": "Results",
+    "pityProgress": "Pity Progress",
+    "pityTriggered": "Pity Triggered!",
+    "dropRates": "Drop Rates",
+    "coins": "Coins",
+    "discount": "10% off!",
+    "noPool": "No pools available"
+  },
+  "market": {
+    "title": "Market",
+    "myListings": "My Listings",
+    "listItem": "List Item",
+    "buy": "Buy",
+    "cancel": "Cancel",
+    "price": "Price",
+    "quantity": "Quantity",
+    "listSuccess": "Listed successfully",
+    "buySuccess": "Purchase successful",
+    "noListings": "No listings available"
+  },
+  "profile": {
+    "title": "Profile",
+    "settings": "Settings",
+    "achievements": "Achievements",
+    "friends": "Friends",
+    "stats": {
+      "level": "Level",
+      "coins": "Coins",
+      "collections": "Collections",
+      "streak": "Login Streak"
+    },
+    "editProfile": "Edit Profile"
+  },
+  "settings": {
+    "title": "Settings",
+    "notifications": "Notifications",
+    "pushNotifications": "Push Notifications",
+    "pushNotificationsDesc": "Receive treasure spawn and collection alerts",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDesc": "Receive weekly summaries and important updates",
+    "achievementNotifications": "Achievement Notifications",
+    "achievementNotificationsDesc": "Receive congratulations when unlocking achievements",
+    "rareItemAlerts": "Rare Item Alerts",
+    "rareItemAlertsDesc": "Alert when epic or legendary items appear nearby",
+    "mapSettings": "Map Settings",
+    "showAllItems": "Show All Items",
+    "showAllItemsDesc": "Show items of all rarities on the map",
+    "showRarityFilter": "Rarity Filter",
+    "showRarityFilterDesc": "Show rarity filter button",
+    "autoCollect": "Auto Collect",
+    "autoCollectDesc": "Automatically collect items when nearby (requires location)",
+    "defaultZoom": "Default Zoom Level",
+    "defaultZoomDesc": "Initial map display range",
+    "privacy": "Privacy Settings",
+    "publicProfile": "Public Profile",
+    "publicProfileDesc": "Allow others to view your collection and achievements",
+    "showOnLeaderboard": "Show on Leaderboard",
+    "showOnLeaderboardDesc": "Display your username on the leaderboard",
+    "shareLocation": "Share Location",
+    "shareLocationDesc": "Share your approximate location for nearby treasure discovery",
+    "display": "Display Settings",
+    "darkMode": "Dark Mode",
+    "darkModeDesc": "Use dark theme to reduce eye strain",
+    "highContrast": "High Contrast",
+    "highContrastDesc": "Enhance text and element contrast",
+    "reducedMotion": "Reduced Motion",
+    "reducedMotionDesc": "Disable non-essential animations",
+    "language": "Language",
+    "saveSuccess": "Settings saved!",
+    "saveFailed": "Failed to save settings, please try again",
+    "resetSettings": "Reset All Settings",
+    "resetConfirm": "Are you sure you want to clear all local settings? This cannot be undone."
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "progress": "Progress",
+    "claimReward": "Claim Reward",
+    "claimed": "Claimed",
+    "noAchievements": "No achievements yet"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "myRank": "My Rank",
+    "noData": "No ranking data",
+    "goCollect": "Go collect treasures"
+  },
+  "friends": {
+    "title": "Friends",
+    "addFriend": "Add Friend",
+    "searchPlaceholder": "Search users...",
+    "sentRequests": "Sent Requests",
+    "receivedRequests": "Received Requests",
+    "accept": "Accept",
+    "reject": "Reject",
+    "noFriends": "No friends yet",
+    "noRequests": "No friend requests",
+    "chat": "Chat",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "chat": {
+    "title": "Chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "noMessages": "No messages yet",
+    "noConversations": "No conversations"
+  },
+  "tasks": {
+    "title": "Daily Tasks",
+    "completed": "Completed",
+    "claimReward": "Claim Reward",
+    "refresh": "Refresh Tasks",
+    "noTasks": "No tasks available"
+  }
+}

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
-import { ChevronLeft, Heart, Star, Github, Mail, Globe } from 'lucide-react';
+import { ChevronLeft, Heart, Star, Github, Mail, Globe, Map, Smartphone, Code, Wrench } from 'lucide-react';
 
 export default function AboutPage() {
   const { user, loading: authLoading } = useAuth();
@@ -36,16 +36,16 @@ export default function AboutPage() {
           <Link href="/profile" className="text-gray-600 hover:text-gray-800 transition">
             <ChevronLeft size={28} />
           </Link>
-          <h1 className="text-2xl font-black text-gray-800">📜 关于</h1>
+          <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2"><Star className="w-6 h-6 text-amber-500" />关于</h1>
           <div className="w-7"></div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 animate-page-enter">
         {/* App Info Card */}
         <div className="cartoon-card p-8 text-center mb-6">
           <div className="w-24 h-24 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-3xl flex items-center justify-center mx-auto mb-4 border-4 border-gray-800 shadow-lg">
-            <span className="text-5xl">🗺️</span>
+            <Map className="w-12 h-12 text-gray-800" strokeWidth={2} />
           </div>
           <h1 className="text-3xl font-black text-gray-800 mb-2">寻宝记</h1>
           <p className="text-gray-500 mb-4">Treasure Hunt</p>
@@ -56,7 +56,7 @@ export default function AboutPage() {
 
         {/* Description */}
         <div className="cartoon-card p-6 mb-6">
-          <h2 className="font-bold text-gray-800 text-lg mb-3">📱 应用简介</h2>
+          <h2 className="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2"><Smartphone className="w-5 h-5 text-blue-500" />应用简介</h2>
           <p className="text-gray-600 leading-relaxed">
             寻宝记是一款基于地理位置的物品收集游戏，类似于 Pokémon GO。
             玩家可以在真实世界中探索，在各个地标位置收集虚拟宝藏物品。
@@ -66,7 +66,7 @@ export default function AboutPage() {
 
         {/* Tech Stack */}
         <div className="cartoon-card p-6 mb-6">
-          <h2 className="font-bold text-gray-800 text-lg mb-4">🛠️ 技术栈</h2>
+          <h2 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2"><Wrench className="w-5 h-5 text-gray-600" />技术栈</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
               { name: 'Web 前端', tech: 'Next.js 14' },
@@ -86,7 +86,7 @@ export default function AboutPage() {
 
         {/* Links */}
         <div className="cartoon-card p-6 mb-6">
-          <h2 className="font-bold text-gray-800 text-lg mb-4">🔗 链接</h2>
+          <h2 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2"><Globe className="w-5 h-5 text-indigo-500" />链接</h2>
           <div className="space-y-3">
             <a
               href="https://github.com/treasure-hunt"
@@ -118,7 +118,7 @@ export default function AboutPage() {
 
         {/* Open Source */}
         <div className="cartoon-card p-6 mb-6">
-          <h2 className="font-bold text-gray-800 text-lg mb-4">📂 开源许可</h2>
+          <h2 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2"><Code className="w-5 h-5 text-green-500" />开源许可</h2>
           <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
             <p className="text-gray-800 font-medium mb-2">MIT License</p>
             <p className="text-gray-500 text-sm">

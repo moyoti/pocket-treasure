@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { BarChart2, TrendingUp, Gem, Trophy, Calendar } from 'lucide-react';
 
 interface CollectionStats {
   totalItems: number;
@@ -108,22 +109,22 @@ export default function StatsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-black text-gray-800">📊 统计</h1>
+          <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2"><BarChart2 className="w-6 h-6 text-indigo-500" />统计</h1>
           <div className="w-6"></div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 animate-page-enter">
         {/* 总览卡片 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="cartoon-card p-6 mb-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4">📈 收集总览</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-green-500" />收集总览</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
-              <p className="text-4xl font-black text-yellow-500">{stats?.collection.totalItems || 0}</p>
+              <p className="text-4xl font-black text-amber-600">{stats?.collection.totalItems || 0}</p>
               <p className="text-sm text-gray-600 mt-1">总收集数</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-xl border-2 border-green-200">
@@ -140,7 +141,7 @@ export default function StatsPage() {
           transition={{ delay: 0.1 }}
           className="cartoon-card p-6 mb-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4">💎 稀有度分布</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Gem className="w-5 h-5 text-purple-500" />稀有度分布</h2>
           <div className="space-y-3">
             {Object.entries(totalByRarity).map(([rarity, count], index) => {
               const colors = RARITY_COLORS[rarity] || RARITY_COLORS.common;
@@ -161,7 +162,7 @@ export default function StatsPage() {
               );
             })}
             {Object.keys(totalByRarity).length === 0 && (
-              <p className="text-gray-400 text-center py-4">还没有收集到任何物品，快去探索吧！🗺️</p>
+              <p className="text-gray-400 text-center py-4">还没有收集到任何物品，快去探索吧！</p>
             )}
           </div>
         </motion.div>
@@ -173,7 +174,7 @@ export default function StatsPage() {
           transition={{ delay: 0.2 }}
           className="cartoon-card p-6 mb-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4">🏆 成就进度</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-500" />成就进度</h2>
           <div className="bg-gray-100 rounded-xl p-4 border-2 border-gray-300">
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-600">已完成成就</span>
@@ -204,7 +205,7 @@ export default function StatsPage() {
           transition={{ delay: 0.3 }}
           className="cartoon-card p-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4">🗓️ 探险历程</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-blue-500" />探险历程</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
               <p className="text-4xl font-black text-blue-500">{daysSinceJoin}</p>

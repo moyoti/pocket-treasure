@@ -7,10 +7,15 @@
   --primary: #FFD93D;
   --primary-dark: #F4C430;
   --secondary: #6BCB77;
+  --secondary-light: #8FD99A;
   --accent: #FF6B6B;
+  --accent-light: #FF9999;
   --accent-purple: #9B59B6;
+  --accent-purple-light: #BB8FCE;
   --accent-blue: #4ECDC4;
+  --accent-blue-light: #7EDDD6;
   --accent-pink: #FF8ED4;
+  --accent-pink-light: #FFB8E3;
 
   /* 背景色 - 温暖明亮 */
   --bg-light: #FFF8E7;
@@ -18,21 +23,23 @@
   --bg-gradient-start: #FFF8E7;
   --bg-gradient-end: #FFE4B5;
 
-  /* 文字色 */
-  --text-primary: #2D3436;
-  --text-secondary: #636E72;
-  --text-light: #B2BEC3;
+  /* 文字色 - 全部使用深色确保可读性 */
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --text-muted: #6A6A6A;
+  --text-light: #8A8A8A;
 
-  /* 稀有度颜色 - 优化版 (设计系统v1.0) */
-  --rarity-common: #8D99AE;
-  --rarity-rare: #00B4D8;
-  --rarity-epic: #9B59B6;
-  --rarity-legendary: #FFD700;
-  
+  /* 稀有度颜色 */
+  --rarity-common: #6B7280;
+  --rarity-rare: #0EA5E9;
+  --rarity-epic: #8B5CF6;
+  --rarity-legendary: #F59E0B;
+
   /* 更多辅助色 */
   --primary-light: #FFE066;
   --secondary-dark: #5AB669;
   --accent-dark: #E85555;
+}
 
 body {
   background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
@@ -63,11 +70,12 @@ body {
 .cartoon-card:active {
   transform: scale(0.98);
   transition: all 0.1s ease;
+}
 
-/* 卡通风格按钮 */
+/* 卡通风格按钮 - 所有按钮文字都用深色 */
 .cartoon-btn {
   background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: #333;
+  color: #1A1A1A;
   font-weight: 800;
   padding: 12px 32px;
   border-radius: 50px;
@@ -108,25 +116,21 @@ body {
 .cartoon-btn:active::after {
   width: 200px;
   height: 200px;
-
-.cartoon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #333;
-}
-
-.cartoon-btn:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #333;
 }
 
 .cartoon-btn-secondary {
-  background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-dark) 100%);
-  color: white;
+  background: linear-gradient(180deg, var(--secondary-light) 0%, var(--secondary) 100%);
+  color: #1A1A1A;
 }
 
 .cartoon-btn-accent {
-  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
-  color: white;
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 100%);
+  color: #1A1A1A;
+}
+
+.cartoon-btn-purple {
+  background: linear-gradient(180deg, var(--accent-purple-light) 0%, var(--accent-purple) 100%);
+  color: #1A1A1A;
 }
 
 /* 按钮尺寸变体 */
@@ -152,6 +156,7 @@ body {
   border-radius: 15px;
   padding: 14px 20px;
   font-size: 16px;
+  color: var(--text-primary);
   transition: all 0.3s ease;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -165,22 +170,18 @@ body {
 }
 
 .cartoon-input::placeholder {
-  color: #B2BEC3;
+  color: #9CA3AF;
 }
 
 /* 标题样式 */
 .cartoon-title {
   font-size: 3.5rem;
   font-weight: 900;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, var(--accent-purple) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
-  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.1));
+  color: #1A1A1A;
+  text-shadow: 2px 2px 0 var(--primary), 4px 4px 0 rgba(0,0,0,0.1);
 }
 
-/* 卡通徽章 */
+/* 卡通徽章 - 所有文字都用深色确保可读性 */
 .cartoon-badge {
   display: inline-flex;
   align-items: center;
@@ -189,29 +190,30 @@ body {
   font-weight: 700;
   font-size: 12px;
   text-transform: uppercase;
-  border: 2px solid currentColor;
+  border: 2px solid #333;
 }
+
 .cartoon-badge-common {
-  background: var(--rarity-common);
-  color: white;
+  background: #E5E7EB;
+  color: #1A1A1A;
 }
 
 .cartoon-badge-rare {
-  background: var(--rarity-rare);
-  color: white;
-  animation: rare-glow 2s infinite;
+  background: #DBEAFE;
+  color: #1E40AF;
+  border-color: #3B82F6;
 }
 
 .cartoon-badge-epic {
-  background: var(--rarity-epic);
-  color: white;
-  animation: epic-glow 2s infinite;
+  background: #EDE9FE;
+  color: #5B21B6;
+  border-color: #8B5CF6;
 }
 
 .cartoon-badge-legendary {
-  background: linear-gradient(135deg, var(--rarity-legendary) 0%, #F39C12 100%);
-  color: var(--text-primary);
-  animation: legendary-glow 2s infinite;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FCD34D 100%);
+  color: #92400E;
+  border-color: #F59E0B;
 }
 
 /* 动画效果 */
@@ -250,36 +252,30 @@ body {
   }
 }
 
-@keyframes legendary-glow {
-  0%, 100% {
-    box-shadow: 0 0 5px var(--rarity-legendary),
-                0 0 10px var(--rarity-legendary);
-  }
-  50% {
-    box-shadow: 0 0 20px var(--rarity-legendary),
-                0 0 30px var(--rarity-epic);
-  }
-}
-
 @keyframes rare-glow {
   0%, 100% {
-    box-shadow: 0 0 5px var(--rarity-rare),
-                0 0 10px rgba(0, 180, 216, 0.5);
+    box-shadow: 0 0 5px #3B82F6, 0 0 10px rgba(59, 130, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 15px var(--rarity-rare),
-                0 0 25px rgba(0, 180, 216, 0.7);
+    box-shadow: 0 0 15px #3B82F6, 0 0 25px rgba(59, 130, 246, 0.5);
   }
 }
 
 @keyframes epic-glow {
   0%, 100% {
-    box-shadow: 0 0 8px var(--rarity-epic),
-                0 0 16px rgba(155, 89, 182, 0.6);
+    box-shadow: 0 0 8px #8B5CF6, 0 0 16px rgba(139, 92, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 20px var(--rarity-epic),
-                0 0 35px rgba(155, 89, 182, 0.8);
+    box-shadow: 0 0 20px #8B5CF6, 0 0 35px rgba(139, 92, 246, 0.5);
+  }
+}
+
+@keyframes legendary-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px #F59E0B, 0 0 20px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px #F59E0B, 0 0 40px rgba(245, 158, 11, 0.6);
   }
 }
 
@@ -382,20 +378,89 @@ body {
   animation: pulse 2s ease-in-out infinite;
 }
 
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Staggered animation delays */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+.stagger-7 { animation-delay: 350ms; }
+.stagger-8 { animation-delay: 400ms; }
+
+/* Skeleton loading shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #2A2A4E 25%, #3A3A5C 50%, #2A2A4E 75%);
+  background-size: 200% 100%;
+}
+
+/* Page enter animation */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.3s ease-out;
+}
+
+/* Treasure chest bounce */
+@keyframes chest-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-8px) scale(1.02);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.01);
+  }
+}
+
+.animate-chest-bounce {
+  animation: chest-bounce 2s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-light);
+  background: #FFF8E7;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-radius: 10px;
-  border: 2px solid var(--bg-light);
+  border: 2px solid #FFF8E7;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -479,40 +544,40 @@ body {
 }
 
 .bottom-nav-item.active {
-  color: var(--primary);
+  color: var(--primary-dark);
 }
 
-/* 消息提示样式 */
+/* 消息提示样式 - 确保文字可读 */
 .cartoon-alert {
   border-radius: 15px;
-  border: 3px solid;
+  border: 3px solid #333;
   padding: 12px 20px;
   font-weight: 600;
 }
 
 .cartoon-alert-error {
   background: #FEE2E2;
-  border-color: var(--accent);
-  color: #DC2626;
+  border-color: #EF4444;
+  color: #991B1B;
 }
 
 .cartoon-alert-success {
   background: #D1FAE5;
-  border-color: var(--secondary);
-  color: #059669;
+  border-color: #10B981;
+  color: #065F46;
 }
 
 .cartoon-alert-info {
   background: #DBEAFE;
-  border-color: var(--accent-blue);
-  color: #2563EB;
+  border-color: #3B82F6;
+  color: #1E40AF;
 }
 
 /* 加载动画 */
 .cartoon-loader {
   width: 50px;
   height: 50px;
-  border: 5px solid var(--bg-light);
+  border: 5px solid #FFF8E7;
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -544,16 +609,8 @@ body {
 }
 
 .collection-card-image {
-  background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-gradient-end) 100%);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-
-.collection-card-image {
   background: linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%);
-  padding: 20px;
+  padding: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -579,28 +636,7 @@ body {
 .stat-number {
   font-size: 2.5rem;
   font-weight: 900;
-  color: var(--primary-dark);
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-/* 统计卡片 */
-.stat-card {
-  background: linear-gradient(135deg, white 0%, #FFF8E7 100%);
-  border-radius: 20px;
-  border: 3px solid #333;
-  padding: 20px;
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: 900;
-  color: var(--primary-dark);
+  color: #B45309;
 }
 
 .stat-label {
@@ -613,7 +649,7 @@ body {
 
 /* ==================== 稀有度发光效果类 ==================== */
 .rarity-glow-common {
-  box-shadow: 0 2px 8px rgba(141, 153, 174, 0.3);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
 }
 
 .rarity-glow-rare {
@@ -670,123 +706,363 @@ body {
   }
 }
 
-/* ==================== DARK MODE ==================== */
+/* ==================== 稀有度文字颜色 ==================== */
+.text-rarity-common {
+  color: var(--rarity-common);
+}
+
+.text-rarity-rare {
+  color: var(--rarity-rare);
+}
+
+.text-rarity-epic {
+  color: var(--rarity-epic);
+}
+
+.text-rarity-legendary {
+  color: var(--rarity-legendary);
+}
+
+/* ==================== 稀有度背景颜色 ==================== */
+.bg-rarity-common {
+  background-color: #F3F4F6;
+}
+
+.bg-rarity-rare {
+  background-color: #DBEAFE;
+}
+
+.bg-rarity-epic {
+  background-color: #EDE9FE;
+}
+
+.bg-rarity-legendary {
+  background-color: #FEF3C7;
+}
+
+/* ==================== 深色模式 ==================== */
 .dark {
-  --bg-light: #1a1a2e;
-  --bg-card: #16213e;
-  --bg-gradient-start: #1a1a2e;
-  --bg-gradient-end: #0f0f1a;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
+  --bg-light: #1A1A2E;
+  --bg-card: #16213E;
+  --bg-gradient-start: #1A1A2E;
+  --bg-gradient-end: #0F3460;
+  --text-primary: #EAEAEA;
+  --text-secondary: #B8B8B8;
+  --text-muted: #888888;
   --text-light: #666666;
 }
 
-.dark body {
-  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-  color: var(--text-primary);
+.dark body,
+.dark .min-h-screen[style*="linear-gradient"] {
+  background: linear-gradient(135deg, #1A1A2E 0%, #0F3460 100%) !important;
+  color: #EAEAEA !important;
 }
 
-.dark .bg-dark-300 {
-  background: #0f0f1a !important;
+.dark .cartoon-card,
+.dark .cartoon-input,
+.dark .bottom-nav {
+  background: #16213E !important;
+  color: #EAEAEA !important;
+  border-color: #3A3A5C !important;
 }
 
-.dark .bg-dark-200 {
-  background: #1a1a2e !important;
+.dark .bg-white {
+  background-color: #16213E !important;
 }
 
-.dark .bg-dark-100 {
-  background: #16213e !important;
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: #1A1A2E !important;
 }
 
-.dark .text-gray-800 {
-  color: #ffffff !important;
-}
-
+.dark .text-gray-800,
 .dark .text-gray-700 {
-  color: #e0e0e0 !important;
+  color: #EAEAEA !important;
 }
 
 .dark .text-gray-600 {
-  color: #b0b0b0 !important;
+  color: #B8B8B8 !important;
 }
 
 .dark .text-gray-500 {
   color: #888888 !important;
 }
 
-.dark .text-gray-400 {
-  color: #666666 !important;
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: #3A3A5C !important;
 }
 
 .dark .border-gray-800 {
-  border-color: #444444 !important;
+  border-color: #4A4A6C !important;
 }
 
-.dark .border-gray-700 {
-  border-color: #333333 !important;
+.dark .bg-gradient-to-r.from-yellow-100,
+.dark .bg-gradient-to-r.from-green-100,
+.dark .bg-gradient-to-r.from-purple-100,
+.dark .bg-gradient-to-r.from-blue-100,
+.dark .bg-gradient-to-r.from-red-100 {
+  background: linear-gradient(to right, #2A2A4E, #3A3A6C) !important;
 }
 
-.dark .cartoon-card {
-  background: #1a1a2e;
-  border-color: #444444;
-  box-shadow: 
-    0 4px 0 rgba(0, 0, 0, 0.3),
-    0 6px 20px rgba(0, 0, 0, 0.3);
+.dark .bg-yellow-200 {
+  background-color: #4A4A6C !important;
 }
 
-.dark .cartoon-card:hover {
-  box-shadow: 
-    0 8px 0 rgba(0, 0, 0, 0.3),
-    0 12px 30px rgba(0, 0, 0, 0.4);
+.dark .bg-purple-50 {
+  background-color: #2A2A4E !important;
 }
 
-.dark .cartoon-input {
-  background: #1a1a2e;
-  border-color: #444444;
-  color: #ffffff;
+.dark .bg-gray-200 {
+  background-color: #3A3A5C !important;
 }
 
-.dark .cartoon-input:focus {
-  border-color: var(--primary);
-}
-
-.dark .cartoon-input::placeholder {
-  color: #666666;
-}
-
-.dark .bottom-nav {
-  background: #1a1a2e;
-  border-color: #444444;
-}
-
-/* Dark mode gradient backgrounds for specific pages */
-.dark .min-h-screen[style*="linear-gradient"] {
-  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%) !important;
-}
-
-/* Dark mode map styles */
 .dark .leaflet-container {
-  background: #1a1a2e;
+  background: #1A1A2E !important;
+  border-color: #3A3A5C !important;
 }
 
 .dark .leaflet-popup-content-wrapper {
-  background: #1a1a2e;
-  color: #ffffff;
+  background: #16213E !important;
+  color: #EAEAEA !important;
 }
 
 .dark .leaflet-popup-tip {
-  background: #1a1a2e;
+  background: #16213E !important;
 }
 
-/* 暗色模式下的稀有度发光效果 */
-.dark .rarity-glow-rare {
-  animation: rare-glow 2s ease-in-out infinite;
+.dark .marker {
+  background: #16213E !important;
+  border-color: #4A4A6C !important;
 }
 
-.dark .rarity-glow-epic {
-  animation: epic-glow 2s ease-in-out infinite;
+.dark .cartoon-btn {
+  background: linear-gradient(180deg, #FFD93D 0%, #F4C430 100%);
+  color: #1A1A1A !important;
 }
 
-.dark .rarity-glow-legendary {
-  animation: legendary-glow 2s ease-in-out infinite;
+.dark .bottom-nav-center-btn {
+  background: linear-gradient(to bottom right, #FFD93D, #F4C430) !important;
+  border-color: #B45309 !important;
+}
+
+.dark .text-amber-600,
+.dark .text-yellow-600,
+.dark .text-yellow-700 {
+  color: #FFD93D !important;
+}
+
+.dark .text-purple-600,
+.dark .text-purple-700 {
+  color: #BB8FCE !important;
+}
+
+.dark .text-green-400 {
+  color: #6BCB77 !important;
+}
+
+.dark .cartoon-alert {
+  border-color: #4A4A6C !important;
+}
+
+.dark .cartoon-alert-error {
+  background: #3B1A1A !important;
+  border-color: #EF4444 !important;
+  color: #FCA5A5 !important;
+}
+
+.dark .cartoon-alert-success {
+  background: #1A3B2A !important;
+  border-color: #10B981 !important;
+  color: #6EE7B7 !important;
+}
+
+.dark .cartoon-alert-info {
+  background: #1A2A3B !important;
+  border-color: #3B82F6 !important;
+  color: #93C5FD !important;
+}
+
+.dark .stat-card {
+  background: linear-gradient(135deg, #16213E 0%, #1A1A2E 100%) !important;
+  border-color: #3A3A5C !important;
+}
+
+.dark .stat-number {
+  color: #FFD93D !important;
+}
+
+.dark .collection-card {
+  background: #16213E !important;
+  border-color: #3A3A5C !important;
+}
+
+.dark .collection-card-image {
+  background: linear-gradient(135deg, #1A1A2E 0%, #0F3460 100%) !important;
+}
+
+.dark input[type="range"] {
+  background: #3A3A5C !important;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1A1A2E !important;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4A4A6C 0%, #3A3A5C 100%) !important;
+}
+
+/* ==================== 高对比度模式 ==================== */
+.high-contrast {
+  --text-primary: #000000;
+  --text-secondary: #000000;
+  --text-muted: #333333;
+}
+
+.high-contrast body,
+.high-contrast .min-h-screen[style*="linear-gradient"] {
+  background: #FFFFFF !important;
+}
+
+.high-contrast .cartoon-card,
+.high-contrast .bg-white {
+  background: #FFFFFF !important;
+  border-width: 4px !important;
+  border-color: #000000 !important;
+}
+
+.high-contrast .cartoon-btn {
+  border-width: 4px !important;
+  border-color: #000000 !important;
+}
+
+.high-contrast .text-gray-800,
+.high-contrast .text-gray-700,
+.high-contrast .text-gray-600,
+.high-contrast .text-gray-500 {
+  color: #000000 !important;
+}
+
+.high-contrast .border-gray-200,
+.high-contrast .border-gray-300,
+.high-contrast .border-gray-800 {
+  border-color: #000000 !important;
+}
+
+.high-contrast .bg-gradient-to-r {
+  background: #FFFFFF !important;
+  border: 3px solid #000000 !important;
+}
+
+.high-contrast .cartoon-input {
+  border-width: 4px !important;
+  border-color: #000000 !important;
+}
+
+.high-contrast button:focus,
+.high-contrast input:focus,
+.high-contrast a:focus {
+  outline: 4px solid #000000 !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast in dark mode */
+.dark.high-contrast {
+  --text-primary: #FFFFFF;
+  --text-secondary: #FFFFFF;
+  --text-muted: #CCCCCC;
+}
+
+.dark.high-contrast body,
+.dark.high-contrast .min-h-screen[style*="linear-gradient"] {
+  background: #000000 !important;
+}
+
+.dark.high-contrast .cartoon-card,
+.dark.high-contrast .bg-white,
+.dark.high-contrast .bg-gray-50,
+.dark.high-contrast .bg-gray-100 {
+  background: #000000 !important;
+  border-color: #FFFFFF !important;
+}
+
+.dark.high-contrast .text-gray-800,
+.dark.high-contrast .text-gray-700,
+.dark.high-contrast .text-gray-600,
+.dark.high-contrast .text-gray-500 {
+  color: #FFFFFF !important;
+}
+
+.dark.high-contrast .border-gray-200,
+.dark.high-contrast .border-gray-300,
+.dark.high-contrast .border-gray-800 {
+  border-color: #FFFFFF !important;
+}
+
+.dark.high-contrast button:focus,
+.dark.high-contrast input:focus,
+.dark.high-contrast a:focus {
+  outline: 4px solid #FFFFFF !important;
+}
+
+/* ==================== 减少动画模式 ==================== */
+.reduced-motion,
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduced-motion .animate-bounce-in,
+.reduced-motion .animate-collect-success,
+.reduced-motion .animate-item-spawn,
+.reduced-motion .animate-pop,
+.reduced-motion .animate-slide-in-up,
+.reduced-motion .animate-wiggle,
+.reduced-motion .animate-float,
+.reduced-motion .animate-pulse-slow,
+.reduced-motion .animate-spin,
+.reduced-motion .animate-bounce,
+.reduced-motion .animate-pulse {
+  animation: none !important;
+}
+
+.reduced-motion .cartoon-card:hover,
+.reduced-motion .cartoon-btn:hover {
+  transform: none !important;
+}
+
+.reduced-motion .rarity-glow-rare,
+.reduced-motion .rarity-glow-epic,
+.reduced-motion .rarity-glow-legendary {
+  animation: none !important;
+}
+
+/* ==================== 字体大小调整 ==================== */
+.font-size-large {
+  font-size: 112%;
+}
+
+.font-size-large .cartoon-btn {
+  font-size: 1.1rem;
+}
+
+.font-size-large .cartoon-input {
+  font-size: 1.1rem;
+}
+
+.font-size-extra-large {
+  font-size: 125%;
+}
+
+.font-size-extra-large .cartoon-btn {
+  font-size: 1.2rem;
+}
+
+.font-size-extra-large .cartoon-input {
+  font-size: 1.2rem;
 }
