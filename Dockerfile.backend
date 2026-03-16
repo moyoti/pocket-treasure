@@ -3,34 +3,42 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy all package files for workspace resolution
 COPY package.json yarn.lock ./
 COPY packages/backend/package.json ./packages/backend/
+COPY packages/shared/package.json ./packages/shared/
 
-# Install dependencies
+# Install all workspace dependencies
 RUN yarn install --frozen-lockfile
 
 # Copy source files
-COPY packages/backend ./packages/backend
 COPY packages/shared ./packages/shared
+COPY packages/backend ./packages/backend
 
-# Build
+# Build shared first, then backend
+WORKDIR /app/packages/shared
+RUN yarn build
+
 WORKDIR /app/packages/backend
 RUN yarn build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built files and dependencies
-COPY --from=builder /app/packages/backend/dist ./dist
-COPY --from=builder /app/packages/backend/node_modules ./node_modules
-COPY --from=builder /app/packages/backend/package.json ./
+# Copy the entire workspace (simpler and more reliable for monorepo)
+COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
+COPY --from=builder /app/packages/backend/package.json ./packages/backend/
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/shared/package.json ./packages/shared/
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/backend/node_modules ./packages/backend/node_modules
 
 # Cloud hosting dynamically assigns PORT via env var
 ENV PORT=3000
 EXPOSE ${PORT}
 
-# Start application
+WORKDIR /app/packages/backend
 CMD ["node", "dist/main.js"]
