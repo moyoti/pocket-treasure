@@ -20,12 +20,12 @@ describe('InventoryService', () => {
     spawnWeight: 1.0,
     maxStack: 10,
     iconUrl: 'https://example.com/icon.png',
-    modelUrl: undefined,
+    modelUrl: null,
     metadata: {},
     spawnedItems: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-  } as Item;
+  } as unknown as Item;
 
   const mockInventoryItem: InventoryItem = {
     id: 'inventory-uuid-123',

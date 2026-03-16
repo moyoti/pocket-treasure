@@ -59,6 +59,9 @@ export class Item {
   @Column({ type: 'simple-json', nullable: true })
   metadata: Record<string, any>;
 
+  @Column({ default: true })
+  canTrade: boolean; // Whether this item can be traded on the market
+
   @OneToMany(() => SpawnedItem, (spawnedItem) => spawnedItem.item)
   spawnedItems: SpawnedItem[];
 

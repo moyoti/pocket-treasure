@@ -31,4 +31,37 @@ export class UserService {
     await this.userRepository.update(id, { avatar });
     return this.findById(id);
   }
+
+  async getUserStats(id: string): Promise<{
+    coins: number;
+    experience: number;
+    level: number;
+    loginStreak: number;
+    collectionCount: number;
+  }> {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.inventoryItems', 'inventory')
+      .select('user.id', 'userId')
+      .addSelect('user.coins', 'coins')
+      .addSelect('user.experience', 'experience')
+      .addSelect('user.level', 'level')
+      .addSelect('user.loginStreak', 'loginStreak')
+      .addSelect('COUNT(inventory.id)', 'collectionCount')
+      .where('user.id = :id', { id })
+      .groupBy('user.id')
+      .getRawOne();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      coins: user.coins || 0,
+      experience: user.experience || 0,
+      level: user.level || 1,
+      loginStreak: user.loginStreak || 0,
+      collectionCount: parseInt(user.collectionCount) || 0,
+    };
+  }
 }

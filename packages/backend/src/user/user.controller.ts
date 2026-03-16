@@ -13,6 +13,11 @@ export class UserController {
     return this.userService.findById(req.user.id);
   }
 
+  @Get('stats')
+  async getUserStats(@Request() req: any) {
+    return this.userService.getUserStats(req.user.id);
+  }
+
   @Patch('me')
   async updateProfile(@Request() req: any, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.updateProfile(req.user.id, updateUserDto);

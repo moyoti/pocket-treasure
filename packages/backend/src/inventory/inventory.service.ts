@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { InventoryItem } from './entities/inventory-item.entity';
@@ -6,6 +6,8 @@ import { Item } from '../item/entities/item.entity';
 
 @Injectable()
 export class InventoryService {
+  private readonly logger = new Logger(InventoryService.name);
+
   constructor(
     @InjectRepository(InventoryItem)
     private inventoryRepository: Repository<InventoryItem>,
@@ -52,6 +54,8 @@ export class InventoryService {
     longitude: number,
     poiName?: string,
   ): Promise<InventoryItem> {
+    this.logger.debug(`Adding item ${item.id} to inventory for user ${userId}`);
+
     // Check if user already has this item
     let inventoryItem = await this.inventoryRepository.findOne({
       where: { userId, itemId: item.id },
@@ -61,7 +65,10 @@ export class InventoryService {
       // Increment quantity if stackable
       if (inventoryItem.quantity < item.maxStack) {
         inventoryItem.quantity += 1;
+        this.logger.debug(`Incremented quantity for item ${item.id} to ${inventoryItem.quantity}`);
         return this.inventoryRepository.save(inventoryItem);
+      } else {
+        this.logger.warn(`Item ${item.id} has reached max stack size ${item.maxStack}`);
       }
     }
 
@@ -76,7 +83,9 @@ export class InventoryService {
       poiName,
     });
 
-    return this.inventoryRepository.save(inventoryItem);
+    const savedItem = await this.inventoryRepository.save(inventoryItem);
+    this.logger.log(`Added new item ${item.id} to inventory for user ${userId}`);
+    return savedItem;
   }
 
   async removeItemFromInventory(
@@ -84,19 +93,24 @@ export class InventoryService {
     inventoryItemId: string,
     quantity: number = 1,
   ): Promise<void> {
+    this.logger.debug(`Removing ${quantity} of item ${inventoryItemId} from user ${userId}'s inventory`);
+
     const inventoryItem = await this.inventoryRepository.findOne({
       where: { id: inventoryItemId, userId },
     });
 
     if (!inventoryItem) {
-      throw new Error('Item not found in inventory');
+      this.logger.warn(`Item ${inventoryItemId} not found in inventory for user ${userId}`);
+      throw new NotFoundException('Item not found in inventory');
     }
 
     if (inventoryItem.quantity <= quantity) {
       await this.inventoryRepository.remove(inventoryItem);
+      this.logger.log(`Removed item ${inventoryItemId} from user ${userId}'s inventory`);
     } else {
       inventoryItem.quantity -= quantity;
       await this.inventoryRepository.save(inventoryItem);
+      this.logger.debug(`Reduced quantity of item ${inventoryItemId} to ${inventoryItem.quantity}`);
     }
   }
 
@@ -110,7 +124,8 @@ export class InventoryService {
     });
 
     if (!inventoryItem) {
-      throw new Error('Item not found in inventory');
+      this.logger.warn(`Inventory item ${inventoryItemId} not found for user ${userId}`);
+      throw new NotFoundException('Item not found in inventory');
     }
 
     return inventoryItem;

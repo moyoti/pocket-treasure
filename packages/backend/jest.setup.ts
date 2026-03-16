@@ -1,0 +1,1 @@
+// Jest setup file - types are imported via triple-slash reference in test files

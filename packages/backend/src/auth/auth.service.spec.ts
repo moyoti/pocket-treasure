@@ -23,15 +23,18 @@ describe('AuthService', () => {
     email: 'test@example.com',
     password: 'hashedPassword123',
     username: 'testuser',
-    avatar: undefined,
-    googleId: undefined,
-    appleId: undefined,
+    avatar: null,
+    googleId: null,
+    appleId: null,
     isVerified: false,
     role: 'user',
     inventoryItems: [],
+    loginStreak: 0,
+    luckyPoints: 0,
+    lastLoginDate: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-  } as User;
+  } as unknown as User;
 
   const mockRepository = {
     findOne: jest.fn(),
@@ -39,6 +42,7 @@ describe('AuthService', () => {
     save: jest.fn(),
     find: jest.fn(),
     delete: jest.fn(),
+    update: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockJwtService = {
@@ -95,6 +99,8 @@ describe('AuthService', () => {
         password: expect.any(String),
         username: registerDto.username,
         isVerified: false,
+        luckyPoints: 0,
+        loginStreak: 0,
       });
       expect(userRepository.save).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({ user: mockUser, token: 'test-jwt-token' });
@@ -160,7 +166,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException if user has no password (OAuth user)', async () => {
-      const oauthUser = { ...mockUser, password: undefined } as User;
+      const oauthUser = { ...mockUser, password: undefined } as unknown as User;
       mockRepository.findOne.mockResolvedValue(oauthUser);
 
       await expect(authService.validateUser(email, password)).rejects.toThrow(
@@ -175,7 +181,7 @@ describe('AuthService', () => {
       const userWithWrongPassword = {
         ...mockUser,
         password: 'wrongHashedPassword',
-      } as User;
+      } as unknown as User;
       mockRepository.findOne.mockResolvedValue(userWithWrongPassword);
       (bcrypt.compare as jest.Mock).mockReturnValue(false);
 
@@ -191,6 +197,9 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should return user and token on successful login', async () => {
       mockJwtService.sign.mockReturnValue('test-jwt-token');
+      // login calls updateLoginStreakAndLuckyPoints which calls update,
+      // then reloads user via findOne
+      mockRepository.findOne.mockResolvedValue(mockUser);
 
       const result = await authService.login(mockUser);
 
@@ -212,7 +221,6 @@ describe('AuthService', () => {
     };
 
     it('should login with Google OAuth and create new user', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
       const newUser = {
         ...mockUser,
         googleId: oauthDto.providerId,
@@ -220,7 +228,12 @@ describe('AuthService', () => {
         username: oauthDto.username,
         avatar: oauthDto.avatar,
         isVerified: true,
-      } as User;
+      } as unknown as User;
+      // findOne: 1st (google lookup) -> null, 2nd (email lookup) -> null, 3rd (reload) -> newUser
+      mockRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(newUser);
       mockRepository.create.mockReturnValue(newUser);
       mockRepository.save.mockResolvedValue(newUser);
       mockJwtService.sign.mockReturnValue('test-jwt-token');
@@ -237,6 +250,9 @@ describe('AuthService', () => {
         googleId: oauthDto.providerId,
         appleId: undefined,
         isVerified: true,
+        luckyPoints: 0,
+        loginStreak: 1,
+        lastLoginDate: expect.any(Date),
       });
       expect(result).toEqual({ user: newUser, token: 'test-jwt-token' });
     });
@@ -250,7 +266,6 @@ describe('AuthService', () => {
         avatar: 'https://example.com/avatar.jpg',
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
       const newUser = {
         ...mockUser,
         appleId: appleDto.providerId,
@@ -258,7 +273,12 @@ describe('AuthService', () => {
         username: appleDto.username,
         avatar: appleDto.avatar,
         isVerified: true,
-      } as User;
+      } as unknown as User;
+      // findOne: 1st call (apple lookup) -> null, 2nd call (email lookup) -> null, 3rd call (reload) -> newUser
+      mockRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(newUser);
       mockRepository.create.mockReturnValue(newUser);
       mockRepository.save.mockResolvedValue(newUser);
       mockJwtService.sign.mockReturnValue('test-jwt-token');
@@ -291,7 +311,8 @@ describe('AuthService', () => {
         googleId: oauthDto.providerId,
         email: oauthDto.email,
         avatar: undefined,
-      } as User;
+      } as unknown as User;
+      // findOne: 1st (google lookup) -> existing user, 2nd (reload) -> existing user
       mockRepository.findOne.mockResolvedValue(existingOauthUser);
       mockJwtService.sign.mockReturnValue('test-jwt-token');
 
@@ -305,14 +326,16 @@ describe('AuthService', () => {
     });
 
     it('should find existing user by email if no OAuth ID match', async () => {
+      // findOne: 1st (google lookup) -> null, 2nd (email lookup) -> mockUser, 3rd (reload) -> mockUser
       mockRepository.findOne
         .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(mockUser);
       mockJwtService.sign.mockReturnValue('test-jwt-token');
 
       const result = await authService.oauthLogin(oauthDto);
 
-      expect(userRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(userRepository.findOne).toHaveBeenCalledTimes(3);
       expect(result).toEqual({ user: mockUser, token: 'test-jwt-token' });
     });
 
@@ -321,15 +344,17 @@ describe('AuthService', () => {
         ...mockUser,
         googleId: undefined,
         email: oauthDto.email,
-      } as User;
+      } as unknown as User;
       const updatedUser = {
         ...userWithoutOAuthId,
         googleId: oauthDto.providerId,
-      } as User;
+      } as unknown as User;
 
+      // findOne: 1st (google lookup) -> null, 2nd (email lookup) -> user, 3rd (reload) -> updatedUser
       mockRepository.findOne
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(userWithoutOAuthId);
+        .mockResolvedValueOnce(userWithoutOAuthId)
+        .mockResolvedValueOnce(updatedUser);
       mockRepository.save.mockResolvedValue(updatedUser);
       mockJwtService.sign.mockReturnValue('test-jwt-token');
 
@@ -348,8 +373,9 @@ describe('AuthService', () => {
         googleId: oauthDto.providerId,
         avatar: undefined,
         email: oauthDto.email,
-      } as User;
+      } as unknown as User;
 
+      // findOne: 1st (google lookup) -> user, 2nd (reload) -> user with avatar
       mockRepository.findOne.mockResolvedValue(userWithoutAvatar);
       mockJwtService.sign.mockReturnValue('test-jwt-token');
 
@@ -368,14 +394,17 @@ describe('AuthService', () => {
         providerId: 'google-123456',
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
       const newUser = {
         ...mockUser,
         googleId: oauthDtoNoEmail.providerId,
         email: `${oauthDtoNoEmail.providerId}@google.placeholder`,
         username: `google_${oauthDtoNoEmail.providerId.slice(0, 8)}`,
         isVerified: true,
-      } as User;
+      } as unknown as User;
+      // findOne: 1st (google lookup) -> null, no email so no email lookup, 2nd (reload) -> newUser
+      mockRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(newUser);
       mockRepository.create.mockReturnValue(newUser);
       mockRepository.save.mockResolvedValue(newUser);
       mockJwtService.sign.mockReturnValue('test-jwt-token');

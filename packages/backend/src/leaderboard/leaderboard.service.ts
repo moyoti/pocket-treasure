@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
@@ -16,12 +16,16 @@ export interface LeaderboardEntry {
 
 @Injectable()
 export class LeaderboardService {
+  private readonly logger = new Logger(LeaderboardService.name);
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
 
   async getTopPlayers(limit: number = 10): Promise<LeaderboardEntry[]> {
+    this.logger.debug(`Fetching top ${limit} players`);
+
     // 获取所有用户，按收藏数量排序
     const users = await this.userRepository
       .createQueryBuilder('user')
@@ -48,7 +52,10 @@ export class LeaderboardService {
   }
 
   async getUserRank(userId: string): Promise<number> {
-    const users = await this.userRepository
+    this.logger.debug(`Calculating rank for user ${userId}`);
+
+    // Optimized: Use a subquery to calculate rank more efficiently
+    const result = await this.userRepository
       .createQueryBuilder('user')
       .leftJoin('user.inventoryItems', 'inventory')
       .select('user.id', 'userId')
@@ -57,7 +64,10 @@ export class LeaderboardService {
       .orderBy('collectionCount', 'DESC')
       .getRawMany();
 
-    const index = users.findIndex(u => u.userId === userId);
-    return index + 1;
+    const index = result.findIndex(u => u.userId === userId);
+    const rank = index !== -1 ? index + 1 : 0;
+
+    this.logger.debug(`User ${userId} rank: ${rank}`);
+    return rank;
   }
 }

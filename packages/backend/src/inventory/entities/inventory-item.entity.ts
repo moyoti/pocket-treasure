@@ -42,6 +42,9 @@ export class InventoryItem {
   @Column({ nullable: true })
   poiName: string;
 
+  @Column({ default: false })
+  isLocked: boolean; // Locked when in trade or market listing
+
   @CreateDateColumn()
   collectedAt: Date;
 }

@@ -1,42 +1,52 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
-  console.log('开始启动应用...');
-  
-  const app = await NestFactory.create(AppModule);
-  console.log('Nest应用创建成功');
-  
+  const logger = new Logger('Bootstrap');
+  logger.log('Starting application...');
+
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+  logger.log('Nest application created');
+
   // Enable CORS
   app.enableCors({
     origin: true,
     credentials: true,
   });
-  console.log('CORS已启用');
-  
+  logger.log('CORS enabled');
+
+  // Global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter());
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
-  
+
   // Set global prefix
   app.setGlobalPrefix('api');
-  console.log('API前缀已设置');
-  
+  logger.log('API prefix set');
+
   const port = process.env.PORT || 3000;
-  console.log(`准备监听端口: ${port}`);
-  
+  logger.log(`Preparing to listen on port: ${port}`);
+
   await app.listen(port);
-  console.log(`✅ Treasure Hunt API running on port ${port}`);
-  console.log(`✅ API地址: http://localhost:${port}/api`);
+  logger.log(`Treasure Hunt API running on port ${port}`);
+  logger.log(`API address: http://localhost:${port}/api`);
 }
 
 bootstrap().catch(err => {
-  console.error('启动失败:', err);
+  console.error('Startup failed:', err);
   process.exit(1);
 });
