@@ -16,10 +16,10 @@ interface IAppOption {
 
 // 环境配置
 const CLOUD_ENV_ID = 'prod-2ghrq2ok704c1590'
-// @ts-ignore __wxConfig is a WeChat DevTools global
-const isDev = typeof __wxConfig !== 'undefined' && __wxConfig.envVersion === 'develop'
-// 开发环境用公网 URL（wx.request），真机用 callContainer（自动注入 openid）
-const useCloud = !isDev
+// 判断是否在开发者工具中运行（只有 DevTools 才用公网 URL，真机和体验版都用云托管）
+const isDevTools = wx.getSystemInfoSync().platform === 'devtools'
+// 开发者工具用公网 URL（wx.request），真机/体验版用 callContainer（自动注入 openid）
+const useCloud = !isDevTools
 const DEV_API_URL = 'https://treasure-backend-234536-7-1411994450.sh.run.tcloudbase.com/api'
 const PROD_API_URL = '' // 生产环境使用云托管，无需配置域名
 

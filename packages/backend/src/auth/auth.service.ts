@@ -213,6 +213,9 @@ export class AuthService {
 
   async wechatLogin(wechatLoginDto: WechatLoginDto): Promise<{ user: User; token: string }> {
     const { code } = wechatLoginDto;
+    if (!code) {
+      throw new UnauthorizedException('WeChat login failed: no code provided');
+    }
     this.logger.debug(`WeChat login attempt with code: ${code.slice(0, 6)}...`);
 
     const appId = this.configService.get<string>('wechat.appId');

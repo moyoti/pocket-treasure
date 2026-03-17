@@ -47,24 +47,32 @@ async function cloudRequest<T = any>(options: RequestOptions): Promise<T> {
   return new Promise((resolve, reject) => {
     wx.cloud.callContainer({
       config: { env: cloudEnv },
+      service: 'treasure-backend',
       path: `/api${url}`,
       method: method as any,
       header,
       data,
       success: (res: any) => {
+        console.log(`[Cloud API] ${method} ${url} => ${res.statusCode}`, JSON.stringify(res.data).slice(0, 200))
         if (res.statusCode === 200 || res.statusCode === 201) {
           resolve(res.data as T)
         } else if (res.statusCode === 401) {
-          wx.removeStorageSync('token')
-          wx.removeStorageSync('userInfo')
-          wx.reLaunch({ url: '/pages/index/index' })
-          reject(new Error('登录已过期，请重新登录'))
+          const errorData = res.data as any
+          const errMsg = errorData?.message || '登录已过期'
+          console.error('[API 401]', url, errMsg, JSON.stringify(res.data))
+          if (needAuth) {
+            wx.removeStorageSync('token')
+            wx.removeStorageSync('userInfo')
+          }
+          reject(new Error(errMsg))
         } else {
           const errorData = res.data as any
+          console.error(`[API ${res.statusCode}]`, url, JSON.stringify(res.data))
           reject(new Error(errorData?.message || '请求失败'))
         }
       },
       fail: (err: any) => {
+        console.error('[Cloud API fail]', url, err)
         reject(new Error(err.errMsg || '网络错误'))
       },
     })
@@ -374,4 +382,15 @@ export async function createMarketListing(inventoryItemId: string, quantity: num
     method: 'POST',
     data: { inventoryItemId, quantity, price }
   })
+}
+
+export async function cancelMarketListing(listingId: string) {
+  return request<any>({
+    url: `/market/cancel/${listingId}`,
+    method: 'POST'
+  })
+}
+
+export async function getMyListings() {
+  return request<any[]>({ url: '/market/my-listings' })
 }
