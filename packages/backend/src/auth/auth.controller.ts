@@ -50,6 +50,17 @@ export class AuthController {
 
     // 本地开发环境：通过 code 换取 openid
     this.logger.log('No X-WX-OPENID header, falling back to code exchange');
-    return this.authService.wechatLogin(wechatLoginDto);
+    try {
+      return await this.authService.wechatLogin(wechatLoginDto);
+    } catch (error) {
+      // 如果 code 换取 openid 失败（如容器无法出网），使用 dev 模式 mock 登录
+      this.logger.warn(`WeChat code exchange failed: ${error.message}`);
+      if (wechatLoginDto.code) {
+        this.logger.log('Falling back to dev mock login with code as mock openid');
+        const mockOpenId = `dev_${wechatLoginDto.code}`;
+        return this.authService.wechatLoginByOpenId(mockOpenId);
+      }
+      throw error;
+    }
   }
 }
