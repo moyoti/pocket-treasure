@@ -14,7 +14,7 @@ import { CoinService, CoinTransactionSource, CoinTransactionType } from './servi
 import { SellItemDto } from './dto/sell-item.dto';
 import { ItemRarity } from '../item/entities/item.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InventoryItem } from '../inventory/entities/inventory-item.entity';
 import { User } from '../user/entities/user.entity';
 import { CoinTransaction } from './entities/coin-transaction.entity';
@@ -34,7 +34,6 @@ export class EconomyController {
     private readonly coinService: CoinService,
     @InjectRepository(InventoryItem)
     private inventoryRepository: Repository<InventoryItem>,
-    private dataSource: DataSource,
   ) {}
 
   @Get('balance')
@@ -93,21 +92,17 @@ export class EconomyController {
     const totalPrice = unitPrice * quantity;
 
     // Use transaction to ensure atomicity
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    return await this.inventoryRepository.manager.transaction(async (manager) => {
       // Remove or reduce item from inventory
       if (inventoryItem.quantity === quantity) {
-        await queryRunner.manager.remove(inventoryItem);
+        await manager.remove(inventoryItem);
       } else {
         inventoryItem.quantity -= quantity;
-        await queryRunner.manager.save(inventoryItem);
+        await manager.save(inventoryItem);
       }
 
       // Get user and update coins
-      const user = await queryRunner.manager.findOne(User, { where: { id: req.user.id } });
+      const user = await manager.findOne(User, { where: { id: req.user.id } });
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -117,7 +112,7 @@ export class EconomyController {
       user.totalCoinsEarned = (user.totalCoinsEarned || 0) + totalPrice;
 
       // Create transaction record
-      const transaction = queryRunner.manager.create(CoinTransaction, {
+      const transaction = manager.create(CoinTransaction, {
         userId: req.user.id,
         type: CoinTransactionType.EARN,
         source: CoinTransactionSource.ITEM_SALE,
@@ -127,9 +122,8 @@ export class EconomyController {
         metadata: { itemRarity: rarity, unitPrice, quantity },
       });
 
-      await queryRunner.manager.save(user);
-      await queryRunner.manager.save(transaction);
-      await queryRunner.commitTransaction();
+      await manager.save(user);
+      await manager.save(transaction);
 
       return {
         success: true,
@@ -140,11 +134,6 @@ export class EconomyController {
         previousBalance,
         newBalance: user.coins,
       };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 }
