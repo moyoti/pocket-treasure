@@ -15,10 +15,12 @@ interface IAppOption {
 }
 
 // 环境配置
+const CLOUD_ENV_ID = 'prod-2ghrq2ok704c1590'
 // @ts-ignore __wxConfig is a WeChat DevTools global
 const isDev = typeof __wxConfig !== 'undefined' && __wxConfig.envVersion === 'develop'
-const CLOUD_ENV_ID = 'cloud1-6g8ey9i1e4143051'
-const DEV_API_URL = 'http://localhost:3000/api'
+// 开发环境用公网 URL（wx.request），真机用 callContainer（自动注入 openid）
+const useCloud = !isDev
+const DEV_API_URL = 'https://treasure-backend-234536-7-1411994450.sh.run.tcloudbase.com/api'
 const PROD_API_URL = '' // 生产环境使用云托管，无需配置域名
 
 App<IAppOption>({
@@ -26,14 +28,14 @@ App<IAppOption>({
     userInfo: undefined,
     token: undefined,
     isLoggedIn: false,
-    apiBaseUrl: isDev ? DEV_API_URL : PROD_API_URL,
-    isCloud: !isDev,
+    apiBaseUrl: useCloud ? PROD_API_URL : DEV_API_URL,
+    isCloud: useCloud,
     cloudEnv: CLOUD_ENV_ID,
   },
 
   onLaunch() {
     // 初始化云开发
-    if (!isDev && wx.cloud) {
+    if (useCloud && wx.cloud) {
       wx.cloud.init({
         env: CLOUD_ENV_ID,
         traceUser: true,
