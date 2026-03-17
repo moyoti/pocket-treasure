@@ -228,8 +228,20 @@ export class AuthService {
 
     let openid: string;
     try {
-      const response = await fetch(url);
-      const data = await response.json();
+      // Use Node.js built-in https module for better compatibility in Docker containers
+      const https = await import('https');
+      const data: any = await new Promise((resolve, reject) => {
+        https.get(url, (res) => {
+          let body = '';
+          res.on('data', (chunk: string) => body += chunk);
+          res.on('end', () => {
+            try { resolve(JSON.parse(body)); }
+            catch (e) { reject(new Error(`Failed to parse response: ${body.slice(0, 200)}`)); }
+          });
+        }).on('error', (err: Error) => reject(err));
+      });
+
+      this.logger.debug(`WeChat API response: ${JSON.stringify(data)}`);
 
       if (data.errcode) {
         this.logger.warn(`WeChat API error: ${data.errcode} - ${data.errmsg}`);
@@ -243,7 +255,7 @@ export class AuthService {
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
       this.logger.error(`WeChat API request failed: ${error}`);
-      throw new UnauthorizedException('WeChat login failed: network error');
+      throw new UnauthorizedException(`WeChat login failed: ${error instanceof Error ? error.message : 'network error'}`);
     }
 
     // Find or create user by openid
@@ -269,6 +281,43 @@ export class AuthService {
       // Update login streak for existing user
       await this.updateLoginStreakAndLuckyPoints(user);
       this.logger.debug(`Existing user logged in via WeChat: ${user.username}`);
+    }
+
+    const token = this.generateToken(user);
+    const updatedUser = await this.userRepository.findOne({ where: { id: user.id } });
+    return { user: updatedUser!, token };
+  }
+
+  /**
+   * 云托管环境直接通过 openid 登录（X-WX-OPENID 由平台注入）
+   */
+  async wechatLoginByOpenId(openid: string): Promise<{ user: User; token: string }> {
+    this.logger.debug(`WeChat cloud login with openid: ${openid.slice(0, 6)}...`);
+
+    if (!openid) {
+      throw new UnauthorizedException('WeChat login failed: no openid');
+    }
+
+    let user = await this.userRepository.findOne({ where: { wechatOpenId: openid } });
+
+    if (!user) {
+      const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const username = `探险家${randomSuffix}`;
+
+      user = this.userRepository.create({
+        email: `wx_${openid.slice(0, 12)}@wechat.placeholder`,
+        username,
+        wechatOpenId: openid,
+        isVerified: true,
+        luckyPoints: 0,
+        loginStreak: 1,
+        lastLoginDate: new Date(),
+      });
+      await this.userRepository.save(user);
+      this.logger.log(`New user created via WeChat cloud: ${username}`);
+    } else {
+      await this.updateLoginStreakAndLuckyPoints(user);
+      this.logger.debug(`Existing user logged in via WeChat cloud: ${user.username}`);
     }
 
     const token = this.generateToken(user);

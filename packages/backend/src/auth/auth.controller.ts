@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus, Req, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RegisterDto } from './dto/register.dto';
@@ -7,6 +7,7 @@ import { WechatLoginDto } from './dto/wechat-login.dto';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
@@ -29,7 +30,26 @@ export class AuthController {
 
   @Post('wechat-login')
   @HttpCode(HttpStatus.OK)
-  async wechatLogin(@Body() wechatLoginDto: WechatLoginDto) {
+  async wechatLogin(
+    @Body() wechatLoginDto: WechatLoginDto,
+    @Req() req: any,
+  ) {
+    // 打印所有 x-wx 相关请求头用于调试
+    const wxHeaders = Object.entries(req.headers)
+      .filter(([k]) => k.startsWith('x-wx'))
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+    this.logger.log(`WeChat login headers: ${JSON.stringify(wxHeaders)}`);
+
+    const cloudOpenId = req.headers['x-wx-openid'];
+
+    // 云托管环境：wx.cloud.callContainer 自动注入 X-WX-OPENID
+    if (cloudOpenId) {
+      this.logger.log(`Using cloud openid: ${cloudOpenId.slice(0, 6)}...`);
+      return this.authService.wechatLoginByOpenId(cloudOpenId);
+    }
+
+    // 本地开发环境：通过 code 换取 openid
+    this.logger.log('No X-WX-OPENID header, falling back to code exchange');
     return this.authService.wechatLogin(wechatLoginDto);
   }
 }

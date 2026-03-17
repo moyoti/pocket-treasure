@@ -24,6 +24,7 @@ RUN yarn build
 
 # Production stage
 FROM node:20-alpine
+RUN apk add --no-cache ca-certificates && update-ca-certificates
 
 WORKDIR /app
 
