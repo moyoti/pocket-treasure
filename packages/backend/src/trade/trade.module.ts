@@ -9,7 +9,6 @@ import { InventoryItem } from '../inventory/entities/inventory-item.entity';
 
 @Module({
   imports: [
-    TypeOrmModule,
     TypeOrmModule.forFeature([Trade, TradeItem, Friendship, InventoryItem]),
   ],
   controllers: [TradeController],

@@ -7,7 +7,6 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { ChatService } from './chat.service';
 import { Message } from './entities/message.entity';
 import { Conversation } from './entities/conversation.entity';
@@ -67,6 +66,9 @@ describe('ChatService', () => {
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
+    manager: {
+      transaction: jest.fn().mockImplementation((cb) => cb({ findOne: jest.fn(), save: jest.fn(), create: jest.fn(), remove: jest.fn() })),
+    },
   };
 
   const mockConversationRepo = {
@@ -104,10 +106,6 @@ describe('ChatService', () => {
         {
           provide: getRepositoryToken(Friendship),
           useValue: mockFriendshipRepo,
-        },
-        {
-          provide: DataSource,
-          useValue: {},
         },
       ],
     }).compile();

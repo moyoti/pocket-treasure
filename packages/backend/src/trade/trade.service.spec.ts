@@ -7,7 +7,6 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { TradeService } from './trade.service';
 import { Trade, TradeStatus } from './entities/trade.entity';
 import { TradeItem, TradeItemOwner } from './entities/trade-item.entity';
@@ -44,12 +43,22 @@ describe('TradeService', () => {
     quantity: 5,
   } as InventoryItem;
 
+  const mockTransactionManager = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+  };
+
   const mockTradeRepo = {
     find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     createQueryBuilder: jest.fn(),
+    manager: {
+      transaction: jest.fn().mockImplementation((cb) => cb(mockTransactionManager)),
+    },
   };
 
   const mockTradeItemRepo = {
@@ -64,24 +73,6 @@ describe('TradeService', () => {
 
   const mockInventoryRepo = {
     findOne: jest.fn(),
-  };
-
-  const mockQueryRunner = {
-    connect: jest.fn(),
-    startTransaction: jest.fn(),
-    commitTransaction: jest.fn(),
-    rollbackTransaction: jest.fn(),
-    release: jest.fn(),
-    manager: {
-      create: jest.fn(),
-      save: jest.fn(),
-      findOne: jest.fn(),
-      remove: jest.fn(),
-    },
-  };
-
-  const mockDataSource = {
-    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
   };
 
   beforeEach(async () => {
@@ -104,17 +95,13 @@ describe('TradeService', () => {
           provide: getRepositoryToken(InventoryItem),
           useValue: mockInventoryRepo,
         },
-        {
-          provide: DataSource,
-          useValue: mockDataSource,
-        },
       ],
     }).compile();
 
     service = module.get<TradeService>(TradeService);
 
     jest.clearAllMocks();
-    mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    mockTradeRepo.manager.transaction.mockImplementation((cb) => cb(mockTransactionManager));
   });
 
   describe('createTrade', () => {

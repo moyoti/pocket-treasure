@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In, Between, LessThan } from 'typeorm';
+import { Repository, In, Between, LessThan } from 'typeorm';
 import { MarketListing, ListingStatus } from '../entities/market-listing.entity';
 import { CreateListingDto, MarketQueryDto, BuyListingDto } from '../dto/market-list.dto';
 import { InventoryItem } from '../../inventory/entities/inventory-item.entity';
@@ -37,7 +37,6 @@ export class MarketService {
     private itemRepository: Repository<Item>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private dataSource: DataSource,
   ) {}
 
   async getListings(query: MarketQueryDto): Promise<{ listings: MarketListing[]; total: number }> {
@@ -154,23 +153,19 @@ export class MarketService {
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_EXPIRATION_DAYS);
 
     // Use transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    const savedListingId = await this.listingRepository.manager.transaction(async (manager) => {
       // Lock or remove from inventory
       if (inventoryItem.quantity === quantity) {
         // Remove entire item from inventory
-        await queryRunner.manager.remove(inventoryItem);
+        await manager.remove(inventoryItem);
       } else {
         // Reduce quantity
         inventoryItem.quantity -= quantity;
-        await queryRunner.manager.save(inventoryItem);
+        await manager.save(inventoryItem);
       }
 
       // Create listing
-      const listing = queryRunner.manager.create(MarketListing, {
+      const listing = manager.create(MarketListing, {
         sellerId: userId,
         inventoryItemId,
         itemId,
@@ -186,22 +181,17 @@ export class MarketService {
         expiresAt,
       });
 
-      const savedListing = await queryRunner.manager.save(listing);
-
-      await queryRunner.commitTransaction();
+      const savedListing = await manager.save(listing);
 
       this.logger.log(`Market listing ${savedListing.id} created by user ${userId} for ${quantity}x ${item.name} at ${price} coins each`);
 
-      return this.listingRepository.findOne({
-        where: { id: savedListing.id },
-        relations: ['item', 'seller'],
-      });
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+      return savedListing.id;
+    });
+
+    return this.listingRepository.findOne({
+      where: { id: savedListingId },
+      relations: ['item', 'seller'],
+    });
   }
 
   async buyListing(userId: string, listingId: string, dto: BuyListingDto): Promise<MarketListing | null> {
@@ -263,36 +253,32 @@ export class MarketService {
     const sellerReceivesForPurchase = totalCost - feeForPurchase;
 
     // Use transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    await this.listingRepository.manager.transaction(async (manager) => {
       // Deduct coins from buyer
       buyer.coins -= totalCost;
-      await queryRunner.manager.save(buyer);
+      await manager.save(buyer);
 
       // Add coins to seller (minus fee)
       seller.coins += sellerReceivesForPurchase;
-      await queryRunner.manager.save(seller);
+      await manager.save(seller);
 
       // Add item to buyer's inventory
-      let buyerInventoryItem = await queryRunner.manager.findOne(InventoryItem, {
+      let buyerInventoryItem = await manager.findOne(InventoryItem, {
         where: { userId, itemId: listing.itemId },
       });
 
       if (buyerInventoryItem) {
         buyerInventoryItem.quantity += quantityToBuy;
-        await queryRunner.manager.save(buyerInventoryItem);
+        await manager.save(buyerInventoryItem);
       } else {
-        buyerInventoryItem = queryRunner.manager.create(InventoryItem, {
+        buyerInventoryItem = manager.create(InventoryItem, {
           userId,
           itemId: listing.itemId,
           quantity: quantityToBuy,
           collectedLatitude: 0,
           collectedLongitude: 0,
         });
-        await queryRunner.manager.save(buyerInventoryItem);
+        await manager.save(buyerInventoryItem);
       }
 
       // Update or complete listing
@@ -309,24 +295,17 @@ export class MarketService {
         listing.sellerReceives = listing.totalPrice - listing.fee;
       }
 
-      await queryRunner.manager.save(listing);
-
-      await queryRunner.commitTransaction();
+      await manager.save(listing);
 
       this.logger.log(
         `User ${userId} bought ${quantityToBuy}x ${listing.itemName} from user ${listing.sellerId} for ${totalCost} coins`,
       );
+    });
 
-      return this.listingRepository.findOne({
-        where: { id: listingId },
-        relations: ['item', 'seller', 'buyer'],
-      });
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    return this.listingRepository.findOne({
+      where: { id: listingId },
+      relations: ['item', 'seller', 'buyer'],
+    });
   }
 
   async cancelListing(userId: string, listingId: string): Promise<MarketListing | null> {
@@ -350,48 +329,37 @@ export class MarketService {
     }
 
     // Use transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    await this.listingRepository.manager.transaction(async (manager) => {
       // Return items to seller's inventory
-      let sellerInventoryItem = await queryRunner.manager.findOne(InventoryItem, {
+      let sellerInventoryItem = await manager.findOne(InventoryItem, {
         where: { userId, itemId: listing.itemId },
       });
 
       if (sellerInventoryItem) {
         sellerInventoryItem.quantity += listing.quantity;
-        await queryRunner.manager.save(sellerInventoryItem);
+        await manager.save(sellerInventoryItem);
       } else {
-        sellerInventoryItem = queryRunner.manager.create(InventoryItem, {
+        sellerInventoryItem = manager.create(InventoryItem, {
           userId,
           itemId: listing.itemId,
           quantity: listing.quantity,
           collectedLatitude: 0,
           collectedLongitude: 0,
         });
-        await queryRunner.manager.save(sellerInventoryItem);
+        await manager.save(sellerInventoryItem);
       }
 
       // Update listing status
       listing.status = ListingStatus.CANCELLED;
-      await queryRunner.manager.save(listing);
-
-      await queryRunner.commitTransaction();
+      await manager.save(listing);
 
       this.logger.log(`Listing ${listingId} cancelled by user ${userId}`);
+    });
 
-      return this.listingRepository.findOne({
-        where: { id: listingId },
-        relations: ['item'],
-      });
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    return this.listingRepository.findOne({
+      where: { id: listingId },
+      relations: ['item'],
+    });
   }
 
   // Get price range for an item rarity

@@ -3,7 +3,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { CoinService, CoinTransactionSource, CoinTransactionType } from './coin.service';
 import { User } from '../../user/entities/user.entity';
 import { CoinTransaction } from '../entities/coin-transaction.entity';
@@ -18,29 +17,22 @@ describe('CoinService', () => {
     totalCoinsSpent: 500,
   };
 
+  const mockTransactionManager = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+  };
+
   const mockUserRepo = {
     findOne: jest.fn(),
+    manager: {
+      transaction: jest.fn().mockImplementation((cb) => cb(mockTransactionManager)),
+    },
   };
 
   const mockTransactionRepo = {
     createQueryBuilder: jest.fn(),
-  };
-
-  const mockQueryRunner = {
-    connect: jest.fn(),
-    startTransaction: jest.fn(),
-    commitTransaction: jest.fn(),
-    rollbackTransaction: jest.fn(),
-    release: jest.fn(),
-    manager: {
-      findOne: jest.fn(),
-      create: jest.fn(),
-      save: jest.fn(),
-    },
-  };
-
-  const mockDataSource = {
-    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
   };
 
   beforeEach(async () => {
@@ -55,17 +47,13 @@ describe('CoinService', () => {
           provide: getRepositoryToken(CoinTransaction),
           useValue: mockTransactionRepo,
         },
-        {
-          provide: DataSource,
-          useValue: mockDataSource,
-        },
       ],
     }).compile();
 
     service = module.get<CoinService>(CoinService);
 
     jest.clearAllMocks();
-    mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    mockUserRepo.manager.transaction.mockImplementation((cb) => cb(mockTransactionManager));
   });
 
   describe('getBalance', () => {
@@ -86,9 +74,9 @@ describe('CoinService', () => {
 
   describe('addCoins', () => {
     it('should add coins to user balance', async () => {
-      mockQueryRunner.manager.findOne.mockResolvedValue({ ...mockUser });
-      mockQueryRunner.manager.create.mockReturnValue({});
-      mockQueryRunner.manager.save.mockResolvedValue({});
+      mockTransactionManager.findOne.mockResolvedValue({ ...mockUser });
+      mockTransactionManager.create.mockReturnValue({});
+      mockTransactionManager.save.mockResolvedValue({});
 
       const result = await service.addCoins('user-1', 100, CoinTransactionSource.DAILY_TASK);
 
@@ -109,31 +97,28 @@ describe('CoinService', () => {
     });
 
     it('should throw BadRequestException when user not found', async () => {
-      mockQueryRunner.manager.findOne.mockResolvedValue(null);
+      mockTransactionManager.findOne.mockResolvedValue(null);
 
       await expect(
         service.addCoins('non-existent', 100, CoinTransactionSource.DAILY_TASK),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should rollback transaction on error', async () => {
-      mockQueryRunner.manager.findOne.mockResolvedValue({ ...mockUser });
-      mockQueryRunner.manager.save.mockRejectedValue(new Error('DB error'));
+    it('should propagate transaction error', async () => {
+      mockTransactionManager.findOne.mockResolvedValue({ ...mockUser });
+      mockTransactionManager.save.mockRejectedValue(new Error('DB error'));
 
       await expect(
         service.addCoins('user-1', 100, CoinTransactionSource.DAILY_TASK),
       ).rejects.toThrow('DB error');
-
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
     });
   });
 
   describe('deductCoins', () => {
     it('should deduct coins from user balance', async () => {
-      mockQueryRunner.manager.findOne.mockResolvedValue({ ...mockUser });
-      mockQueryRunner.manager.create.mockReturnValue({});
-      mockQueryRunner.manager.save.mockResolvedValue({});
+      mockTransactionManager.findOne.mockResolvedValue({ ...mockUser });
+      mockTransactionManager.create.mockReturnValue({});
+      mockTransactionManager.save.mockResolvedValue({});
 
       const result = await service.deductCoins('user-1', 100, CoinTransactionSource.SHOP_PURCHASE);
 
@@ -143,7 +128,7 @@ describe('CoinService', () => {
     });
 
     it('should throw BadRequestException when insufficient coins', async () => {
-      mockQueryRunner.manager.findOne.mockResolvedValue({ ...mockUser, coins: 50 });
+      mockTransactionManager.findOne.mockResolvedValue({ ...mockUser, coins: 50 });
 
       await expect(
         service.deductCoins('user-1', 100, CoinTransactionSource.SHOP_PURCHASE),
@@ -159,9 +144,9 @@ describe('CoinService', () => {
 
   describe('spendCoins', () => {
     it('should be an alias for deductCoins', async () => {
-      mockQueryRunner.manager.findOne.mockResolvedValue({ ...mockUser });
-      mockQueryRunner.manager.create.mockReturnValue({});
-      mockQueryRunner.manager.save.mockResolvedValue({});
+      mockTransactionManager.findOne.mockResolvedValue({ ...mockUser });
+      mockTransactionManager.create.mockReturnValue({});
+      mockTransactionManager.save.mockResolvedValue({});
 
       const result = await service.spendCoins('user-1', 50, CoinTransactionSource.GACHA);
 

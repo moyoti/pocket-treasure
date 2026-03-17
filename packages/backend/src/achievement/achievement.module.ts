@@ -9,7 +9,6 @@ import { UserAchievement } from './entities/user-achievement.entity';
 
 @Module({
   imports: [
-    TypeOrmModule,
     TypeOrmModule.forFeature([
       User,
       InventoryItem,

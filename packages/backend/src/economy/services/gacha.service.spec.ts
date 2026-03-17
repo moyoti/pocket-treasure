@@ -3,7 +3,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { GachaService } from './gacha.service';
 import { GachaPool } from '../entities/gacha-pool.entity';
 import { GachaRecord } from '../entities/gacha-record.entity';
@@ -40,17 +39,30 @@ describe('GachaService', () => {
     maxStack: 99,
   } as Item;
 
+  const mockTransactionManager = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+  };
+
   const mockGachaPoolRepo = {
     find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     count: jest.fn(),
+    manager: {
+      transaction: jest.fn().mockImplementation((cb) => cb(mockTransactionManager)),
+    },
   };
 
   const mockGachaRecordRepo = {
     findOne: jest.fn(),
     createQueryBuilder: jest.fn(),
+    manager: {
+      transaction: jest.fn().mockImplementation((cb) => cb(mockTransactionManager)),
+    },
   };
 
   const mockUserRepo = {
@@ -68,23 +80,6 @@ describe('GachaService', () => {
   const mockCoinService = {
     hasEnoughCoins: jest.fn(),
     spendCoins: jest.fn(),
-  };
-
-  const mockQueryRunner = {
-    connect: jest.fn(),
-    startTransaction: jest.fn(),
-    commitTransaction: jest.fn(),
-    rollbackTransaction: jest.fn(),
-    release: jest.fn(),
-    manager: {
-      create: jest.fn(),
-      save: jest.fn(),
-      findOne: jest.fn(),
-    },
-  };
-
-  const mockDataSource = {
-    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
   };
 
   beforeEach(async () => {
@@ -115,17 +110,14 @@ describe('GachaService', () => {
           provide: CoinService,
           useValue: mockCoinService,
         },
-        {
-          provide: DataSource,
-          useValue: mockDataSource,
-        },
       ],
     }).compile();
 
     service = module.get<GachaService>(GachaService);
 
     jest.clearAllMocks();
-    mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    mockGachaPoolRepo.manager.transaction.mockImplementation((cb) => cb(mockTransactionManager));
+    mockGachaRecordRepo.manager.transaction.mockImplementation((cb) => cb(mockTransactionManager));
   });
 
   describe('getPools', () => {
@@ -224,9 +216,9 @@ describe('GachaService', () => {
       mockCoinService.spendCoins.mockResolvedValue({ newBalance: 400 });
       mockGachaRecordRepo.findOne.mockResolvedValue(null); // no pity
       mockItemRepo.find.mockResolvedValue([mockItem]);
-      mockQueryRunner.manager.findOne.mockResolvedValue(null); // no existing inventory
-      mockQueryRunner.manager.create.mockImplementation((_, data) => data);
-      mockQueryRunner.manager.save.mockImplementation((data) => Promise.resolve(data));
+      mockTransactionManager.findOne.mockResolvedValue(null); // no existing inventory
+      mockTransactionManager.create.mockImplementation((_, data) => data);
+      mockTransactionManager.save.mockImplementation((data) => Promise.resolve(data));
 
       const result = await service.pull('user-1', { poolId: 'pool-1', pullType: PullType.SINGLE });
 
@@ -242,9 +234,9 @@ describe('GachaService', () => {
       mockCoinService.spendCoins.mockResolvedValue({ newBalance: 100 });
       mockGachaRecordRepo.findOne.mockResolvedValue(null);
       mockItemRepo.find.mockResolvedValue([mockItem]);
-      mockQueryRunner.manager.findOne.mockResolvedValue(null);
-      mockQueryRunner.manager.create.mockImplementation((_, data) => data);
-      mockQueryRunner.manager.save.mockImplementation((data) => Promise.resolve(data));
+      mockTransactionManager.findOne.mockResolvedValue(null);
+      mockTransactionManager.create.mockImplementation((_, data) => data);
+      mockTransactionManager.save.mockImplementation((data) => Promise.resolve(data));
 
       const result = await service.pull('user-1', { poolId: 'pool-1', pullType: PullType.TEN });
 

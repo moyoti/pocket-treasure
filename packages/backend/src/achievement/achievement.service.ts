@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import {
   AchievementDefinition,
@@ -134,7 +134,6 @@ export class AchievementService {
     private userAchievementRepository: Repository<UserAchievement>,
     @InjectRepository(InventoryItem)
     private inventoryItemRepository: Repository<InventoryItem>,
-    private dataSource: DataSource,
   ) {}
 
   /**
@@ -272,11 +271,7 @@ export class AchievementService {
     }
 
     // 使用事务更新用户数据和成就状态
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    return await this.userRepository.manager.transaction(async (manager) => {
       // 创建或更新用户成就记录
       if (!userAchievement) {
         userAchievement = this.userAchievementRepository.create({
@@ -293,10 +288,10 @@ export class AchievementService {
         userAchievement.progress = progressData.progress;
       }
 
-      await queryRunner.manager.save(userAchievement);
+      await manager.save(userAchievement);
 
       // 更新用户金币和经验
-      const user = await queryRunner.manager.findOne(User, { where: { id: userId } });
+      const user = await manager.findOne(User, { where: { id: userId } });
       if (!user) {
         throw new NotFoundException('用户不存在');
       }
@@ -313,10 +308,8 @@ export class AchievementService {
           user.level = newLevel;
         }
 
-        await queryRunner.manager.save(user);
+        await manager.save(user);
       }
-
-      await queryRunner.commitTransaction();
 
       return {
         success: true,
@@ -325,12 +318,7 @@ export class AchievementService {
         newExperience: user.experience,
         newLevel: user.level,
       };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 
   /**

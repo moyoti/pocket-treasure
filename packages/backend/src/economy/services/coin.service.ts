@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { CoinTransaction, CoinTransactionSource, CoinTransactionType } from '../entities/coin-transaction.entity';
 
@@ -23,7 +23,6 @@ export class CoinService {
     private userRepository: Repository<User>,
     @InjectRepository(CoinTransaction)
     private transactionRepository: Repository<CoinTransaction>,
-    private dataSource: DataSource,
   ) {}
 
   /**
@@ -52,12 +51,8 @@ export class CoinService {
       throw new BadRequestException('Amount must be positive');
     }
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const user = await queryRunner.manager.findOne(User, { where: { id: userId } });
+    return await this.userRepository.manager.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id: userId } });
       if (!user) {
         throw new BadRequestException('User not found');
       }
@@ -67,7 +62,7 @@ export class CoinService {
       user.totalCoinsEarned = (user.totalCoinsEarned || 0) + amount;
 
       // Create transaction record
-      const transaction = queryRunner.manager.create(CoinTransaction, {
+      const transaction = manager.create(CoinTransaction, {
         userId,
         type: CoinTransactionType.EARN,
         source,
@@ -77,9 +72,8 @@ export class CoinService {
         metadata,
       });
 
-      await queryRunner.manager.save(user);
-      await queryRunner.manager.save(transaction);
-      await queryRunner.commitTransaction();
+      await manager.save(user);
+      await manager.save(transaction);
 
       this.logger.log(`User ${userId} earned ${amount} coins (${source}). New balance: ${user.coins}`);
 
@@ -89,12 +83,7 @@ export class CoinService {
         newBalance: user.coins,
         amount,
       };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 
   /**
@@ -124,12 +113,8 @@ export class CoinService {
       throw new BadRequestException('Amount must be positive');
     }
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const user = await queryRunner.manager.findOne(User, { where: { id: userId } });
+    return await this.userRepository.manager.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id: userId } });
       if (!user) {
         throw new BadRequestException('User not found');
       }
@@ -143,7 +128,7 @@ export class CoinService {
       user.totalCoinsSpent = (user.totalCoinsSpent || 0) + amount;
 
       // Create transaction record
-      const transaction = queryRunner.manager.create(CoinTransaction, {
+      const transaction = manager.create(CoinTransaction, {
         userId,
         type: CoinTransactionType.SPEND,
         source,
@@ -153,9 +138,8 @@ export class CoinService {
         metadata,
       });
 
-      await queryRunner.manager.save(user);
-      await queryRunner.manager.save(transaction);
-      await queryRunner.commitTransaction();
+      await manager.save(user);
+      await manager.save(transaction);
 
       this.logger.log(`User ${userId} spent ${amount} coins (${source}). New balance: ${user.coins}`);
 
@@ -165,12 +149,7 @@ export class CoinService {
         newBalance: user.coins,
         amount,
       };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 
   /**

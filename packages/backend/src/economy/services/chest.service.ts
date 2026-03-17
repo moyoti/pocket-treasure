@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ChestDefinition, ChestType, ChestDrop } from '../entities/chest-definition.entity';
 import { UserChest } from '../entities/user-chest.entity';
 import { User } from '../../user/entities/user.entity';
@@ -87,7 +87,6 @@ export class ChestService {
     @InjectRepository(InventoryItem)
     private inventoryItemRepository: Repository<InventoryItem>,
     private coinService: CoinService,
-    private dataSource: DataSource,
   ) {}
 
   /**
@@ -160,11 +159,7 @@ export class ChestService {
     }
 
     // Use transaction to handle the whole operation
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    return await this.userChestRepository.manager.transaction(async (manager) => {
       // Deduct coins or use owned chest
       let newCoinBalance = await this.coinService.getBalance(userId);
 
@@ -172,9 +167,9 @@ export class ChestService {
         // Use owned chest
         userChest.quantity -= quantity;
         if (userChest.quantity <= 0) {
-          await queryRunner.manager.remove(userChest);
+          await manager.remove(userChest);
         } else {
-          await queryRunner.manager.save(userChest);
+          await manager.save(userChest);
         }
       } else if (coinsNeeded > 0) {
         // Spend coins
@@ -213,10 +208,8 @@ export class ChestService {
 
       // Add items to inventory
       for (const reward of rewards) {
-        await this.addItemToInventory(userId, reward.item, reward.quantity, queryRunner.manager);
+        await this.addItemToInventory(userId, reward.item, reward.quantity, manager);
       }
-
-      await queryRunner.commitTransaction();
 
       this.logger.log(`User ${userId} opened ${quantity} ${chest.name}(s). Rewards: ${rewards.map(r => `${r.item.name}x${r.quantity}`).join(', ')}`);
 
@@ -227,12 +220,7 @@ export class ChestService {
         coinsSpent: coinsNeeded,
         newCoinBalance,
       };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 
   /**

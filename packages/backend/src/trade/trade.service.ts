@@ -6,7 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Trade, TradeStatus } from './entities/trade.entity';
 import { TradeItem, TradeItemOwner } from './entities/trade-item.entity';
 import { CreateTradeDto, TradeQueryDto, TradeItemDto } from './dto/create-trade.dto';
@@ -27,7 +27,6 @@ export class TradeService {
     private friendshipRepository: Repository<Friendship>,
     @InjectRepository(InventoryItem)
     private inventoryRepository: Repository<InventoryItem>,
-    private dataSource: DataSource,
   ) {}
 
   async createTrade(initiatorId: string, dto: CreateTradeDto): Promise<Trade> {
@@ -69,17 +68,13 @@ export class TradeService {
     await this.verifyItemOwnership(receiverId, receiverItems, 'receiver');
 
     // Create trade with items in a transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    const savedTradeId = await this.tradeRepository.manager.transaction(async (manager) => {
       const expiresAt = new Date();
       expiresAt.setHours(
         expiresAt.getHours() + (expiresInHours || this.DEFAULT_EXPIRATION_HOURS),
       );
 
-      const trade = queryRunner.manager.create(Trade, {
+      const trade = manager.create(Trade, {
         initiatorId,
         receiverId,
         status: TradeStatus.PENDING,
@@ -87,13 +82,13 @@ export class TradeService {
         expiresAt,
       });
 
-      const savedTrade = await queryRunner.manager.save(trade);
+      const savedTrade = await manager.save(trade);
 
       // Create trade items
       const tradeItems: TradeItem[] = [];
 
       for (const item of initiatorItems) {
-        const tradeItem = queryRunner.manager.create(TradeItem, {
+        const tradeItem = manager.create(TradeItem, {
           tradeId: savedTrade.id,
           inventoryItemId: item.inventoryItemId,
           itemId: item.itemId,
@@ -105,7 +100,7 @@ export class TradeService {
       }
 
       for (const item of receiverItems) {
-        const tradeItem = queryRunner.manager.create(TradeItem, {
+        const tradeItem = manager.create(TradeItem, {
           tradeId: savedTrade.id,
           inventoryItemId: item.inventoryItemId,
           itemId: item.itemId,
@@ -116,20 +111,15 @@ export class TradeService {
         tradeItems.push(tradeItem);
       }
 
-      await queryRunner.manager.save(TradeItem, tradeItems);
-
-      await queryRunner.commitTransaction();
+      await manager.save(TradeItem, tradeItems);
 
       this.logger.log(`Trade ${savedTrade.id} created by user ${initiatorId}`);
 
-      // Return trade with items
-      return this.getTradeById(savedTrade.id, initiatorId);
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+      return savedTrade.id;
+    });
+
+    // Return trade with items
+    return this.getTradeById(savedTradeId, initiatorId);
   }
 
   private async verifyItemOwnership(
@@ -223,11 +213,7 @@ export class TradeService {
     }
 
     // Execute trade with transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
+    await this.tradeRepository.manager.transaction(async (manager) => {
       // Get all trade items
       const tradeItems = trade.items;
 
@@ -244,7 +230,7 @@ export class TradeService {
         trade.initiatorId,
         trade.receiverId,
         initiatorItems,
-        queryRunner.manager,
+        manager,
       );
 
       // Transfer items from receiver to initiator
@@ -252,26 +238,18 @@ export class TradeService {
         trade.receiverId,
         trade.initiatorId,
         receiverItems,
-        queryRunner.manager,
+        manager,
       );
 
       // Update trade status
       trade.status = TradeStatus.ACCEPTED;
       trade.completedAt = new Date();
-      await queryRunner.manager.save(trade);
-
-      await queryRunner.commitTransaction();
+      await manager.save(trade);
 
       this.logger.log(`Trade ${tradeId} accepted by user ${userId}`);
+    });
 
-      return this.getTradeById(tradeId, userId);
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      this.logger.error(`Failed to accept trade ${tradeId}: ${error.message}`);
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    return this.getTradeById(tradeId, userId);
   }
 
   private async transferItems(

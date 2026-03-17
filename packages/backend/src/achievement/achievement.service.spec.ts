@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AchievementService, AchievementProgress } from './achievement.service';
 import { User } from '../user/entities/user.entity';
 import {
@@ -20,7 +20,6 @@ describe('AchievementService', () => {
   let achievementDefinitionRepository: jest.Mocked<Repository<AchievementDefinition>>;
   let userAchievementRepository: jest.Mocked<Repository<UserAchievement>>;
   let inventoryItemRepository: jest.Mocked<Repository<InventoryItem>>;
-  let dataSource: jest.Mocked<DataSource>;
 
   const mockUserId = 'test-user-id';
   const mockAchievementId = 'test-achievement-id';
@@ -40,6 +39,14 @@ describe('AchievementService', () => {
 
   beforeEach(async () => {
     // Create separate mock objects for each repository
+    const mockManager = {
+      transaction: jest.fn().mockImplementation((cb: any) => cb(mockManager)),
+      findOne: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+      remove: jest.fn(),
+    };
+
     const userMockRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
@@ -47,6 +54,7 @@ describe('AchievementService', () => {
       save: jest.fn(),
       count: jest.fn(),
       createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder()),
+      manager: mockManager,
     };
 
     const achievementDefMockRepo = {
@@ -95,22 +103,6 @@ describe('AchievementService', () => {
           provide: getRepositoryToken(InventoryItem),
           useValue: inventoryMockRepo,
         },
-        {
-          provide: DataSource,
-          useValue: {
-            createQueryRunner: jest.fn().mockReturnValue({
-              connect: jest.fn(),
-              startTransaction: jest.fn(),
-              commitTransaction: jest.fn(),
-              rollbackTransaction: jest.fn(),
-              release: jest.fn(),
-              manager: {
-                findOne: jest.fn(),
-                save: jest.fn(),
-              },
-            }),
-          },
-        },
       ],
     }).compile();
 
@@ -119,7 +111,6 @@ describe('AchievementService', () => {
     achievementDefinitionRepository = module.get(getRepositoryToken(AchievementDefinition));
     userAchievementRepository = module.get(getRepositoryToken(UserAchievement));
     inventoryItemRepository = module.get(getRepositoryToken(InventoryItem));
-    dataSource = module.get(DataSource);
   });
 
   describe('getAllAchievements', () => {

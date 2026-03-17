@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DataSource } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Message } from './entities/message.entity';
 import { Conversation } from './entities/conversation.entity';
 import { User } from '../user/entities/user.entity';
@@ -45,7 +45,6 @@ export class ChatService {
     private userRepository: Repository<User>,
     @InjectRepository(Friendship)
     private friendshipRepository: Repository<Friendship>,
-    private dataSource: DataSource,
   ) {}
 
   private async getOrCreateConversation(

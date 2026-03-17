@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { GachaPool, GachaPoolItem } from '../entities/gacha-pool.entity';
 import { GachaRecord } from '../entities/gacha-record.entity';
 import { User } from '../../user/entities/user.entity';
@@ -75,7 +75,6 @@ export class GachaService {
     @InjectRepository(InventoryItem)
     private inventoryItemRepository: Repository<InventoryItem>,
     private coinService: CoinService,
-    private dataSource: DataSource,
   ) {}
 
   /**
@@ -151,20 +150,16 @@ export class GachaService {
       throw new BadRequestException(`Insufficient coins. Required: ${cost}`);
     }
 
-    // Use transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // Spend coins first (has its own transaction)
+    const coinResult = await this.coinService.spendCoins(
+      userId,
+      cost,
+      CoinTransactionSource.GACHA,
+      `Gacha pull: ${pullType} from ${pool.name}`,
+    );
 
-    try {
-      // Spend coins
-      const coinResult = await this.coinService.spendCoins(
-        userId,
-        cost,
-        CoinTransactionSource.GACHA,
-        `Gacha pull: ${pullType} from ${pool.name}`,
-      );
-
+    // Use transaction for gacha pulls
+    return await this.gachaRecordRepository.manager.transaction(async (manager) => {
       // Get current pity count
       let pityCount = await this.getPityCount(userId, poolId);
 
@@ -201,7 +196,7 @@ export class GachaService {
           });
 
           // Add to inventory
-          await this.addItemToInventory(userId, randomItem, 1, queryRunner.manager);
+          await this.addItemToInventory(userId, randomItem, 1, manager);
 
           // Reset pity if high rarity obtained
           if (this.isHighRarity(selectedRarity, pool.pityMinRarity) && !shouldPity) {
@@ -210,7 +205,7 @@ export class GachaService {
         }
 
         // Record gacha result
-        const record = queryRunner.manager.create(GachaRecord, {
+        const record = manager.create(GachaRecord, {
           userId,
           poolId,
           itemRarity: selectedRarity,
@@ -220,10 +215,8 @@ export class GachaService {
           pullType,
           cost: pullType === PullType.TEN ? pool.tenPrice / 10 : pool.singlePrice,
         });
-        await queryRunner.manager.save(record);
+        await manager.save(record);
       }
-
-      await queryRunner.commitTransaction();
 
       this.logger.log(`User ${userId} pulled ${pullType} from ${pool.name}. Results: ${results.map(r => r.item.name).join(', ')}`);
 
@@ -236,12 +229,7 @@ export class GachaService {
         newCoinBalance: coinResult.newBalance,
         newPityCount: pityCount,
       };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
 
   /**
