@@ -1,81 +1,203 @@
 <view class="container">
   <!-- 地图 -->
-  <map 
+  <map
     id="map"
     class="map"
     latitude="{{ latitude }}"
     longitude="{{ longitude }}"
     scale="{{ scale }}"
     markers="{{ markers }}"
+    circles="{{ circles }}"
     show-location="{{ hasLocation }}"
-    bindmarkertap="onMarkerTap"
     bindtap="onMapTap"
+    bindmarkertap="onMarkerTap"
   />
-  
-  <!-- 顶部信息栏 -->
-  <view class="top-bar">
-    <view class="balance-card" wx:if="{{ isLoggedIn }}">
-      <text class="balance-icon">💰</text>
+
+  <!-- 顶部悬浮UI层 -->
+  <view class="top-overlay">
+    <!-- 左上角：宝藏池按钮 -->
+    <view class="pool-btn" hover-class="pool-btn-hover" bindtap="toggleItemPool">
+      <image class="icon pool-icon" src="/images/icons/clipboard-list.svg" mode="aspectFit" />
+      <text class="pool-text">宝藏池</text>
+    </view>
+
+    <!-- 右上角：刷新按钮 -->
+    <view class="refresh-btn {{ refreshing ? 'refresh-spinning' : '' }}" hover-class="refresh-btn-hover" bindtap="onRefresh">
+      <image class="icon refresh-icon" src="/images/icons/refresh-cw.svg" mode="aspectFit" />
+    </view>
+  </view>
+
+  <!-- 信息栏 -->
+  <view class="info-bar">
+    <!-- 金币余额（登录时显示）-->
+    <view class="balance-pill" wx:if="{{ isLoggedIn }}">
+      <image class="icon-sm balance-icon" src="/images/icons/coins.svg" mode="aspectFit" />
       <text class="balance-value">{{ balance }}</text>
-      <text class="balance-unit">金币</text>
     </view>
-    <view class="login-hint" wx:else bindtap="goToLogin">
-      <text class="login-icon">🔐</text>
-      <text class="login-text">点击登录</text>
+    <!-- 未登录提示 -->
+    <view class="login-pill" wx:else bindtap="goToLogin">
+      <image class="icon login-pill-icon" src="/images/icons/lock.svg" mode="aspectFit" />
+      <text class="login-pill-text">点击登录</text>
     </view>
-    <view class="item-count">
+
+    <!-- 附近宝藏数量 -->
+    <view class="count-pill">
+      <image class="icon count-icon" src="/images/icons/gem.svg" mode="aspectFit" />
       <text class="count-value">{{ items.length }}</text>
       <text class="count-label">个宝藏</text>
     </view>
-    <view class="refresh-btn" bindtap="onRefresh">
-      <text class="refresh-icon">🔄</text>
+
+    <!-- 坐标 -->
+    <view class="coord-pill">
+      <image class="icon-sm coord-icon" src="/images/icons/map-pin.svg" mode="aspectFit" />
+      <text class="coord-text">{{ coordText }}</text>
     </view>
   </view>
-  
-  <!-- 未登录提示 -->
+
+  <!-- 左下角：稀有度图例 -->
+  <view class="rarity-legend">
+    <view class="legend-title">稀有度</view>
+    <view class="legend-items">
+      <view class="legend-item" wx:for="{{ rarityLegend }}" wx:key="name">
+        <view class="legend-dot" style="background-color: {{ item.color }}"></view>
+        <text class="legend-name">{{ item.name }}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 附近物品列表（展开） -->
+  <view class="item-pool-panel {{ showItemPool ? 'panel-visible' : '' }}">
+    <view class="panel-header">
+      <view class="panel-title"><image class="icon" src="/images/icons/clipboard-list.svg" mode="aspectFit" /> 附近宝藏列表</view>
+      <view class="panel-close" bindtap="toggleItemPool"><image class="icon-sm" src="/images/icons/x.svg" mode="aspectFit" /></view>
+    </view>
+    <scroll-view class="panel-scroll" scroll-y>
+      <view class="panel-empty" wx:if="{{ items.length === 0 }}">
+        <image class="icon-lg panel-empty-icon" src="/images/icons/search.svg" mode="aspectFit" />
+        <text class="panel-empty-text">附近暂无宝藏</text>
+      </view>
+      <view class="panel-item" wx:for="{{ items }}" wx:key="id">
+        <view class="panel-item-icon rarity-bg-{{ item.item.rarity || 'common' }}"><image class="icon" src="/images/icons/gem.svg" mode="aspectFit" /></view>
+        <view class="panel-item-info">
+          <text class="panel-item-name">{{ item.item.name || '宝藏' }}</text>
+          <text class="panel-item-rarity rarity-{{ item.item.rarity || 'common' }}">
+            {{ item.item.rarity === 'legendary' ? '传说' : item.item.rarity === 'epic' ? '史诗' : item.item.rarity === 'rare' ? '稀有' : '普通' }}
+          </text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 未登录底部提示 -->
   <view class="guest-hint" wx:if="{{ !isLoggedIn }}">
     <view class="hint-content">
-      <text class="hint-icon">💡</text>
+      <image class="icon-sm hint-icon" src="/images/icons/lightbulb.svg" mode="aspectFit" />
       <text class="hint-text">登录后可收集宝藏并保存进度</text>
-      <button class="hint-btn" bindtap="goToLogin">立即登录</button>
+      <button class="hint-btn" hover-class="hint-btn-hover" bindtap="goToLogin">立即登录</button>
     </view>
   </view>
-  
+
   <!-- 加载中 -->
   <view class="loading-overlay" wx:if="{{ loading }}">
     <view class="loading-spinner"></view>
     <text class="loading-text">正在寻找宝藏...</text>
   </view>
-  
-  <!-- 宝藏详情弹窗 -->
-  <view class="item-modal" wx:if="{{ showItemModal && selectedItem }}">
+
+  <!-- 宝藏详情弹窗（底部滑出） -->
+  <view class="item-modal {{ showItemModal && selectedItem ? 'modal-visible' : '' }}">
     <view class="modal-mask" bindtap="closeModal"></view>
-    <view class="modal-content">
-      <view class="modal-header">
-        <view class="item-icon {{ 'rarity-bg-' + (selectedItem.item.rarity || 'common') }}">
-          <text class="icon-emoji">💎</text>
+    <view class="modal-sheet">
+      <view class="sheet-handle"></view>
+
+      <view class="sheet-body" wx:if="{{ selectedItem }}">
+        <!-- 物品图标 -->
+        <view class="sheet-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }}">
+          <image class="icon-xl sheet-icon-emoji" src="/images/icons/gem.svg" mode="aspectFit" />
         </view>
-        <view class="item-info">
-          <view class="item-name">{{ selectedItem.item.name }}</view>
-          <view class="item-rarity {{ 'rarity-' + (selectedItem.item.rarity || 'common') }}">
-            {{ selectedItem.item.rarity === 'common' ? '普通' : selectedItem.item.rarity === 'rare' ? '稀有' : selectedItem.item.rarity === 'epic' ? '史诗' : '传说' }}
-          </view>
+
+        <!-- 物品信息 -->
+        <view class="sheet-name">{{ selectedItem.item.name || '宝藏' }}</view>
+        <view class="sheet-rarity-badge cartoon-badge cartoon-badge-{{ selectedItem.item.rarity || 'common' }}">
+          {{ selectedItem.item.rarity === 'legendary' ? '传说' : selectedItem.item.rarity === 'epic' ? '史诗' : selectedItem.item.rarity === 'rare' ? '稀有' : '普通' }}
         </view>
-        <view class="close-btn" bindtap="closeModal">✕</view>
-      </view>
-      
-      <view class="modal-body">
-        <view class="item-desc">{{ selectedItem.item.description }}</view>
-      </view>
-      
-      <view class="modal-footer">
-        <button 
-          class="cartoon-btn collect-btn" 
+        <view class="sheet-desc">{{ selectedItem.item.description || '一个神秘的宝藏' }}</view>
+
+        <!-- 距离 -->
+        <view class="sheet-distance">
+          <image class="icon-sm distance-icon" src="/images/icons/ruler.svg" mode="aspectFit" />
+          <text class="distance-text">距离你 {{ itemDistance }}</text>
+        </view>
+
+        <!-- 收集按钮 -->
+        <button
+          class="cartoon-btn collect-btn"
+          hover-class="cartoon-btn-hover"
           bindtap="handleCollect"
           disabled="{{ collectLoading }}"
         >
-          {{ collectLoading ? '收集中...' : '✨ 收集宝藏' }}
+          <image class="icon-sm" src="/images/icons/sparkles.svg" mode="aspectFit" wx:if="{{ !collectLoading }}" /> {{ collectLoading ? '收集中...' : '收集宝藏' }}
         </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 收集成功弹窗 -->
+  <view class="success-modal" wx:if="{{ showCollectSuccess }}">
+    <view class="success-mask" bindtap="closeSuccessModal"></view>
+    <view class="success-content animate-bounce-in">
+      <view class="success-celebration"><image class="icon-lg" src="/images/icons/party-popper.svg" mode="aspectFit" /></view>
+      <view class="success-title">恭喜获得！</view>
+      <view class="success-item-icon rarity-bg-{{ collectedItemRarity }}"><image class="icon-xl" src="/images/icons/gem.svg" mode="aspectFit" /></view>
+      <view class="success-item-name">{{ collectedItemName }}</view>
+      <view class="success-rarity rarity-{{ collectedItemRarity }}">
+        {{ collectedItemRarity === 'legendary' ? '传说' : collectedItemRarity === 'epic' ? '史诗' : collectedItemRarity === 'rare' ? '稀有' : '普通' }}
+      </view>
+      <view class="success-coins" wx:if="{{ collectedCoins > 0 }}">
+        <image class="icon-sm coins-icon" src="/images/icons/coins.svg" mode="aspectFit" />
+        <text class="coins-text">+{{ collectedCoins }} 金币</text>
+      </view>
+      <button class="cartoon-btn success-btn" hover-class="cartoon-btn-hover" bindtap="closeSuccessModal">
+        <image class="icon-sm" src="/images/icons/sparkles.svg" mode="aspectFit" /> 太棒了！
+      </button>
+    </view>
+  </view>
+
+  <!-- 疯狂点击收集弹窗 -->
+  <view class="collecting-modal" wx:if="{{ showCollecting }}">
+    <view class="collecting-backdrop"></view>
+    <view class="collecting-content">
+      <!-- 进度环容器 -->
+      <view class="progress-ring-container" bindtap="handleCollectTap">
+        <!-- 背景环 -->
+        <view class="progress-ring-bg"></view>
+        <!-- 进度环（CSS实现） -->
+        <view class="progress-ring-fill" style="transform: rotate({{ collectProgress * 3.6 - 90 }}deg); border-color: {{ collectProgress >= 100 ? '#10B981' : collectRarityColor }};"></view>
+        <!-- 中心内容 -->
+        <view class="progress-center">
+          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} animate-{{ selectedItem.item.rarity === 'legendary' ? 'legendary-pulse' : selectedItem.item.rarity === 'epic' ? 'epic-pulse' : 'common-pulse' }}">
+            <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
+          </view>
+          <view class="tap-hint animate-pulse">疯狂点击!</view>
+        </view>
+      </view>
+
+      <!-- 进度文字 -->
+      <view class="collecting-progress-text">
+        <text class="progress-current">{{ collectTaps }}</text>
+        <text class="progress-separator">/</text>
+        <text class="progress-target">{{ collectTarget }}</text>
+      </view>
+
+      <!-- 稀有度标签 -->
+      <view class="collecting-rarity-label rarity-{{ selectedItem.item.rarity || 'common' }}">
+        {{ selectedItem.item.rarity === 'legendary' ? '传说级宝藏' : selectedItem.item.rarity === 'epic' ? '史诗级宝藏' : selectedItem.item.rarity === 'rare' ? '稀有级宝藏' : '普通宝藏' }}
+      </view>
+
+      <!-- 浮动点击效果 -->
+      <view class="tap-effects">
+        <view wx:for="{{ tapEffects }}" wx:key="id" class="tap-effect-item" style="left: {{ item.x }}px; top: {{ item.y }}px; animation: tap-float 0.6s ease-out forwards;">
+          +{{ item.value }}
+        </view>
       </view>
     </view>
   </view>

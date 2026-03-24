@@ -1,6 +1,6 @@
 // pages/map/map.ts
 import { getNearbyItems, collectItem, getCoinBalance } from '../../utils/api'
-import { showLoading, hideLoading, showToast, getLocation, requireLogin, checkLogin, calculateDistance } from '../../utils/util'
+import { showToast, getLocation, checkLogin, calculateDistance } from '../../utils/util'
 
 const COLLECTION_RADIUS_METERS = 50
 
@@ -50,7 +50,16 @@ Page({
       { name: '史诗', color: '#8B5CF6' },
       { name: '传说', color: '#F59E0B' }
     ],
-    collectionRadius: COLLECTION_RADIUS_METERS
+    collectionRadius: COLLECTION_RADIUS_METERS,
+
+    // 疯狂点击收集相关状态
+    showCollecting: false,
+    collectProgress: 0,
+    collectTaps: 0,
+    collectTarget: 15,
+    collectRarityColor: '#6B7280',
+    tapEffects: [] as { id: number; x: number; y: number; value: number }[],
+    tapEffectId: 0
   },
 
   onLoad() {
@@ -269,22 +278,79 @@ Page({
     })
   },
 
-  async handleCollect() {
+  handleCollect() {
+    const { selectedItem } = this.data
+
+    if (!selectedItem) return
+
+    const rarity = selectedItem.item?.rarity || 'common'
+    const rarityColors: Record<string, string> = {
+      common: '#6B7280',
+      rare: '#0EA5E9',
+      epic: '#8B5CF6',
+      legendary: '#F59E0B'
+    }
+
+    const tapTargets: Record<string, number> = {
+      common: 8,
+      rare: 12,
+      epic: 18,
+      legendary: 25
+    }
+
+    this.setData({
+      showItemModal: false,
+      showCollecting: true,
+      collectProgress: 0,
+      collectTaps: 0,
+      collectTarget: tapTargets[rarity] || 15,
+      collectRarityColor: rarityColors[rarity] || '#6B7280',
+      tapEffects: [],
+      tapEffectId: 0
+    })
+  },
+
+  handleCollectTap(e: any) {
+    const { collectProgress, collectTaps, collectTarget, tapEffects, tapEffectId } = this.data
+
+    if (collectProgress >= 100) return
+
+    const newTaps = collectTaps + 1
+    const newProgress = Math.min((newTaps / collectTarget) * 100, 100)
+
+    const touch = e.touches && e.touches[0]
+    const x = touch ? touch.clientX : Math.random() * 200 + 50
+    const y = touch ? touch.clientY : Math.random() * 100 + 100
+
+    const newEffect = {
+      id: tapEffectId + 1,
+      x,
+      y,
+      value: 1
+    }
+
+    this.setData({
+      collectTaps: newTaps,
+      collectProgress: newProgress,
+      tapEffects: [...tapEffects.slice(-10), newEffect],
+      tapEffectId: tapEffectId + 1
+    })
+
+    if (collectProgress >= 100) {
+      this.completeCollection()
+    }
+  },
+
+  async completeCollection() {
     const { selectedItem, latitude, longitude } = this.data
 
     if (!selectedItem) return
 
-    const loggedIn = await requireLogin()
-    if (!loggedIn) return
-
-    this.setData({ collectLoading: true })
-    showLoading('收集中...')
-
     try {
       const result = await collectItem(selectedItem.id, latitude, longitude)
-      hideLoading()
 
       if (!result.success) {
+        this.setData({ showCollecting: false })
         let distText = ''
         if (result.distance < 1000) {
           distText = Math.round(result.distance) + '米'
@@ -300,7 +366,7 @@ Page({
       const coins = result.rewards?.coins || 0
 
       this.setData({
-        showItemModal: false,
+        showCollecting: false,
         selectedItem: null,
         showCollectSuccess: true,
         collectedItemName: itemName,
@@ -312,11 +378,13 @@ Page({
       this.loadItems()
       this.loadBalance()
     } catch (err: any) {
-      hideLoading()
+      this.setData({ showCollecting: false })
       showToast(err.message || '收集失败，请靠近宝藏')
-    } finally {
-      this.setData({ collectLoading: false })
     }
+  },
+
+  closeCollectingModal() {
+    this.setData({ showCollecting: false })
   },
 
   closeModal() {
