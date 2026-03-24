@@ -286,9 +286,22 @@ Page({
   },
 
   handleCollect() {
-    const { selectedItem } = this.data
+    const { selectedItem, latitude, longitude } = this.data
 
     if (!selectedItem) return
+
+    const dist = calculateDistance(latitude, longitude, selectedItem.latitude, selectedItem.longitude)
+
+    if (dist > COLLECTION_RADIUS_METERS) {
+      let distText = ''
+      if (dist < 1000) {
+        distText = Math.round(dist) + '米'
+      } else {
+        distText = (dist / 1000).toFixed(1) + '公里'
+      }
+      showToast(`请靠近至${distText}内再收集`)
+      return
+    }
 
     const rarity = selectedItem.item?.rarity || 'common'
     const rarityColors: Record<string, string> = {
