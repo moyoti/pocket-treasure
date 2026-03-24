@@ -828,13 +828,37 @@
   transition: transform 0.15s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-.progress-inner-glow {
+/* 能量环 */
+.energy-ring {
   position: absolute;
-  width: 300rpx;
-  height: 300rpx;
+  width: 400rpx;
+  height: 400rpx;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  transition: box-shadow 0.3s ease;
+  border: 6rpx solid currentColor;
+  color: inherit;
+  background: transparent;
+  pointer-events: none;
+  transition: transform 0.3s ease-out, opacity 0.3s ease;
+}
+
+.energy-ring-2 {
+  width: 450rpx;
+  height: 450rpx;
+  border-width: 4rpx;
+  border-style: dashed;
+}
+
+/* 内圈光晕 */
+.inner-aura {
+  position: absolute;
+  width: 280rpx;
+  height: 280rpx;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  filter: blur(40rpx);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 .ring-tap {

@@ -183,13 +183,21 @@
     <view class="collecting-content">
       <!-- 圆形进度环 -->
       <view class="progress-ring-container">
-        <view class="progress-ring-bg"></view>
-        <view class="progress-ring-fill {{ isTapping ? 'ring-tap' : '' }}" style="transform: rotate({{ displayProgress * 3.6 - 90 }}deg); border-color: {{ collectRarityColor }};"></view>
-        <view class="progress-inner-glow" style="box-shadow: inset 0 0 60rpx {{ collectRarityColor }}66;"></view>
+        <!-- 外圈能量环 -->
+        <view class="energy-ring" style="transform: scale({{ 0.5 + displayProgress * 0.005 }}); opacity: {{ displayProgress * 0.01 }};"></view>
+        
+        <!-- 第二层能量环 -->
+        <view class="energy-ring energy-ring-2" style="transform: scale({{ 0.3 + displayProgress * 0.007 }}); opacity: {{ displayProgress * 0.008 }};"></view>
+        
+        <!-- 进度弧线 -->
+        <view class="progress-ring-fill" style="transform: rotate({{ displayProgress * 3.6 - 90 }}deg); border-color: {{ collectRarityColor }};"></view>
+        
+        <!-- 内圈光晕 -->
+        <view class="inner-aura" style="opacity: {{ displayProgress * 0.01 }}; background: {{ collectRarityColor }};"></view>
         
         <!-- 中心内容 -->
         <view class="progress-center">
-          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ isTapping ? 'treasure-pop' : '' }} animate-glow-{{ selectedItem.item.rarity || 'common' }}">
+          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ isTapping ? 'treasure-pop' : '' }}" style="transform: scale({{ 1 + displayProgress * 0.005 }}); box-shadow: 0 0 {{ 30 + displayProgress * 0.8 }}rpx {{ collectRarityColor }};">
             <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
           </view>
         </view>
