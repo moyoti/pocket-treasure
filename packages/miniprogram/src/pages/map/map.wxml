@@ -163,7 +163,7 @@
   </view>
 
   <!-- 疯狂点击收集弹窗 -->
-  <view class="collecting-modal" wx:if="{{ showCollecting }}">
+  <view class="collecting-modal" wx:if="{{ showCollecting }}" bindtap="handleCollectTap">
     <!-- 动态背景 -->
     <view class="collecting-backdrop collecting-backdrop-{{ selectedItem.item.rarity || 'common' }}"></view>
     
@@ -172,20 +172,27 @@
       <view wx:for="{{ particles }}" wx:key="id" class="particle" style="left: {{ item.x }}%; top: {{ item.y }}%; background: {{ item.color }}; animation-delay: {{ item.delay }}ms; animation-duration: {{ item.duration }}ms;"></view>
     </view>
 
+    <!-- 全屏点击区域 -->
+    <view class="fullscreen-tap-area"></view>
+
     <view class="collecting-content">
-      <!-- 宝物图标 -->
-      <view class="treasure-section">
-        <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ isTapping ? 'treasure-pop' : '' }} animate-glow-{{ selectedItem.item.rarity || 'common' }}">
-          <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
-        </view>
+      <!-- 关闭按钮 -->
+      <view class="close-btn" catchtap="closeCollectingModal">
+        <image class="close-icon" src="/images/icons/x.svg" mode="aspectFit" />
       </view>
 
-      <!-- 垂直进度条 -->
-      <view class="progress-bar-container" bindtap="handleCollectTap">
-        <view class="progress-bar-track">
-          <view class="progress-bar-fill" style="height: {{ displayProgress }}%; background: linear-gradient(to top, {{ collectRarityColor }}CC, {{ collectRarityColor }});"></view>
+      <!-- 圆形进度环 -->
+      <view class="progress-ring-container">
+        <view class="progress-ring-bg"></view>
+        <view class="progress-ring-fill {{ isTapping ? 'ring-tap' : '' }}" style="transform: rotate({{ displayProgress * 3.6 - 90 }}deg); border-color: {{ collectRarityColor }};"></view>
+        <view class="progress-inner-glow" style="box-shadow: inset 0 0 60rpx {{ collectRarityColor }}66;"></view>
+        
+        <!-- 中心内容 -->
+        <view class="progress-center">
+          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ isTapping ? 'treasure-pop' : '' }} animate-glow-{{ selectedItem.item.rarity || 'common' }}">
+            <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
+          </view>
         </view>
-        <view class="progress-bar-glow" style="height: {{ displayProgress }}%; background: {{ collectRarityColor }}; box-shadow: 0 0 30rpx {{ collectRarityColor }};"></view>
       </view>
 
       <!-- 动态数字显示 -->

@@ -63,6 +63,7 @@ Page({
     tapEffectId: 0,
     comboCount: 0,
     lastTapTime: 0,
+    lastActiveTime: 0,
     isTapping: false,
     particles: [] as { id: number; x: number; y: number; color: string; delay: number; duration: number }[],
     particleId: 0
@@ -318,10 +319,38 @@ Page({
       tapEffectId: 0,
       comboCount: 0,
       lastTapTime: 0,
+      lastActiveTime: Date.now(),
       isTapping: false,
       particles: particles,
       particleId: 0
     })
+
+    this.startDecayTimer()
+  },
+
+  startDecayTimer() {
+    const decayInterval = setInterval(() => {
+      const { showCollecting, collectProgress, lastActiveTime } = this.data
+      
+      if (!showCollecting) {
+        clearInterval(decayInterval)
+        return
+      }
+
+      const inactiveTime = Date.now() - lastActiveTime
+      
+      if (inactiveTime > 400 && collectProgress > 0) {
+        const decayAmount = Math.min(2, (inactiveTime - 400) / 200)
+        const newProgress = Math.max(0, collectProgress - decayAmount)
+        const newDisplayProgress = Math.max(0, this.data.displayProgress - decayAmount * 0.8)
+        
+        this.setData({
+          collectProgress: newProgress,
+          displayProgress: newDisplayProgress,
+          comboCount: 0
+        })
+      }
+    }, 50)
   },
 
   generateParticles(color: string) {
@@ -340,7 +369,7 @@ Page({
   },
 
   handleCollectTap(e: any) {
-    const { collectProgress, collectTaps, collectTarget, tapEffects, tapEffectId, lastTapTime, comboCount } = this.data
+    const { collectProgress, collectTaps, collectTarget, tapEffects, tapEffectId, lastTapTime, comboCount, displayProgress } = this.data
 
     if (collectProgress >= 100) return
 
@@ -371,14 +400,14 @@ Page({
     this.setData({
       collectTaps: newTaps,
       collectProgress: newProgress,
+      displayProgress: displayProgress + (newProgress - displayProgress) * 0.3,
       tapEffects: [...tapEffects.slice(-20), newEffect],
       tapEffectId: tapEffectId + 1,
       comboCount: newCombo,
       lastTapTime: now,
-      isTapping: true
+      isTapping: true,
+      lastActiveTime: now
     })
-
-    this.smoothProgressLoop()
 
     setTimeout(() => {
       this.setData({ isTapping: false })
@@ -389,21 +418,8 @@ Page({
     }
   },
 
-  smoothProgressLoop() {
-    const { collectProgress, displayProgress } = this.data
-    const diff = collectProgress - displayProgress
-    
-    if (Math.abs(diff) < 0.5) {
-      this.setData({ displayProgress: collectProgress })
-      return
-    }
-    
-    const step = diff * 0.15
-    this.setData({ displayProgress: displayProgress + step })
-    
-    setTimeout(() => {
-      this.smoothProgressLoop()
-    }, 16)
+  closeCollectingModal() {
+    this.setData({ showCollecting: false })
   },
 
   async completeCollection() {
@@ -446,10 +462,6 @@ Page({
       this.setData({ showCollecting: false })
       showToast(err.message || '收集失败，请靠近宝藏')
     }
-  },
-
-  closeCollectingModal() {
-    this.setData({ showCollecting: false })
   },
 
   closeModal() {

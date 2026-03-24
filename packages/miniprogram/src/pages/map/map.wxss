@@ -705,54 +705,89 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 40rpx;
+  gap: 50rpx;
 }
 
-/* 宝物区域 */
-.treasure-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* 全屏点击区域 */
+.fullscreen-tap-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 199;
+  cursor: pointer;
 }
 
-/* 垂直进度条 */
-.progress-bar-container {
-  position: relative;
-  width: 60rpx;
-  height: 280rpx;
+/* 关闭按钮 */
+.close-btn {
+  position: absolute;
+  top: calc(200rpx + env(safe-area-inset-top));
+  right: 40rpx;
+  width: 70rpx;
+  height: 70rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10rpx);
+  z-index: 202;
 }
 
-.progress-bar-track {
-  position: relative;
-  width: 40rpx;
-  height: 240rpx;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20rpx;
-  overflow: hidden;
-  border: 4rpx solid rgba(255, 255, 255, 0.2);
-}
-
-.progress-bar-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-radius: 16rpx;
-  transition: height 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
-}
-
-.progress-bar-glow {
-  position: absolute;
-  width: 8rpx;
-  border-radius: 4rpx;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+.close-icon {
+  width: 36rpx;
+  height: 36rpx;
   opacity: 0.8;
-  transition: height 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+/* 圆形进度环 */
+.progress-ring-container {
+  position: relative;
+  width: 380rpx;
+  height: 380rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.progress-ring-bg {
+  position: absolute;
+  width: 340rpx;
+  height: 340rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 14rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-ring-fill {
+  position: absolute;
+  width: 340rpx;
+  height: 340rpx;
+  border-radius: 50%;
+  border: 14rpx solid transparent;
+  transition: transform 0.15s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.progress-inner-glow {
+  position: absolute;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.ring-tap {
+  animation: ring-tap 0.15s ease-out;
+}
+
+@keyframes ring-tap {
+  0% { transform: rotate({{ collectProgress * 3.6 - 90 }}deg) scale(1); }
+  50% { transform: rotate({{ collectProgress * 3.6 - 90 }}deg) scale(1.05); }
+  100% { transform: rotate({{ collectProgress * 3.6 - 90 }}deg) scale(1); }
 }
 
 /* 中心内容 */
