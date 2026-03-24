@@ -336,7 +336,7 @@ Page({
       tapEffectId: tapEffectId + 1
     })
 
-    if (collectProgress >= 100) {
+    if (newProgress >= 100) {
       this.completeCollection()
     }
   },
