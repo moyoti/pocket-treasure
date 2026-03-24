@@ -456,12 +456,12 @@ export class SpawnService implements OnModuleInit {
       .limit(100)
       .getMany();
 
-    // Return with rarity info only (mystery mechanism)
     return items.map(item => ({
       id: item.id,
       latitude: item.latitude,
       longitude: item.longitude,
       itemRarity: item.item.rarity,
+      itemName: item.item.name,
       poiName: item.poiName,
       expiresAt: item.expiresAt,
       createdAt: item.createdAt,

@@ -1,8 +1,10 @@
 // pages/map/map.ts
 import { getNearbyItems, collectItem, getCoinBalance } from '../../utils/api'
-import { showLoading, hideLoading, showToast, getLocation, requireLogin, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
+import { showLoading, hideLoading, showToast, getLocation, requireLogin, checkLogin, calculateDistance } from '../../utils/util'
 
-interface Item {
+const COLLECTION_RADIUS_METERS = 50
+
+interface MapItem {
   id: string
   itemId: string
   name: string
@@ -11,6 +13,11 @@ interface Item {
   latitude: number
   longitude: number
   expiresAt: string
+  item?: {
+    name: string
+    description: string
+    rarity: string
+  }
 }
 
 Page({
@@ -18,14 +25,32 @@ Page({
     latitude: 39.90469,
     longitude: 116.40717,
     scale: 16,
-    items: [] as Item[],
+    items: [] as MapItem[],
+    markers: [] as any[],
+    circles: [] as any[],
+
     balance: 0,
     loading: true,
-    selectedItem: null as Item | null,
+    selectedItem: null as MapItem | null,
     showItemModal: false,
     collectLoading: false,
     hasLocation: false,
-    isLoggedIn: false
+    isLoggedIn: false,
+    showItemPool: false,
+    coordText: '定位中...',
+    itemDistance: '',
+    showCollectSuccess: false,
+    collectedItemName: '',
+    collectedItemRarity: '',
+    collectedCoins: 0,
+    refreshing: false,
+    rarityLegend: [
+      { name: '普通', color: '#6B7280' },
+      { name: '稀有', color: '#0EA5E9' },
+      { name: '史诗', color: '#8B5CF6' },
+      { name: '传说', color: '#F59E0B' }
+    ],
+    collectionRadius: COLLECTION_RADIUS_METERS
   },
 
   onLoad() {
@@ -49,22 +74,34 @@ Page({
     }
   },
 
+  formatCoord(lat: number, lng: number): string {
+    return lat.toFixed(4) + ', ' + lng.toFixed(4)
+  },
+
   async getLocationAndItems() {
     this.setData({ loading: true })
-    
+
     try {
       const location = await getLocation()
       this.setData({
         latitude: location.latitude,
         longitude: location.longitude,
-        hasLocation: true
+        hasLocation: true,
+        coordText: this.formatCoord(location.latitude, location.longitude)
       })
-      
-      await this.loadItems()
+
+      if (checkLogin()) {
+        await this.loadItems()
+      } else {
+        this.setData({ loading: false })
+      }
     } catch (err: any) {
       console.error('获取位置失败:', err)
-      this.setData({ loading: false })
-      
+      this.setData({
+        loading: false,
+        coordText: '定位失败'
+      })
+
       wx.showModal({
         title: '需要位置权限',
         content: '请在设置中开启位置权限，以便查找附近的宝藏',
@@ -82,41 +119,73 @@ Page({
     try {
       const { latitude, longitude } = this.data
       const items = await getNearbyItems(latitude, longitude, 5)
-      
-      // 如果未登录，items 可能是空数组或模拟数据
-      const markers = (items || []).map((item: any, index: number) => ({
+
+      const rarityOrder: Record<string, number> = {
+        legendary: 0,
+        epic: 1,
+        rare: 2,
+        common: 3
+      }
+
+      const sortedItems = [...(items || [])].sort((a, b) => {
+        const orderA = rarityOrder[a.itemRarity] ?? 3
+        const orderB = rarityOrder[b.itemRarity] ?? 3
+        return orderA - orderB
+      }).map((item: any) => ({
+        ...item,
+        item: {
+          name: item.itemName || '神秘宝藏',
+          description: item.poiName ? `在${item.poiName}发现的宝藏` : '一个神秘的宝藏',
+          rarity: item.itemRarity || 'common'
+        }
+      }))
+
+      const markers = sortedItems.map((item: any, index: number) => ({
         id: index,
         itemId: item.id,
         latitude: item.latitude,
         longitude: item.longitude,
-        width: 40,
-        height: 40,
-        iconPath: this.getMarkerIcon(item.item?.rarity || 'common'),
-        callout: {
-          content: item.item?.name || '宝藏',
-          color: '#333',
-          fontSize: 12,
-          borderRadius: 10,
-          bgColor: '#FFD93D',
-          padding: 8,
-          display: 'ALWAYS'
-        }
+        width: 50,
+        height: 50,
+        iconPath: this.getMarkerIcon(item.item.rarity),
+        anchor: { x: 0.5, y: 0.5 }
       }))
-      
-      this.setData({ 
-        items: items || [],
+
+      const circles = sortedItems.map((item: any, index: number) => ({
+        id: index,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        radius: COLLECTION_RADIUS_METERS,
+        strokeColor: this.getRarityColor(item.item.rarity),
+        fillColor: this.getRarityColor(item.item.rarity) + '30',
+        strokeWidth: 3
+      }))
+
+      this.setData({
+        items: sortedItems,
         markers: markers,
+        circles: circles,
         loading: false
       })
     } catch (err) {
       console.error('获取宝藏失败:', err)
-      // 未登录时显示模拟数据或空状态
-      this.setData({ 
+      this.setData({
         items: [],
         markers: [],
-        loading: false 
+        circles: [],
+        loading: false
       })
     }
+  },
+
+  getRarityColor(rarity: string): string {
+    const colors: Record<string, string> = {
+      common: '#6B7280',
+      rare: '#0EA5E9',
+      epic: '#8B5CF6',
+      legendary: '#F59E0B'
+    }
+    return colors[rarity] || colors.common
   },
 
   getMarkerIcon(rarity: string): string {
@@ -132,48 +201,105 @@ Page({
   onMapTap(e: any) {
     if (this.data.showItemModal) {
       this.setData({ showItemModal: false, selectedItem: null })
+      return
+    }
+
+    const detail = e.detail || {}
+    const tapLat = detail.latitude
+    const tapLng = detail.longitude
+
+    if (!tapLat || !tapLng) return
+
+    let nearestItem = null
+    let nearestDist = Infinity
+
+    for (const item of this.data.items) {
+      const dist = calculateDistance(tapLat, tapLng, item.latitude, item.longitude)
+      if (dist < nearestDist && dist <= COLLECTION_RADIUS_METERS) {
+        nearestDist = dist
+        nearestItem = item
+      }
+    }
+
+    if (nearestItem) {
+      let distText = ''
+      if (nearestDist < 1000) {
+        distText = Math.round(nearestDist) + '米'
+      } else {
+        distText = (nearestDist / 1000).toFixed(1) + '公里'
+      }
+
+      this.setData({
+        selectedItem: nearestItem,
+        showItemModal: true,
+        itemDistance: distText
+      })
     }
   },
 
   onMarkerTap(e: any) {
     const markerId = e.detail.markerId || e.markerId
-    const item = this.data.items[markerId]
+    console.log('Marker tap - markerId:', markerId)
+    console.log('Available markers:', this.data.markers.map((m: any) => ({ id: m.id, itemId: m.itemId, lat: m.latitude, lng: m.longitude })))
     
-    if (item) {
-      this.setData({
-        selectedItem: item,
-        showItemModal: true
-      })
+    const marker = this.data.markers.find((m: any) => m.id === markerId)
+    console.log('Found marker:', marker)
+    
+    if (!marker) return
+    
+    const item = this.data.items.find((item: any) => item.id === marker.itemId)
+    console.log('Found item:', item ? { id: item.id, name: item.item?.name, rarity: item.item?.rarity } : null)
+    if (!item) return
+
+    const dist = calculateDistance(
+      this.data.latitude, this.data.longitude,
+      marker.latitude, marker.longitude
+    )
+    let distText = ''
+    if (dist < 1000) {
+      distText = Math.round(dist) + '米'
+    } else {
+      distText = (dist / 1000).toFixed(1) + '公里'
     }
+
+    this.setData({
+      selectedItem: item,
+      showItemModal: true,
+      itemDistance: distText
+    })
   },
 
   async handleCollect() {
     const { selectedItem, latitude, longitude } = this.data
-    
+
     if (!selectedItem) return
-    
-    // 检查登录状态
+
     const loggedIn = await requireLogin()
     if (!loggedIn) return
-    
+
     this.setData({ collectLoading: true })
     showLoading('收集中...')
-    
+
     try {
       const result = await collectItem(selectedItem.id, latitude, longitude)
       hideLoading()
-      
-      wx.showModal({
-        title: '🎉 收集成功！',
-        content: `获得 ${selectedItem.item?.name || '宝藏'}\n金币 +${result.rewards?.coins || 0}`,
-        showCancel: false,
-        confirmText: '太棒了'
+
+      const itemName = selectedItem.item?.name || '宝藏'
+      const itemRarity = selectedItem.item?.rarity || 'common'
+      const coins = result.rewards?.coins || 0
+
+      this.setData({
+        showItemModal: false,
+        selectedItem: null,
+        showCollectSuccess: true,
+        collectedItemName: itemName,
+        collectedItemRarity: itemRarity,
+        collectedCoins: coins,
+        isLoggedIn: true
       })
-      
-      this.setData({ isLoggedIn: true })
+
       this.loadItems()
       this.loadBalance()
-      this.setData({ showItemModal: false, selectedItem: null })
     } catch (err: any) {
       hideLoading()
       showToast(err.message || '收集失败，请靠近宝藏')
@@ -186,11 +312,21 @@ Page({
     this.setData({ showItemModal: false, selectedItem: null })
   },
 
-  onRefresh() {
-    this.getLocationAndItems()
+  closeSuccessModal() {
+    this.setData({ showCollectSuccess: false })
+  },
+
+  toggleItemPool() {
+    this.setData({ showItemPool: !this.data.showItemPool })
+  },
+
+  async onRefresh() {
+    this.setData({ refreshing: true })
+    await this.getLocationAndItems()
     if (checkLogin()) {
-      this.loadBalance()
+      await this.loadBalance()
     }
+    this.setData({ refreshing: false })
   },
 
   goToLogin() {
