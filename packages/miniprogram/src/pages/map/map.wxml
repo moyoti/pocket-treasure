@@ -143,7 +143,7 @@
 
   <!-- 收集成功弹窗 -->
   <view class="success-modal" wx:if="{{ showCollectSuccess }}">
-    <view class="success-mask" bindtap="closeSuccessModal"></view>
+    <view class="success-mask"></view>
     <view class="success-content animate-bounce-in">
       <view class="success-celebration"><image class="icon-lg" src="/images/icons/party-popper.svg" mode="aspectFit" /></view>
       <view class="success-title">恭喜获得！</view>
