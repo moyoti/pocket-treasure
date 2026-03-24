@@ -55,6 +55,7 @@ Page({
     // 疯狂点击收集相关状态
     showCollecting: false,
     collectProgress: 0,
+    displayProgress: 0,
     collectTaps: 0,
     collectTarget: 15,
     collectRarityColor: '#6B7280',
@@ -309,6 +310,7 @@ Page({
       showItemModal: false,
       showCollecting: true,
       collectProgress: 0,
+      displayProgress: 0,
       collectTaps: 0,
       collectTarget: tapTargets[rarity] || 15,
       collectRarityColor: rarityColors[rarity] || '#6B7280',
@@ -376,6 +378,8 @@ Page({
       isTapping: true
     })
 
+    this.smoothProgressLoop()
+
     setTimeout(() => {
       this.setData({ isTapping: false })
     }, 150)
@@ -383,6 +387,23 @@ Page({
     if (newProgress >= 100) {
       this.completeCollection()
     }
+  },
+
+  smoothProgressLoop() {
+    const { collectProgress, displayProgress } = this.data
+    const diff = collectProgress - displayProgress
+    
+    if (Math.abs(diff) < 0.5) {
+      this.setData({ displayProgress: collectProgress })
+      return
+    }
+    
+    const step = diff * 0.15
+    this.setData({ displayProgress: displayProgress + step })
+    
+    setTimeout(() => {
+      this.smoothProgressLoop()
+    }, 16)
   },
 
   async completeCollection() {

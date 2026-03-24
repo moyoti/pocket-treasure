@@ -173,24 +173,19 @@
     </view>
 
     <view class="collecting-content">
-      <!-- 圆形进度环 -->
-      <view class="progress-ring-outer {{ isTapping ? 'ring-pulse' : '' }}" bindtap="handleCollectTap">
-        <view class="progress-ring-inner">
-          <!-- 进度遮罩（减少的弧度） -->
-          <view class="progress-mask" style="transform: rotate({{ collectProgress * 3.6 }}deg);">
-            <view class="progress-semicircle progress-semicircle-left"></view>
-            <view class="progress-semicircle progress-semicircle-right"></view>
-          </view>
-          <!-- 进度弧线 -->
-          <view class="progress-arc" style="background: conic-gradient(from 0deg, {{ collectRarityColor }} 0%, {{ collectRarityColor }} {{ collectProgress }}%, transparent {{ collectProgress }}%);"></view>
+      <!-- 宝物图标 -->
+      <view class="treasure-section">
+        <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ isTapping ? 'treasure-pop' : '' }} animate-glow-{{ selectedItem.item.rarity || 'common' }}">
+          <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
         </view>
-        
-        <!-- 中心内容 -->
-        <view class="progress-center">
-          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ isTapping ? 'treasure-pop' : '' }} animate-glow-{{ selectedItem.item.rarity || 'common' }}">
-            <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
-          </view>
+      </view>
+
+      <!-- 垂直进度条 -->
+      <view class="progress-bar-container" bindtap="handleCollectTap">
+        <view class="progress-bar-track">
+          <view class="progress-bar-fill" style="height: {{ displayProgress }}%; background: linear-gradient(to top, {{ collectRarityColor }}CC, {{ collectRarityColor }});"></view>
         </view>
+        <view class="progress-bar-glow" style="height: {{ displayProgress }}%; background: {{ collectRarityColor }}; box-shadow: 0 0 30rpx {{ collectRarityColor }};"></view>
       </view>
 
       <!-- 动态数字显示 -->
@@ -198,7 +193,7 @@
         <text class="taps-number {{ isTapping ? 'tap-number-pop' : '' }}">{{ collectTaps }}</text>
       </view>
 
-      <!-- 连击提示（连击时放大） -->
+      <!-- 连击提示 -->
       <view class="combo-container" wx:if="{{ comboCount >= 3 }}">
         <text class="combo-text" style="color: {{ comboCount >= 10 ? '#EF4444' : comboCount >= 7 ? '#F59E0B' : '#FCD34D' }};">{{ comboCount }} 连击!</text>
       </view>
