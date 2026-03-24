@@ -58,8 +58,10 @@ Page({
     collectTaps: 0,
     collectTarget: 15,
     collectRarityColor: '#6B7280',
-    tapEffects: [] as { id: number; x: number; y: number; value: number }[],
-    tapEffectId: 0
+    tapEffects: [] as { id: number; x: number; y: number; color: string }[],
+    tapEffectId: 0,
+    comboCount: 0,
+    lastTapTime: 0
   },
 
   onLoad() {
@@ -311,29 +313,39 @@ Page({
   },
 
   handleCollectTap(e: any) {
-    const { collectProgress, collectTaps, collectTarget, tapEffects, tapEffectId } = this.data
+    const { collectProgress, collectTaps, collectTarget, tapEffects, tapEffectId, lastTapTime, comboCount } = this.data
 
     if (collectProgress >= 100) return
 
+    const now = Date.now()
+    const timeDiff = now - lastTapTime
+    const isCombo = timeDiff < 300
+
+    const newCombo = isCombo ? comboCount + 1 : 1
     const newTaps = collectTaps + 1
     const newProgress = Math.min((newTaps / collectTarget) * 100, 100)
 
     const touch = e.touches && e.touches[0]
-    const x = touch ? touch.clientX : Math.random() * 200 + 50
-    const y = touch ? touch.clientY : Math.random() * 100 + 100
+    const x = touch ? touch.clientX - 20 : Math.random() * 200 + 50
+    const y = touch ? touch.clientY - 20 : Math.random() * 100 + 100
+
+    const colors = ['#FCD34D', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#10B981']
+    const color = colors[Math.floor(Math.random() * colors.length)]
 
     const newEffect = {
       id: tapEffectId + 1,
       x,
       y,
-      value: 1
+      color
     }
 
     this.setData({
       collectTaps: newTaps,
       collectProgress: newProgress,
-      tapEffects: [...tapEffects.slice(-10), newEffect],
-      tapEffectId: tapEffectId + 1
+      tapEffects: [...tapEffects.slice(-15), newEffect],
+      tapEffectId: tapEffectId + 1,
+      comboCount: newCombo,
+      lastTapTime: now
     })
 
     if (newProgress >= 100) {

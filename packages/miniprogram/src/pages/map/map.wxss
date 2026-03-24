@@ -635,7 +635,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: radial-gradient(circle at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%);
 }
 
 .collecting-content {
@@ -646,39 +646,43 @@
   justify-content: center;
 }
 
-/* 进度环容器 */
+/* 进度条容器 - 垂直填充样式 */
 .progress-ring-container {
   position: relative;
-  width: 360rpx;
-  height: 360rpx;
+  width: 400rpx;
+  height: 400rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 8rpx solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 60rpx rgba(0, 0, 0, 0.5), inset 0 0 40rpx rgba(0, 0, 0, 0.3);
 }
 
-/* 背景环 */
-.progress-ring-bg {
+.progress-track {
   position: absolute;
-  width: 320rpx;
-  height: 320rpx;
-  border-radius: 50%;
-  border: 16rpx solid #E5E7EB;
-  box-sizing: border-box;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* 进度环 */
-.progress-ring-fill {
+.progress-fill {
   position: absolute;
-  width: 320rpx;
-  height: 320rpx;
-  border-radius: 50%;
-  border: 16rpx solid transparent;
-  box-sizing: border-box;
-  transition: transform 0.1s ease-out;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: height 0.08s ease-out;
+  background: linear-gradient(to top, rgba(255,255,255,0.3) 0%, transparent 100%);
 }
 
 /* 中心内容 */
 .progress-center {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -686,64 +690,122 @@
 }
 
 .treasure-icon-wrap {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 35rpx;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 6rpx solid var(--border-color);
-  margin-bottom: 16rpx;
+  border: 8rpx solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.4);
 }
 
 .treasure-icon {
-  width: 80rpx;
-  height: 80rpx;
+  width: 90rpx;
+  height: 90rpx;
 }
 
-.tap-hint {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+/* 宝物跳动动画 */
+.treasure-bouncing {
+  animation: treasure-bounce 0.15s ease-out;
 }
 
-/* 进度文字 */
-.collecting-progress-text {
+@keyframes treasure-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25) rotate(10deg); }
+  100% { transform: scale(1); }
+}
+
+/* 环形摇晃 */
+.ring-shaking {
+  animation: ring-shake 0.1s ease-in-out;
+}
+
+@keyframes ring-shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+/* 连击提示 */
+.combo-container {
   margin-top: 40rpx;
-  display: flex;
-  align-items: baseline;
-  gap: 8rpx;
+  animation: combo-pop 0.3s ease-out;
 }
 
-.progress-current {
-  font-size: 56rpx;
+.combo-text {
+  font-size: 48rpx;
+  font-weight: 900;
+  color: #FCD34D;
+  text-shadow: 0 4rpx 20rpx rgba(252, 211, 77, 0.6), 0 0 40rpx rgba(252, 211, 77, 0.4);
+}
+
+@keyframes combo-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 点击次数显示 */
+.collecting-taps-count {
+  margin-top: 30rpx;
+}
+
+.taps-number {
+  font-size: 72rpx;
   font-weight: 900;
   color: white;
-  text-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.3);
+  text-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.5);
 }
 
-.progress-separator {
-  font-size: 36rpx;
-  color: rgba(255, 255, 255, 0.6);
+/* 稀有度发光效果 */
+.animate-common-glow {
+  animation: common-glow 1.5s ease-in-out infinite;
 }
 
-.progress-target {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.8);
+.animate-rare-glow {
+  animation: rare-glow 1.2s ease-in-out infinite;
+}
+
+.animate-epic-glow {
+  animation: epic-glow 1s ease-in-out infinite;
+}
+
+.animate-legendary-glow {
+  animation: legendary-glow 0.8s ease-in-out infinite;
+}
+
+@keyframes common-glow {
+  0%, 100% { box-shadow: 0 0 20rpx rgba(107, 114, 128, 0.4); }
+  50% { box-shadow: 0 0 40rpx rgba(107, 114, 128, 0.7); }
+}
+
+@keyframes rare-glow {
+  0%, 100% { box-shadow: 0 0 30rpx rgba(14, 165, 233, 0.5), 0 0 60rpx rgba(14, 165, 233, 0.3); }
+  50% { box-shadow: 0 0 50rpx rgba(14, 165, 233, 0.8), 0 0 100rpx rgba(14, 165, 233, 0.5); }
+}
+
+@keyframes epic-glow {
+  0%, 100% { box-shadow: 0 0 40rpx rgba(139, 92, 246, 0.6), 0 0 80rpx rgba(139, 92, 246, 0.4); }
+  50% { box-shadow: 0 0 70rpx rgba(139, 92, 246, 0.9), 0 0 140rpx rgba(139, 92, 246, 0.6); }
+}
+
+@keyframes legendary-glow {
+  0%, 100% { box-shadow: 0 0 50rpx rgba(245, 158, 11, 0.7), 0 0 100rpx rgba(245, 158, 11, 0.5), 0 0 150rpx rgba(245, 158, 11, 0.3); }
+  50% { box-shadow: 0 0 80rpx rgba(245, 158, 11, 1), 0 0 160rpx rgba(245, 158, 11, 0.7), 0 0 240rpx rgba(245, 158, 11, 0.4); }
 }
 
 /* 稀有度标签 */
 .collecting-rarity-label {
-  margin-top: 20rpx;
-  font-size: 28rpx;
+  margin-top: 24rpx;
+  font-size: 32rpx;
   font-weight: bold;
-  padding: 10rpx 32rpx;
+  padding: 14rpx 40rpx;
   border-radius: 50rpx;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
   backdrop-filter: blur(10rpx);
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
 }
 
 /* 浮动点击效果 */
@@ -759,60 +821,29 @@
 
 .tap-effect-item {
   position: absolute;
-  font-size: 36rpx;
-  font-weight: 900;
-  color: #FCD34D;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.4);
-  animation: tap-float 0.6s ease-out forwards;
+  animation: tap-burst 0.5s ease-out forwards;
   pointer-events: none;
 }
 
-@keyframes tap-float {
+.tap-float-text {
+  font-size: 42rpx;
+  font-weight: 900;
+  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5);
+}
+
+@keyframes tap-burst {
   0% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(0.5) translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.5) translateY(-20rpx);
   }
   100% {
     opacity: 0;
-    transform: translateY(-80rpx) scale(1.2);
+    transform: scale(1) translateY(-100rpx);
   }
-}
-
-/* 稀有度脉冲动画 */
-.animate-common-pulse {
-  animation: common-pulse 1s ease-in-out infinite;
-}
-
-.animate-rare-pulse {
-  animation: rare-pulse 1s ease-in-out infinite;
-}
-
-.animate-epic-pulse {
-  animation: epic-pulse 1s ease-in-out infinite;
-}
-
-.animate-legendary-pulse {
-  animation: legendary-pulse 0.8s ease-in-out infinite;
-}
-
-@keyframes common-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes rare-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 20rpx rgba(14, 165, 233, 0.3); }
-  50% { transform: scale(1.08); box-shadow: 0 0 40rpx rgba(14, 165, 233, 0.6); }
-}
-
-@keyframes epic-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 20rpx rgba(139, 92, 246, 0.3); }
-  50% { transform: scale(1.1); box-shadow: 0 0 50rpx rgba(139, 92, 246, 0.7); }
-}
-
-@keyframes legendary-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 30rpx rgba(245, 158, 11, 0.5); }
-  50% { transform: scale(1.15); box-shadow: 0 0 70rpx rgba(245, 158, 11, 0.9); }
 }
 
 /* 收集完成时的爆发动画 */

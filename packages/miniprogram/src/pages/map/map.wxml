@@ -167,25 +167,27 @@
     <view class="collecting-backdrop"></view>
     <view class="collecting-content">
       <!-- 进度环容器 -->
-      <view class="progress-ring-container" bindtap="handleCollectTap">
-        <!-- 背景环 -->
-        <view class="progress-ring-bg"></view>
-        <!-- 进度环（CSS实现） -->
-        <view class="progress-ring-fill" style="transform: rotate({{ collectProgress * 3.6 - 90 }}deg); border-color: {{ collectProgress >= 100 ? '#10B981' : collectRarityColor }};"></view>
+      <view class="progress-ring-container {{ collectTaps > 0 ? 'ring-shaking' : '' }}" bindtap="handleCollectTap">
+        <!-- 进度填充（纯CSS圆环） -->
+        <view class="progress-track">
+          <view class="progress-fill" style="height: {{ collectProgress }}%; background: {{ collectRarityColor }};"></view>
+        </view>
         <!-- 中心内容 -->
         <view class="progress-center">
-          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} animate-{{ selectedItem.item.rarity === 'legendary' ? 'legendary-pulse' : selectedItem.item.rarity === 'epic' ? 'epic-pulse' : 'common-pulse' }}">
+          <view class="treasure-icon-wrap rarity-bg-{{ selectedItem.item.rarity || 'common' }} {{ collectTaps > 0 ? 'treasure-bouncing' : '' }} animate-{{ selectedItem.item.rarity === 'legendary' ? 'legendary-glow' : selectedItem.item.rarity === 'epic' ? 'epic-glow' : selectedItem.item.rarity === 'rare' ? 'rare-glow' : 'common-glow' }}">
             <image class="treasure-icon" src="/images/icons/gem.svg" mode="aspectFit" />
           </view>
-          <view class="tap-hint animate-pulse">疯狂点击!</view>
         </view>
       </view>
 
-      <!-- 进度文字 -->
-      <view class="collecting-progress-text">
-        <text class="progress-current">{{ collectTaps }}</text>
-        <text class="progress-separator">/</text>
-        <text class="progress-target">{{ collectTarget }}</text>
+      <!-- 连击提示 -->
+      <view class="combo-container" wx:if="{{ comboCount >= 3 }}">
+        <text class="combo-text">{{ comboCount }} 连击!</text>
+      </view>
+
+      <!-- 点击次数（不带目标） -->
+      <view class="collecting-taps-count">
+        <text class="taps-number">{{ collectTaps }}</text>
       </view>
 
       <!-- 稀有度标签 -->
@@ -195,8 +197,8 @@
 
       <!-- 浮动点击效果 -->
       <view class="tap-effects">
-        <view wx:for="{{ tapEffects }}" wx:key="id" class="tap-effect-item" style="left: {{ item.x }}px; top: {{ item.y }}px; animation: tap-float 0.6s ease-out forwards;">
-          +{{ item.value }}
+        <view wx:for="{{ tapEffects }}" wx:key="id" class="tap-effect-item" style="left: {{ item.x }}px; top: {{ item.y }}px;">
+          <text class="tap-float-text" style="color: {{ item.color }};">+1</text>
         </view>
       </view>
     </view>
