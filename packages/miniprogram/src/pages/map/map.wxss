@@ -719,27 +719,84 @@
   cursor: pointer;
 }
 
-/* 关闭按钮 */
-.close-btn {
-  position: absolute;
-  top: calc(200rpx + env(safe-area-inset-top));
-  right: 40rpx;
-  width: 70rpx;
-  height: 70rpx;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3rpx solid rgba(255, 255, 255, 0.3);
+/* 关闭按钮 - 左下角 */
+.close-btn-bottom {
+  position: fixed;
+  bottom: calc(60rpx + env(safe-area-inset-bottom));
+  left: 40rpx;
+  padding: 16rpx 32rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 40rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10rpx);
   z-index: 202;
+  min-width: 120rpx;
+  text-align: center;
 }
 
-.close-icon {
-  width: 36rpx;
-  height: 36rpx;
-  opacity: 0.8;
+.close-btn-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* 固定位置的数字和连击区域 */
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120rpx;
+}
+
+/* 数字显示 */
+.taps-display {
+  margin-top: 0;
+}
+
+.taps-big {
+  transform: scale(1.3);
+}
+
+.taps-number {
+  font-size: 80rpx;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 4rpx 30rpx rgba(0, 0, 0, 0.6);
+  display: inline-block;
+  transition: transform 0.1s ease;
+}
+
+.tap-number-pop {
+  animation: number-pop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes number-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* 连击提示 - 绝对定位，不影响其他元素 */
+.combo-container {
+  position: absolute;
+  top: -80rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  animation: combo-appear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.combo-text {
+  font-size: 52rpx;
+  font-weight: 900;
+  text-shadow: 0 4rpx 30rpx rgba(252, 211, 77, 0.8), 0 0 60rpx rgba(252, 211, 77, 0.5);
+}
+
+@keyframes combo-appear {
+  0% { transform: translateX(-50%) scale(0) rotate(-10deg); opacity: 0; }
+  60% { transform: translateX(-50%) scale(1.3) rotate(5deg); }
+  100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
 }
 
 /* 圆形进度环 */
@@ -862,53 +919,6 @@
 @keyframes glow-legendary {
   0%, 100% { box-shadow: 0 0 60rpx rgba(245, 158, 11, 0.7), 0 0 120rpx rgba(245, 158, 11, 0.4), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
   50% { box-shadow: 0 0 100rpx rgba(245, 158, 11, 1), 0 0 200rpx rgba(245, 158, 11, 0.6), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
-}
-
-/* 动态数字显示 */
-.taps-display {
-  margin-top: 50rpx;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.taps-big {
-  transform: scale(1.3);
-}
-
-.taps-number {
-  font-size: 80rpx;
-  font-weight: 900;
-  color: white;
-  text-shadow: 0 4rpx 30rpx rgba(0, 0, 0, 0.6);
-  display: inline-block;
-  transition: transform 0.1s ease;
-}
-
-.tap-number-pop {
-  animation: number-pop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes number-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-/* 连击提示 */
-.combo-container {
-  margin-top: 30rpx;
-  animation: combo-appear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.combo-text {
-  font-size: 52rpx;
-  font-weight: 900;
-  text-shadow: 0 4rpx 30rpx rgba(252, 211, 77, 0.8), 0 0 60rpx rgba(252, 211, 77, 0.5);
-}
-
-@keyframes combo-appear {
-  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-  60% { transform: scale(1.3) rotate(5deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 /* 稀有度标签 */

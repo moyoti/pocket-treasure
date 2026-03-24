@@ -175,12 +175,12 @@
     <!-- 全屏点击区域 -->
     <view class="fullscreen-tap-area"></view>
 
-    <view class="collecting-content">
-      <!-- 关闭按钮 -->
-      <view class="close-btn" catchtap="closeCollectingModal">
-        <image class="close-icon" src="/images/icons/x.svg" mode="aspectFit" />
-      </view>
+    <!-- 关闭按钮 - 左下角 -->
+    <view class="close-btn-bottom" catchtap="closeCollectingModal">
+      <text class="close-btn-text">取消</text>
+    </view>
 
+    <view class="collecting-content">
       <!-- 圆形进度环 -->
       <view class="progress-ring-container">
         <view class="progress-ring-bg"></view>
@@ -195,14 +195,17 @@
         </view>
       </view>
 
-      <!-- 动态数字显示 -->
-      <view class="taps-display {{ comboCount >= 5 ? 'taps-big' : '' }}">
-        <text class="taps-number {{ isTapping ? 'tap-number-pop' : '' }}">{{ collectTaps }}</text>
-      </view>
+      <!-- 固定位置的数字和连击 -->
+      <view class="stats-section">
+        <!-- 动态数字显示 -->
+        <view class="taps-display {{ comboCount >= 5 ? 'taps-big' : '' }}">
+          <text class="taps-number {{ isTapping ? 'tap-number-pop' : '' }}">{{ collectTaps }}</text>
+        </view>
 
-      <!-- 连击提示 -->
-      <view class="combo-container" wx:if="{{ comboCount >= 3 }}">
-        <text class="combo-text" style="color: {{ comboCount >= 10 ? '#EF4444' : comboCount >= 7 ? '#F59E0B' : '#FCD34D' }};">{{ comboCount }} 连击!</text>
+        <!-- 连击提示 - 绝对定位，不影响布局 -->
+        <view class="combo-container" wx:if="{{ comboCount >= 3 }}">
+          <text class="combo-text" style="color: {{ comboCount >= 10 ? '#EF4444' : comboCount >= 7 ? '#F59E0B' : '#FCD34D' }};">{{ comboCount }} 连击!</text>
+        </view>
       </view>
 
       <!-- 稀有度标签 -->
