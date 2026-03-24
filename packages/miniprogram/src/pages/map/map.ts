@@ -284,6 +284,17 @@ Page({
       const result = await collectItem(selectedItem.id, latitude, longitude)
       hideLoading()
 
+      if (!result.success) {
+        let distText = ''
+        if (result.distance < 1000) {
+          distText = Math.round(result.distance) + '米'
+        } else {
+          distText = (result.distance / 1000).toFixed(1) + '公里'
+        }
+        showToast(`距离太远，请靠近至${distText}内`)
+        return
+      }
+
       const itemName = result.item?.name || '神秘宝藏'
       const itemRarity = result.item?.rarity || selectedItem.item?.rarity || 'common'
       const coins = result.rewards?.coins || 0
