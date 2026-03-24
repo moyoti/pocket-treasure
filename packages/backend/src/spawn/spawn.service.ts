@@ -461,7 +461,6 @@ export class SpawnService implements OnModuleInit {
       latitude: item.latitude,
       longitude: item.longitude,
       itemRarity: item.item.rarity,
-      itemName: item.item.name,
       poiName: item.poiName,
       expiresAt: item.expiresAt,
       createdAt: item.createdAt,
