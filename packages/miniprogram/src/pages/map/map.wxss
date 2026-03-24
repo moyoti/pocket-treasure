@@ -102,6 +102,19 @@
   animation: spin 1s linear infinite;
 }
 
+/* ===== 底部操作栏 ===== */
+.bottom-action-bar {
+  position: absolute;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 24rpx;
+  align-items: center;
+  z-index: 10;
+  padding: 0 24rpx;
+}
+
 /* ===== 信息栏 ===== */
 .info-bar {
   position: absolute;
