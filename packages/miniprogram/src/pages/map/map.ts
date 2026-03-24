@@ -39,6 +39,7 @@ Page({
     showItemPool: false,
     coordText: '定位中...',
     itemDistance: '',
+    collectedItemDistance: 0,
     showCollectSuccess: false,
     collectedItemName: '',
     collectedItemRarity: '',
@@ -281,16 +282,17 @@ Page({
     this.setData({
       selectedItem: item,
       showItemModal: true,
-      itemDistance: distText
+      itemDistance: distText,
+      collectedItemDistance: dist
     })
   },
 
   handleCollect() {
-    const { selectedItem, latitude, longitude } = this.data
+    const { selectedItem, collectedItemDistance } = this.data
 
     if (!selectedItem) return
 
-    const dist = calculateDistance(latitude, longitude, selectedItem.latitude, selectedItem.longitude)
+    const dist = collectedItemDistance
 
     if (dist > COLLECTION_RADIUS_METERS) {
       let distText = ''
