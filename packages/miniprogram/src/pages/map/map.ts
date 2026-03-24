@@ -58,10 +58,13 @@ Page({
     collectTaps: 0,
     collectTarget: 15,
     collectRarityColor: '#6B7280',
-    tapEffects: [] as { id: number; x: number; y: number; color: string }[],
+    tapEffects: [] as { id: number; x: number; y: number; color: string; scale: number }[],
     tapEffectId: 0,
     comboCount: 0,
-    lastTapTime: 0
+    lastTapTime: 0,
+    isTapping: false,
+    particles: [] as { id: number; x: number; y: number; color: string; delay: number; duration: number }[],
+    particleId: 0
   },
 
   onLoad() {
@@ -300,6 +303,8 @@ Page({
       legendary: 25
     }
 
+    const particles = this.generateParticles(rarityColors[rarity] || '#6B7280')
+
     this.setData({
       showItemModal: false,
       showCollecting: true,
@@ -308,8 +313,28 @@ Page({
       collectTarget: tapTargets[rarity] || 15,
       collectRarityColor: rarityColors[rarity] || '#6B7280',
       tapEffects: [],
-      tapEffectId: 0
+      tapEffectId: 0,
+      comboCount: 0,
+      lastTapTime: 0,
+      isTapping: false,
+      particles: particles,
+      particleId: 0
     })
+  },
+
+  generateParticles(color: string) {
+    const particles = []
+    for (let i = 0; i < 20; i++) {
+      particles.push({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        color: color,
+        delay: Math.random() * 2000,
+        duration: 1500 + Math.random() * 1000
+      })
+    }
+    return particles
   },
 
   handleCollectTap(e: any) {
@@ -326,27 +351,34 @@ Page({
     const newProgress = Math.min((newTaps / collectTarget) * 100, 100)
 
     const touch = e.touches && e.touches[0]
-    const x = touch ? touch.clientX - 20 : Math.random() * 200 + 50
-    const y = touch ? touch.clientY - 20 : Math.random() * 100 + 100
+    const x = touch ? touch.clientX - 25 : Math.random() * 300 + 50
+    const y = touch ? touch.clientY - 25 : Math.random() * 200 + 100
 
-    const colors = ['#FCD34D', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#10B981']
+    const colors = ['#FCD34D', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#10B981', '#06B6D4', '#84CC16']
     const color = colors[Math.floor(Math.random() * colors.length)]
+    const scale = 0.8 + Math.random() * 0.8
 
     const newEffect = {
       id: tapEffectId + 1,
       x,
       y,
-      color
+      color,
+      scale
     }
 
     this.setData({
       collectTaps: newTaps,
       collectProgress: newProgress,
-      tapEffects: [...tapEffects.slice(-15), newEffect],
+      tapEffects: [...tapEffects.slice(-20), newEffect],
       tapEffectId: tapEffectId + 1,
       comboCount: newCombo,
-      lastTapTime: now
+      lastTapTime: now,
+      isTapping: true
     })
+
+    setTimeout(() => {
+      this.setData({ isTapping: false })
+    }, 150)
 
     if (newProgress >= 100) {
       this.completeCollection()

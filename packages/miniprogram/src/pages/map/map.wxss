@@ -629,13 +629,74 @@
   justify-content: center;
 }
 
+/* 动态背景 */
 .collecting-backdrop {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%);
+  background: radial-gradient(circle at center, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%);
+  transition: background 0.3s ease;
+}
+
+.collecting-backdrop-common {
+  background: radial-gradient(circle at center, rgba(107,114,128,0.3) 0%, rgba(0,0,0,0.95) 100%);
+}
+
+.collecting-backdrop-rare {
+  background: radial-gradient(circle at center, rgba(14,165,233,0.3) 0%, rgba(0,0,0,0.95) 100%);
+}
+
+.collecting-backdrop-epic {
+  background: radial-gradient(circle at center, rgba(139,92,246,0.3) 0%, rgba(0,0,0,0.95) 100%);
+}
+
+.collecting-backdrop-legendary {
+  background: radial-gradient(circle at center, rgba(245,158,11,0.4) 0%, rgba(0,0,0,0.95) 100%);
+  animation: legendary-bg-pulse 1s ease-in-out infinite;
+}
+
+@keyframes legendary-bg-pulse {
+  0%, 100% { background: radial-gradient(circle at center, rgba(245,158,11,0.3) 0%, rgba(0,0,0,0.95) 100%); }
+  50% { background: radial-gradient(circle at center, rgba(245,158,11,0.5) 0%, rgba(0,0,0,0.95) 100%); }
+}
+
+/* 粒子容器 */
+.particles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  animation: particle-float 2s ease-out infinite;
+  opacity: 0.6;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-20vh) scale(1);
+    opacity: 0;
+  }
 }
 
 .collecting-content {
@@ -646,43 +707,78 @@
   justify-content: center;
 }
 
-/* 进度条容器 - 垂直填充样式 */
-.progress-ring-container {
+/* 圆形进度环 */
+.progress-ring-outer {
   position: relative;
-  width: 400rpx;
-  height: 400rpx;
+  width: 380rpx;
+  height: 380rpx;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 8rpx solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 10rpx solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 0 60rpx rgba(0, 0, 0, 0.5), inset 0 0 40rpx rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 80rpx rgba(0, 0, 0, 0.6), inset 0 0 60rpx rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease;
 }
 
-.progress-track {
+.progress-ring-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.progress-arc {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  transition: background 0.1s ease;
+}
+
+.progress-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: transform 0.1s linear;
+}
+
+.progress-semicircle {
+  position: absolute;
+  width: 50%;
   height: 100%;
   overflow: hidden;
 }
 
-.progress-fill {
-  position: absolute;
-  bottom: 0;
+.progress-semicircle-left {
   left: 0;
+}
+
+.progress-semicircle-right {
   right: 0;
-  transition: height 0.08s ease-out;
-  background: linear-gradient(to top, rgba(255,255,255,0.3) 0%, transparent 100%);
+}
+
+/* 环形脉动 */
+.ring-pulse {
+  animation: ring-tap 0.15s ease-out;
+}
+
+@keyframes ring-tap {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 /* 中心内容 */
 .progress-center {
-  position: relative;
-  z-index: 2;
+  position: absolute;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -690,122 +786,128 @@
 }
 
 .treasure-icon-wrap {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 40rpx;
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 38rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 8rpx solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.5);
 }
 
 .treasure-icon {
-  width: 90rpx;
-  height: 90rpx;
+  width: 85rpx;
+  height: 85rpx;
 }
 
-/* 宝物跳动动画 */
-.treasure-bouncing {
-  animation: treasure-bounce 0.15s ease-out;
+/* 宝物弹跳 */
+.treasure-pop {
+  animation: treasure-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes treasure-bounce {
+@keyframes treasure-pop {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.4) rotate(15deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* 稀有度发光 */
+.animate-glow-common {
+  animation: glow-common 1.5s ease-in-out infinite;
+}
+
+.animate-glow-rare {
+  animation: glow-rare 1.2s ease-in-out infinite;
+}
+
+.animate-glow-epic {
+  animation: glow-epic 1s ease-in-out infinite;
+}
+
+.animate-glow-legendary {
+  animation: glow-legendary 0.6s ease-in-out infinite;
+}
+
+@keyframes glow-common {
+  0%, 100% { box-shadow: 0 0 30rpx rgba(107, 114, 128, 0.5), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 60rpx rgba(107, 114, 128, 0.8), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+}
+
+@keyframes glow-rare {
+  0%, 100% { box-shadow: 0 0 40rpx rgba(14, 165, 233, 0.5), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 80rpx rgba(14, 165, 233, 0.9), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+}
+
+@keyframes glow-epic {
+  0%, 100% { box-shadow: 0 0 50rpx rgba(139, 92, 246, 0.6), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 100rpx rgba(139, 92, 246, 1), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+}
+
+@keyframes glow-legendary {
+  0%, 100% { box-shadow: 0 0 60rpx rgba(245, 158, 11, 0.7), 0 0 120rpx rgba(245, 158, 11, 0.4), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 100rpx rgba(245, 158, 11, 1), 0 0 200rpx rgba(245, 158, 11, 0.6), 0 8rpx 32rpx rgba(0, 0, 0, 0.5); }
+}
+
+/* 动态数字显示 */
+.taps-display {
+  margin-top: 50rpx;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.taps-big {
+  transform: scale(1.3);
+}
+
+.taps-number {
+  font-size: 80rpx;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 4rpx 30rpx rgba(0, 0, 0, 0.6);
+  display: inline-block;
+  transition: transform 0.1s ease;
+}
+
+.tap-number-pop {
+  animation: number-pop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes number-pop {
   0% { transform: scale(1); }
-  50% { transform: scale(1.25) rotate(10deg); }
+  50% { transform: scale(1.3); }
   100% { transform: scale(1); }
-}
-
-/* 环形摇晃 */
-.ring-shaking {
-  animation: ring-shake 0.1s ease-in-out;
-}
-
-@keyframes ring-shake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-3deg); }
-  75% { transform: rotate(3deg); }
 }
 
 /* 连击提示 */
 .combo-container {
-  margin-top: 40rpx;
-  animation: combo-pop 0.3s ease-out;
+  margin-top: 30rpx;
+  animation: combo-appear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .combo-text {
-  font-size: 48rpx;
+  font-size: 52rpx;
   font-weight: 900;
-  color: #FCD34D;
-  text-shadow: 0 4rpx 20rpx rgba(252, 211, 77, 0.6), 0 0 40rpx rgba(252, 211, 77, 0.4);
+  text-shadow: 0 4rpx 30rpx rgba(252, 211, 77, 0.8), 0 0 60rpx rgba(252, 211, 77, 0.5);
 }
 
-@keyframes combo-pop {
-  0% { transform: scale(0.5); opacity: 0; }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* 点击次数显示 */
-.collecting-taps-count {
-  margin-top: 30rpx;
-}
-
-.taps-number {
-  font-size: 72rpx;
-  font-weight: 900;
-  color: white;
-  text-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.5);
-}
-
-/* 稀有度发光效果 */
-.animate-common-glow {
-  animation: common-glow 1.5s ease-in-out infinite;
-}
-
-.animate-rare-glow {
-  animation: rare-glow 1.2s ease-in-out infinite;
-}
-
-.animate-epic-glow {
-  animation: epic-glow 1s ease-in-out infinite;
-}
-
-.animate-legendary-glow {
-  animation: legendary-glow 0.8s ease-in-out infinite;
-}
-
-@keyframes common-glow {
-  0%, 100% { box-shadow: 0 0 20rpx rgba(107, 114, 128, 0.4); }
-  50% { box-shadow: 0 0 40rpx rgba(107, 114, 128, 0.7); }
-}
-
-@keyframes rare-glow {
-  0%, 100% { box-shadow: 0 0 30rpx rgba(14, 165, 233, 0.5), 0 0 60rpx rgba(14, 165, 233, 0.3); }
-  50% { box-shadow: 0 0 50rpx rgba(14, 165, 233, 0.8), 0 0 100rpx rgba(14, 165, 233, 0.5); }
-}
-
-@keyframes epic-glow {
-  0%, 100% { box-shadow: 0 0 40rpx rgba(139, 92, 246, 0.6), 0 0 80rpx rgba(139, 92, 246, 0.4); }
-  50% { box-shadow: 0 0 70rpx rgba(139, 92, 246, 0.9), 0 0 140rpx rgba(139, 92, 246, 0.6); }
-}
-
-@keyframes legendary-glow {
-  0%, 100% { box-shadow: 0 0 50rpx rgba(245, 158, 11, 0.7), 0 0 100rpx rgba(245, 158, 11, 0.5), 0 0 150rpx rgba(245, 158, 11, 0.3); }
-  50% { box-shadow: 0 0 80rpx rgba(245, 158, 11, 1), 0 0 160rpx rgba(245, 158, 11, 0.7), 0 0 240rpx rgba(245, 158, 11, 0.4); }
+@keyframes combo-appear {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 /* 稀有度标签 */
 .collecting-rarity-label {
-  margin-top: 24rpx;
-  font-size: 32rpx;
+  margin-top: 28rpx;
+  font-size: 34rpx;
   font-weight: bold;
-  padding: 14rpx 40rpx;
+  padding: 16rpx 44rpx;
   border-radius: 50rpx;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   color: white;
-  backdrop-filter: blur(10rpx);
-  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12rpx);
+  border: 2rpx solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 2rpx;
 }
 
 /* 浮动点击效果 */
@@ -821,28 +923,28 @@
 
 .tap-effect-item {
   position: absolute;
-  animation: tap-burst 0.5s ease-out forwards;
+  animation: tap-explode 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   pointer-events: none;
 }
 
 .tap-float-text {
-  font-size: 42rpx;
+  font-size: 48rpx;
   font-weight: 900;
-  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5);
+  text-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.6);
 }
 
-@keyframes tap-burst {
+@keyframes tap-explode {
   0% {
     opacity: 1;
-    transform: scale(0.5) translateY(0);
+    transform: scale(0.3) translateY(0) rotate(0deg);
   }
-  30% {
+  40% {
     opacity: 1;
-    transform: scale(1.5) translateY(-20rpx);
+    transform: scale(1.8) translateY(-30rpx) rotate(15deg);
   }
   100% {
     opacity: 0;
-    transform: scale(1) translateY(-100rpx);
+    transform: scale(1) translateY(-120rpx) rotate(-10deg);
   }
 }
 
