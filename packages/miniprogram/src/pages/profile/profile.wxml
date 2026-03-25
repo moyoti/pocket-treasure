@@ -1,65 +1,68 @@
 <view class="container">
   <!-- 未登录状态 -->
   <view class="guest-card" wx:if="{{ !isLoggedIn }}">
-    <view class="guest-avatar">👤</view>
+    <view class="guest-avatar"><image class="icon-xl" src="/images/icons/user.svg" mode="aspectFit" /></view>
     <view class="guest-title">探险家</view>
     <view class="guest-desc">登录后可保存游戏进度</view>
     <button class="cartoon-btn login-btn" bindtap="goToLogin">
-      🔐 立即登录
+      <image class="icon" src="/images/icons/lock.svg" mode="aspectFit" /> 立即登录
     </button>
   </view>
-  
+
   <!-- 已登录状态 -->
   <block wx:else>
     <!-- 用户信息卡片 -->
     <view class="profile-card">
       <view class="avatar">
-        <text class="avatar-text">{{ userInfo.username ? userInfo.username[0].toUpperCase() : '探' }}</text>
+        <text class="avatar-text">{{ avatarLetter }}</text>
       </view>
       <view class="username">{{ userInfo.username || '探险家' }}</view>
       <view class="email">{{ userInfo.email || '' }}</view>
-      
+
       <view class="balance-badge">
-        <text class="balance-icon">💰</text>
+        <image class="icon balance-icon" src="/images/icons/coins.svg" mode="aspectFit" />
         <text class="balance-value">{{ balance }}</text>
         <text class="balance-unit">金币</text>
       </view>
     </view>
-    
+
     <!-- 统计信息 -->
-    <view class="stats-card" wx:if="{{ stats }}">
-      <view class="stat-item">
-        <view class="stat-value">{{ stats.collection?.totalItems || 0 }}</view>
-        <view class="stat-label">收集物品</view>
+    <view class="stats-row">
+      <view class="stats-item">
+        <view class="stats-number">{{ totalItems }}</view>
+        <view class="stats-label">收集物品</view>
       </view>
-      <view class="stat-divider"></view>
-      <view class="stat-item">
-        <view class="stat-value">{{ stats.achievements?.completed || 0 }}</view>
-        <view class="stat-label">成就</view>
+      <view class="stats-item">
+        <view class="stats-number">{{ completedAchievements }}</view>
+        <view class="stats-label">成就</view>
       </view>
-      <view class="stat-divider"></view>
-      <view class="stat-item">
-        <view class="stat-value">{{ stats.friends || 0 }}</view>
-        <view class="stat-label">好友</view>
+      <view class="stats-item">
+        <view class="stats-number">{{ friendCount }}</view>
+        <view class="stats-label">好友</view>
       </view>
     </view>
   </block>
-  
+
   <!-- 菜单列表 -->
   <view class="menu-card">
-    <view 
-      class="menu-item" 
-      wx:for="{{ menuItems }}" 
+    <view
+      class="menu-item"
+      wx:for="{{ menuItems }}"
       wx:key="path"
       bindtap="navigateTo"
       data-path="{{ item.path }}"
     >
-      <view class="menu-icon">{{ item.icon }}</view>
+      <view class="menu-icon-wrapper" style="background-color: {{ item.color }}20;">
+        <image class="icon" src="{{ item.icon }}" mode="aspectFit" />
+      </view>
       <view class="menu-label">{{ item.label }}</view>
-      <view class="menu-arrow">›</view>
+      <view class="menu-right">
+        <text class="menu-extra" wx:if="{{ item.extra }}">{{ item.extra }}</text>
+        <image class="icon-sm menu-arrow-icon" src="/images/icons/chevron-right.svg" mode="aspectFit" />
+      </view>
     </view>
   </view>
-  
+
   <!-- 退出登录 -->
-  <button class="logout-btn" bindtap="handleLogout" wx:if="{{ isLoggedIn }}">退出登录</button>
+  <view class="logout-btn" bindtap="handleLogout" wx:if="{{ isLoggedIn }}">退出登录</view>
 </view>

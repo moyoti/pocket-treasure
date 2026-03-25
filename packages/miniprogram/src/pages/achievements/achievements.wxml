@@ -1,50 +1,125 @@
 <view class="container">
-  <!-- 标题 -->
+  <!-- 顶部栏 -->
   <view class="header">
-    <view class="title">🏆 成就</view>
-  </view>
-  
-  <!-- 加载中 -->
-  <view class="loading-container" wx:if="{{ loading }}">
-    <view class="loading-spinner"></view>
-  </view>
-  
-  <!-- 空状态 -->
-  <view class="empty-state" wx:elif="{{ achievements.length === 0 }}">
-    <view class="empty-state-icon">🏆</view>
-    <view class="empty-state-text">暂无成就</view>
-    <view class="empty-state-subtext">开始收集宝藏来解锁成就</view>
-  </view>
-  
-  <!-- 成就列表 -->
-  <view class="achievement-list" wx:else>
-    <view class="achievement-card" wx:for="{{ achievements }}" wx:key="achievement.id">
-      <view class="achievement-header">
-        <view class="achievement-icon">{{ item.achievement.icon || '🏆' }}</view>
-        <view class="achievement-info">
-          <view class="achievement-name">{{ item.achievement.name }}</view>
-          <view class="achievement-desc">{{ item.achievement.description }}</view>
-        </view>
-        <button 
-          class="claim-btn" 
-          wx:if="{{ item.canClaim }}"
-          bindtap="handleClaim"
-          data-id="{{ item.achievement.id }}"
-        >领取</button>
-        <view class="claimed-badge" wx:if="{{ item.status === 'claimed' }}">✓ 已领取</view>
-      </view>
-      
-      <view class="achievement-progress">
-        <view class="progress-bar">
-          <view class="progress-fill" style="width: {{ (item.progress / item.requirement) * 100 }}%"></view>
-        </view>
-        <view class="progress-text">{{ item.progress }} / {{ item.requirement }}</view>
-      </view>
-      
-      <view class="achievement-rewards" wx:if="{{ item.achievement.rewards }}">
-        <view class="reward-item">💰 {{ item.achievement.rewards.coins }}</view>
-        <view class="reward-item">⭐ {{ item.achievement.rewards.experience }}</view>
-      </view>
+    <view class="header-center">
+      <image class="icon-lg title-icon" src="/images/icons/trophy.svg" mode="aspectFit" />
+      <text class="title-text">成就</text>
     </view>
   </view>
+
+  <!-- 成功提示 -->
+  <view class="success-toast animate-slide-in-down" wx:if="{{ showSuccess }}">
+    <image class="icon-sm" src="/images/icons/check.svg" mode="aspectFit" />
+    <text class="toast-text">成就奖励领取成功!</text>
+    <view class="toast-coin">
+      <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+      <text> +{{ successRewardCoins }}</text>
+    </view>
+    <view class="toast-exp">
+      <image class="icon-sm" src="/images/icons/star.svg" mode="aspectFit" />
+      <text> +{{ successRewardExp }}</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{ loading }}">
+    <view class="cartoon-loader"></view>
+  </view>
+
+  <block wx:else>
+    <!-- 统计卡片 -->
+    <view class="stats-card">
+      <view class="stats-left">
+        <text class="stats-label">已完成成就</text>
+        <text class="stats-value">{{ completedCount }} / {{ totalCount }}</text>
+        <text class="stats-claim-hint" wx:if="{{ canClaimCount > 0 }}">{{ canClaimCount }} 个奖励待领取</text>
+      </view>
+      <view class="stats-badge">
+        <image class="icon-lg" src="/images/icons/trophy.svg" mode="aspectFit" />
+      </view>
+    </view>
+
+    <!-- 总进度条 -->
+    <view class="progress-bar-wrap">
+      <view class="progress-bar-bg">
+        <view class="progress-bar-fill" style="width: {{ progressPercent }}%;"></view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{ achievements.length === 0 }}">
+      <view class="empty-icon-circle">
+        <image class="icon-xl" src="/images/icons/trophy.svg" mode="aspectFit" />
+      </view>
+      <view class="empty-state-text">暂无成就</view>
+      <view class="empty-state-subtext">开始收集宝藏来解锁成就</view>
+    </view>
+
+    <!-- 成就列表 -->
+    <view class="achievement-list animate-page-enter" wx:else>
+      <view
+        class="achievement-card {{ item.isClaimable ? 'claimable' : '' }}"
+        wx:for="{{ achievements }}"
+        wx:key="achievement.id"
+      >
+        <!-- 渐变头部 -->
+        <view class="ach-header" style="background: {{ item.tierGradient }};">
+          <view class="ach-icon-circle">
+            <image class="icon" src="{{ item.achievementIcon }}" mode="aspectFit" />
+          </view>
+          <view class="ach-header-info">
+            <text class="ach-name">{{ item.achievementName }}</text>
+            <view class="ach-type-badge">
+              <text>{{ item.typeLabel }}</text>
+            </view>
+          </view>
+          <!-- 领取按钮/已领取 -->
+          <view class="ach-claim-btn" wx:if="{{ item.isClaimable }}" bindtap="handleClaim" data-id="{{ item.achievement.id }}">
+            <text wx:if="{{ claimingId !== item.achievement.id }}">领取</text>
+            <text wx:else>...</text>
+          </view>
+          <view class="ach-claimed-badge" wx:elif="{{ item.isClaimed }}">
+            <view class="ach-claimed-inner">
+              <image class="icon-sm" src="/images/icons/check.svg" mode="aspectFit" />
+              <text> 已领取</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 描述 + 进度 -->
+        <view class="ach-body">
+          <text class="ach-desc">{{ item.achievementDesc }}</text>
+
+          <view class="ach-progress">
+            <view class="ach-progress-bar">
+              <view class="ach-progress-fill" style="width: {{ item.progressPct }}%;"></view>
+            </view>
+            <text class="ach-progress-text">{{ item.progressText }}</text>
+          </view>
+
+          <!-- 奖励 -->
+          <view class="ach-rewards">
+            <view class="ach-reward" wx:if="{{ item.rewardCoins > 0 }}">
+              <view class="reward-inner">
+                <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+                <text> {{ item.rewardCoins }}</text>
+              </view>
+            </view>
+            <view class="ach-reward" wx:if="{{ item.rewardExp > 0 }}">
+              <view class="reward-inner">
+                <image class="icon-sm" src="/images/icons/star.svg" mode="aspectFit" />
+                <text> {{ item.rewardExp }}</text>
+              </view>
+            </view>
+            <view class="ach-reward ach-reward-title" wx:if="{{ item.rewardTitle }}">
+              <view class="reward-inner">
+                <image class="icon-sm" src="/images/icons/medal.svg" mode="aspectFit" />
+                <text> {{ item.rewardTitle }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
 </view>

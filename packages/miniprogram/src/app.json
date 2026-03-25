@@ -10,11 +10,17 @@
     "pages/achievements/achievements",
     "pages/friends/friends",
     "pages/chat/chat",
-    "pages/tasks/tasks"
+    "pages/tasks/tasks",
+    "pages/leaderboard/leaderboard",
+    "pages/market/market",
+    "pages/profile-settings/profile-settings",
+    "pages/profile-stats/profile-stats",
+    "pages/profile-help/profile-help",
+    "pages/profile-about/profile-about"
   ],
   "window": {
     "navigationBarBackgroundColor": "#FFFFFF",
-    "navigationBarTitleText": "寻宝记",
+    "navigationBarTitleText": "宝藏地图",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#FFF8E7",
     "backgroundTextStyle": "dark"
@@ -26,12 +32,6 @@
     "borderStyle": "black",
     "list": [
       {
-        "pagePath": "pages/map/map",
-        "text": "地图",
-        "iconPath": "images/map.png",
-        "selectedIconPath": "images/map-active.png"
-      },
-      {
         "pagePath": "pages/inventory/inventory",
         "text": "背包",
         "iconPath": "images/package.png",
@@ -42,6 +42,18 @@
         "text": "商店",
         "iconPath": "images/shop.png",
         "selectedIconPath": "images/shop-active.png"
+      },
+      {
+        "pagePath": "pages/map/map",
+        "text": "地图",
+        "iconPath": "images/map.png",
+        "selectedIconPath": "images/map-active.png"
+      },
+      {
+        "pagePath": "pages/gacha/gacha",
+        "text": "抽奖",
+        "iconPath": "images/gacha.png",
+        "selectedIconPath": "images/gacha-active.png"
       },
       {
         "pagePath": "pages/profile/profile",

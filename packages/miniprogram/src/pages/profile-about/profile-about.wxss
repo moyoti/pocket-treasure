@@ -1,0 +1,220 @@
+.icon {
+  width: 36rpx;
+  height: 36rpx;
+  vertical-align: middle;
+}
+.icon-sm {
+  width: 28rpx;
+  height: 28rpx;
+}
+.icon-lg {
+  width: 48rpx;
+  height: 48rpx;
+}
+.icon-xl {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.container {
+  min-height: 100vh;
+  padding: 24rpx;
+  padding-bottom: 120rpx;
+}
+
+/* App Card */
+.app-card {
+  background: white;
+  border-radius: 30rpx;
+  border: 6rpx solid var(--border-color);
+  box-shadow: 0 8rpx 0 rgba(0, 0, 0, 0.1);
+  padding: 60rpx 30rpx;
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.app-icon {
+  width: 140rpx;
+  height: 140rpx;
+  background: linear-gradient(135deg, #FDE047 0%, #FB923C 100%);
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24rpx;
+  border: 6rpx solid var(--border-color);
+  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.15);
+}
+
+.app-icon-img {
+  display: block;
+}
+
+.app-name {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.app-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-muted);
+  margin-top: 8rpx;
+}
+
+.version-badge {
+  display: inline-block;
+  background: #FEF3C7;
+  border: 4rpx solid #F59E0B;
+  border-radius: 30rpx;
+  padding: 10rpx 32rpx;
+  margin-top: 24rpx;
+}
+
+.version-text {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #92400E;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 24rpx;
+  border: 6rpx solid var(--border-color);
+  box-shadow: 0 8rpx 0 rgba(0, 0, 0, 0.1);
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 20rpx;
+}
+
+.card-icon {
+  flex-shrink: 0;
+}
+
+.card-desc {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Tech Grid */
+.tech-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.tech-item {
+  width: calc(50% - 8rpx);
+  background: #F9FAFB;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  border: 4rpx solid #E5E7EB;
+}
+
+.tech-label {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.tech-value {
+  display: block;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-top: 4rpx;
+}
+
+/* Link Items */
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx;
+  background: #F9FAFB;
+  border-radius: 16rpx;
+  border: 4rpx solid #E5E7EB;
+  margin-bottom: 12rpx;
+}
+
+.link-item:last-child {
+  margin-bottom: 0;
+}
+
+.link-icon {
+  flex-shrink: 0;
+}
+
+.link-text {
+  flex: 1;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.link-action {
+  font-size: 24rpx;
+  color: #2563EB;
+  font-weight: bold;
+}
+
+/* License */
+.license-box {
+  background: #F9FAFB;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  border: 4rpx solid #E5E7EB;
+}
+
+.license-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+.license-desc {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.footer-heart {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.footer-copyright {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-muted);
+  margin-top: 12rpx;
+}
+
+.footer-slogan {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-top: 8rpx;
+}

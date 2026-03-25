@@ -1,0 +1,108 @@
+<view class="container">
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{ loading }}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+    <!-- 收集总览 -->
+    <view class="card">
+      <view class="card-title">
+        <image class="icon card-icon" src="/images/icons/trending-up.svg" mode="aspectFit" />
+        <text>收集总览</text>
+      </view>
+      <view class="overview-grid">
+        <view class="overview-item overview-item-yellow">
+          <text class="overview-number">{{ totalItems }}</text>
+          <text class="overview-label">总收集数</text>
+        </view>
+        <view class="overview-item overview-item-green">
+          <text class="overview-number">{{ uniqueItems }}</text>
+          <text class="overview-label">物品种类</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 稀有度分布 -->
+    <view class="card">
+      <view class="card-title">
+        <image class="icon card-icon" src="/images/icons/gem.svg" mode="aspectFit" />
+        <text>稀有度分布</text>
+      </view>
+
+      <view class="rarity-row" wx:if="{{ totalItems > 0 }}">
+        <text class="rarity-label">普通</text>
+        <view class="progress-bar">
+          <view class="progress-fill progress-common" style="width: {{ commonPct }}%"></view>
+        </view>
+        <text class="rarity-count rarity-count-common">{{ commonCount }}</text>
+      </view>
+
+      <view class="rarity-row" wx:if="{{ totalItems > 0 }}">
+        <text class="rarity-label">稀有</text>
+        <view class="progress-bar">
+          <view class="progress-fill progress-rare" style="width: {{ rarePct }}%"></view>
+        </view>
+        <text class="rarity-count rarity-count-rare">{{ rareCount }}</text>
+      </view>
+
+      <view class="rarity-row" wx:if="{{ totalItems > 0 }}">
+        <text class="rarity-label">史诗</text>
+        <view class="progress-bar">
+          <view class="progress-fill progress-epic" style="width: {{ epicPct }}%"></view>
+        </view>
+        <text class="rarity-count rarity-count-epic">{{ epicCount }}</text>
+      </view>
+
+      <view class="rarity-row" wx:if="{{ totalItems > 0 }}">
+        <text class="rarity-label">传说</text>
+        <view class="progress-bar">
+          <view class="progress-fill progress-legendary" style="width: {{ legendaryPct }}%"></view>
+        </view>
+        <text class="rarity-count rarity-count-legendary">{{ legendaryCount }}</text>
+      </view>
+
+      <view class="empty-hint" wx:if="{{ totalItems === 0 }}">
+        <text>还没有收集到任何物品，快去探索吧！</text>
+      </view>
+    </view>
+
+    <!-- 成就进度 -->
+    <view class="card">
+      <view class="card-title">
+        <image class="icon card-icon" src="/images/icons/trophy.svg" mode="aspectFit" />
+        <text>成就进度</text>
+      </view>
+      <view class="achievement-box">
+        <view class="achievement-header">
+          <text class="achievement-label">已完成成就</text>
+          <text class="achievement-value">{{ completedAchievements }} / {{ totalAchievements }}</text>
+        </view>
+        <view class="progress-bar progress-bar-large">
+          <view class="progress-fill progress-achievement" style="width: {{ achievementPct }}%"></view>
+        </view>
+        <text class="achievement-hint" wx:if="{{ totalAchievements > 0 }}">已完成 {{ achievementPct }}% 的成就</text>
+        <text class="achievement-hint" wx:else>暂无成就数据</text>
+      </view>
+    </view>
+
+    <!-- 探险历程 -->
+    <view class="card">
+      <view class="card-title">
+        <image class="icon card-icon" src="/images/icons/calendar.svg" mode="aspectFit" />
+        <text>探险历程</text>
+      </view>
+      <view class="overview-grid">
+        <view class="overview-item overview-item-blue">
+          <text class="overview-number">{{ daysSinceJoin }}</text>
+          <text class="overview-label">加入天数</text>
+        </view>
+        <view class="overview-item overview-item-purple">
+          <text class="overview-number">{{ dailyAverage }}</text>
+          <text class="overview-label">日均收集</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

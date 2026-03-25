@@ -1,0 +1,76 @@
+<view class="container">
+  <!-- 应用信息 -->
+  <view class="app-card">
+    <view class="app-icon">
+      <image class="icon-xl app-icon-img" src="/images/icons/map.svg" mode="aspectFit" />
+    </view>
+    <text class="app-name">宝藏地图</text>
+    <text class="app-subtitle">Treasure Hunt</text>
+    <view class="version-badge">
+      <text class="version-text">版本 {{ version }}</text>
+    </view>
+  </view>
+
+  <!-- 应用简介 -->
+  <view class="card">
+    <view class="card-title">
+      <image class="icon card-icon" src="/images/icons/smartphone.svg" mode="aspectFit" />
+      <text>应用简介</text>
+    </view>
+    <text class="card-desc">宝藏地图是一款基于地理位置的物品收集游戏，类似于 Pokemon GO。玩家可以在真实世界中探索，在各个地标位置收集虚拟宝藏物品。收集稀有物品，完成成就，与其他玩家竞争排名！</text>
+  </view>
+
+  <!-- 技术栈 -->
+  <view class="card">
+    <view class="card-title">
+      <image class="icon card-icon" src="/images/icons/wrench.svg" mode="aspectFit" />
+      <text>技术栈</text>
+    </view>
+    <view class="tech-grid">
+      <view class="tech-item" wx:for="{{ techStack }}" wx:key="name">
+        <text class="tech-label">{{ item.name }}</text>
+        <text class="tech-value">{{ item.tech }}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 联系方式 -->
+  <view class="card">
+    <view class="card-title">
+      <image class="icon card-icon" src="/images/icons/globe.svg" mode="aspectFit" />
+      <text>联系方式</text>
+    </view>
+    <view class="link-item" bindtap="copyEmail">
+      <image class="icon link-icon" src="/images/icons/mail.svg" mode="aspectFit" />
+      <text class="link-text">support@treasurehunt.game</text>
+      <text class="link-action">复制</text>
+    </view>
+    <view class="link-item">
+      <image class="icon link-icon" src="/images/icons/monitor.svg" mode="aspectFit" />
+      <text class="link-text">GitHub 开源仓库</text>
+    </view>
+    <view class="link-item">
+      <image class="icon link-icon" src="/images/icons/globe.svg" mode="aspectFit" />
+      <text class="link-text">官方网站</text>
+    </view>
+  </view>
+
+  <!-- 开源许可 -->
+  <view class="card">
+    <view class="card-title">
+      <image class="icon card-icon" src="/images/icons/file-text.svg" mode="aspectFit" />
+      <text>开源许可</text>
+    </view>
+    <view class="license-box">
+      <text class="license-name">MIT License</text>
+      <text class="license-desc">本项目基于 MIT 许可证开源，欢迎贡献代码和提出建议。</text>
+    </view>
+  </view>
+
+  <!-- 底部 -->
+  <view class="footer">
+    <view class="footer-heart"><image class="icon-sm" src="/images/icons/heart.svg" mode="aspectFit" /> Made with love</view>
+    <text class="footer-copyright">© 2024 Treasure Hunt. All rights reserved.</text>
+    <text class="footer-slogan">探索世界，收集宝藏，享受游戏乐趣！</text>
+  </view>
+</view>

@@ -1,0 +1,220 @@
+<view class="container {{ bodyClass }}">
+  <view class="section">
+    <view class="section-header section-header-yellow">
+      <image class="icon section-icon" src="/images/icons/bell.svg" mode="aspectFit" />
+      <text class="section-title">{{i18n.settings.notifications}}</text>
+    </view>
+    <view class="section-body">
+      <view class="setting-item" bindtap="toggleSetting" data-key="pushNotifications">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.pushNotifications}}</text>
+          <text class="setting-desc">{{i18n.settings.pushNotificationsDesc}}</text>
+        </view>
+        <view class="toggle {{ pushNotifications ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="emailNotifications">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.emailNotifications}}</text>
+          <text class="setting-desc">{{i18n.settings.emailNotificationsDesc}}</text>
+        </view>
+        <view class="toggle {{ emailNotifications ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="achievementNotifications">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.achievementNotifications}}</text>
+          <text class="setting-desc">{{i18n.settings.achievementNotificationsDesc}}</text>
+        </view>
+        <view class="toggle {{ achievementNotifications ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="rareItemAlerts">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.rareItemAlerts}}</text>
+          <text class="setting-desc">{{i18n.settings.rareItemAlertsDesc}}</text>
+        </view>
+        <view class="toggle {{ rareItemAlerts ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header section-header-green">
+      <image class="icon section-icon" src="/images/icons/map.svg" mode="aspectFit" />
+      <text class="section-title">{{i18n.settings.mapSettings}}</text>
+    </view>
+    <view class="section-body">
+      <view class="setting-item" bindtap="toggleSetting" data-key="showAllItems">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.showAllItems}}</text>
+          <text class="setting-desc">{{i18n.settings.showAllItemsDesc}}</text>
+        </view>
+        <view class="toggle {{ showAllItems ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="showRarityFilter">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.showRarityFilter}}</text>
+          <text class="setting-desc">{{i18n.settings.showRarityFilterDesc}}</text>
+        </view>
+        <view class="toggle {{ showRarityFilter ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="autoCollectNearby">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.autoCollect}}</text>
+          <text class="setting-desc">{{i18n.settings.autoCollectDesc}}</text>
+        </view>
+        <view class="toggle {{ autoCollectNearby ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.defaultZoom}}</text>
+          <text class="setting-desc">{{i18n.settings.defaultZoomDesc}}: {{ defaultZoom }}</text>
+        </view>
+      </view>
+      <slider
+        class="zoom-slider"
+        min="10"
+        max="20"
+        value="{{ defaultZoom }}"
+        activeColor="#F59E0B"
+        backgroundColor="#E5E7EB"
+        block-size="24"
+        bindchange="onZoomChange"
+      />
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header section-header-purple">
+      <image class="icon section-icon" src="/images/icons/lock.svg" mode="aspectFit" />
+      <text class="section-title">{{i18n.settings.privacy}}</text>
+    </view>
+    <view class="section-body">
+      <view class="setting-item" bindtap="toggleSetting" data-key="publicProfile">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.publicProfile}}</text>
+          <text class="setting-desc">{{i18n.settings.publicProfileDesc}}</text>
+        </view>
+        <view class="toggle {{ publicProfile ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="showOnLeaderboard">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.showOnLeaderboard}}</text>
+          <text class="setting-desc">{{i18n.settings.showOnLeaderboardDesc}}</text>
+        </view>
+        <view class="toggle {{ showOnLeaderboard ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="shareLocation">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.shareLocation}}</text>
+          <text class="setting-desc">{{i18n.settings.shareLocationDesc}}</text>
+        </view>
+        <view class="toggle {{ shareLocation ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header section-header-blue">
+      <image class="icon section-icon" src="/images/icons/palette.svg" mode="aspectFit" />
+      <text class="section-title">{{i18n.settings.display}}</text>
+    </view>
+    <view class="section-body">
+      <view class="setting-item" bindtap="toggleSetting" data-key="darkMode">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.darkMode}}</text>
+          <text class="setting-desc">{{i18n.settings.darkModeDesc}}</text>
+        </view>
+        <view class="toggle {{ darkMode ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="highContrast">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.highContrast}}</text>
+          <text class="setting-desc">{{i18n.settings.highContrastDesc}}</text>
+        </view>
+        <view class="toggle {{ highContrast ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+      <view class="setting-divider"></view>
+      <view class="setting-item" bindtap="toggleSetting" data-key="reducedMotion">
+        <view class="setting-info">
+          <text class="setting-title">{{i18n.settings.reducedMotion}}</text>
+          <text class="setting-desc">{{i18n.settings.reducedMotionDesc}}</text>
+        </view>
+        <view class="toggle {{ reducedMotion ? 'toggle-on' : '' }}">
+          <view class="toggle-dot"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header section-header-red">
+      <image class="icon section-icon" src="/images/icons/globe.svg" mode="aspectFit" />
+      <text class="section-title">{{i18n.settings.language}}</text>
+    </view>
+    <view class="section-body">
+      <view class="lang-grid">
+        <view
+          class="lang-item {{ language === 'zh-CN' ? 'lang-item-active' : '' }}"
+          bindtap="selectLanguage"
+          data-lang="zh-CN"
+        >
+          <image class="icon-lg lang-flag-icon" src="/images/icons/flag-cn.svg" mode="aspectFit" />
+          <text class="lang-name">中文</text>
+        </view>
+        <view
+          class="lang-item {{ language === 'en' ? 'lang-item-active' : '' }}"
+          bindtap="selectLanguage"
+          data-lang="en"
+        >
+          <image class="icon-lg lang-flag-icon" src="/images/icons/flag-us.svg" mode="aspectFit" />
+          <text class="lang-name">English</text>
+        </view>
+        <view
+          class="lang-item {{ language === 'ja' ? 'lang-item-active' : '' }}"
+          bindtap="selectLanguage"
+          data-lang="ja"
+        >
+          <image class="icon-lg lang-flag-icon" src="/images/icons/flag-jp.svg" mode="aspectFit" />
+          <text class="lang-name">日本語</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="btn-group">
+    <button class="cartoon-btn save-btn" bindtap="saveSettings" disabled="{{saving}}"><image class="icon" src="/images/icons/save.svg" mode="aspectFit" /> {{i18n.common.save}}</button>
+    <view class="reset-btn" bindtap="resetSettings"><image class="icon" src="/images/icons/trash-2.svg" mode="aspectFit" /> {{i18n.settings.resetSettings}}</view>
+  </view>
+</view>

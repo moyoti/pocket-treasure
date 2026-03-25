@@ -1,37 +1,124 @@
-<view class="container">
-  <!-- 消息列表 -->
-  <view class="messages">
-    <view class="loading-container" wx:if="{{ loading }}">
+<!-- 会话列表模式 -->
+<view class="container" wx:if="{{mode === 'list'}}">
+  <!-- 好友快捷入口 -->
+  <view class="quick-friends" wx:if="{{friends.length > 0}}">
+    <view class="quick-label">开始聊天</view>
+    <scroll-view class="quick-scroll" scroll-x="true" enable-flex="true">
+      <view
+        class="quick-friend"
+        wx:for="{{friends}}"
+        wx:key="id"
+        bindtap="openFriendChat"
+        data-friend="{{item}}"
+      >
+        <view class="quick-avatar-wrap">
+          <view class="quick-avatar">{{item.avatarLetter}}</view>
+          <view class="quick-online" wx:if="{{item.isOnline}}"></view>
+        </view>
+        <view class="quick-name">{{item.username}}</view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 最近会话 -->
+  <view class="conv-section">
+    <view class="loading-container" wx:if="{{loading}}">
       <view class="loading-spinner"></view>
+      <view class="loading-text">加载中...</view>
     </view>
-    
-    <view class="empty-state" wx:elif="{{ messages.length === 0 }}">
-      <view class="empty-state-icon">💬</view>
-      <view class="empty-state-text">暂无消息</view>
-      <view class="empty-state-subtext">发送一条消息开始对话</view>
+
+    <view wx:elif="{{conversations.length === 0}}" class="empty-state">
+      <view class="empty-icon"><image class="icon-xl" src="/images/icons/message-circle.svg" mode="aspectFit" /></view>
+      <view class="empty-title">暂无对话</view>
+      <view class="empty-desc">点击上方好友开始聊天！</view>
     </view>
-    
+
     <view wx:else>
-      <view class="message {{ item.senderId === userId ? 'received' : 'sent' }}" wx:for="{{ messages }}" wx:key="id">
-        <view class="message-bubble">
-          <view class="message-content">{{ item.content }}</view>
-          <view class="message-time">{{ item.createdAt }}</view>
+      <view class="conv-label">最近聊天</view>
+      <view class="conv-list">
+        <view
+          class="conv-item"
+          wx:for="{{conversations}}"
+          wx:key="userId"
+          bindtap="openChat"
+          data-userid="{{item.userId}}"
+          data-username="{{item.username}}"
+        >
+          <view class="conv-avatar-wrap">
+            <view class="conv-avatar">{{item.avatarLetter}}</view>
+            <view class="conv-unread" wx:if="{{item.unreadCount > 0}}">
+              {{item.unreadCount > 9 ? '9+' : item.unreadCount}}
+            </view>
+          </view>
+          <view class="conv-info">
+            <view class="conv-top">
+              <view class="conv-name">{{item.username}}</view>
+              <view class="conv-time">{{item.lastMessageTime}}</view>
+            </view>
+            <view class="conv-preview">{{item.lastMessagePreview}}</view>
+          </view>
         </view>
       </view>
     </view>
   </view>
-  
-  <!-- 输入框 -->
+</view>
+
+<!-- 聊天模式 -->
+<view class="chat-container" wx:if="{{mode === 'chat'}}">
+  <!-- 消息列表 -->
+  <scroll-view
+    class="message-list"
+    scroll-y="true"
+    scroll-into-view="{{scrollToMessage}}"
+    scroll-with-animation="true"
+  >
+    <view class="loading-container" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+    </view>
+
+    <view wx:elif="{{messages.length === 0}}" class="empty-chat">
+      <view class="empty-icon"><image class="icon-xl" src="/images/icons/message-circle.svg" mode="aspectFit" /></view>
+      <view class="empty-title">开始聊天吧</view>
+      <view class="empty-desc">发送一条消息开始对话！</view>
+    </view>
+
+    <view wx:else class="messages-wrap">
+      <view
+        class="message {{item.isOwn ? 'message-own' : 'message-other'}}"
+        wx:for="{{messages}}"
+        wx:key="id"
+        id="{{item.msgId}}"
+      >
+        <!-- 对方消息 -->
+        <view class="msg-avatar" wx:if="{{!item.isOwn}}">
+          <view class="msg-avatar-circle">{{username[0]}}</view>
+        </view>
+        <view class="msg-body">
+          <view class="msg-bubble {{item.isOwn ? 'bubble-own' : 'bubble-other'}}">
+            <text class="msg-content">{{item.content}}</text>
+          </view>
+          <view class="msg-time">{{item.formattedTime}}</view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 输入栏 -->
   <view class="input-bar">
-    <input 
-      class="message-input" 
-      placeholder="输入消息..." 
-      value="{{ inputText }}"
+    <input
+      class="message-input"
+      placeholder="输入消息..."
+      value="{{inputText}}"
       bindinput="onInputChange"
       bindconfirm="handleSend"
+      confirm-type="send"
+      adjust-position="{{true}}"
     />
-    <button class="send-btn" bindtap="handleSend" disabled="{{ !inputText.trim() || sending }}">
-      {{ sending ? '...' : '发送' }}
-    </button>
+    <view
+      class="send-btn {{!inputText || sending ? 'send-btn-disabled' : ''}}"
+      bindtap="handleSend"
+    >
+      {{sending ? '...' : '发送'}}
+    </view>
   </view>
 </view>

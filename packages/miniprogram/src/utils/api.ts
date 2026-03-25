@@ -248,6 +248,10 @@ export async function getLeaderboard() {
   return request<any[]>({ url: '/leaderboard' })
 }
 
+export async function getMyLeaderboardRank() {
+  return request<{ rank: number }>({ url: '/leaderboard/me' })
+}
+
 // ==================== 好友 API ====================
 export async function getFriends() {
   const res = await request<any[]>({ url: '/friends' })
@@ -345,6 +349,43 @@ export async function updateUserProfile(data: any) {
     url: '/users/me',
     method: 'PATCH',
     data
+  })
+}
+
+// ==================== 设置 API ====================
+export interface UserSettings {
+  pushNotifications: boolean
+  emailNotifications: boolean
+  achievementNotifications: boolean
+  rareItemAlerts: boolean
+  showAllItems: boolean
+  showRarityFilter: boolean
+  autoCollectNearby: boolean
+  defaultZoom: number
+  publicProfile: boolean
+  showOnLeaderboard: boolean
+  shareLocation: boolean
+  darkMode: boolean
+  highContrast: boolean
+  reducedMotion: boolean
+  language: string
+}
+
+export async function getUserSettings(): Promise<Partial<UserSettings>> {
+  try {
+    const res = await request<{ preferences?: UserSettings }>({ url: '/users/me' })
+    return res.preferences || {}
+  } catch (e) {
+    console.error('Failed to get user settings:', e)
+    return {}
+  }
+}
+
+export async function updateUserSettings(settings: Partial<UserSettings>): Promise<void> {
+  await request({
+    url: '/users/me',
+    method: 'PATCH',
+    data: { preferences: settings }
   })
 }
 

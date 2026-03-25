@@ -2,8 +2,8 @@
   "miniprogramRoot": "src/",
   "compileType": "miniprogram",
   "projectname": "treasure-hunt",
-  "description": "寻宝记 - 探索世界，收集宝藏",
-  "appid": "wx1316335d14fe427b",
+  "description": "宝藏地图 - 探索世界，收集宝藏",
+  "appid": "wxd1be069ddbf4cad1",
   "setting": {
     "urlCheck": true,
     "es6": true,
@@ -22,7 +22,7 @@
     "checkSiteMap": true,
     "uploadWithSourceMap": true,
     "compileHotReLoad": false,
-    "lazyloadPlaceholderEnable": false,
+    "lazyloadPlaceholderEnable": true,
     "useMultiFrameRuntime": true,
     "useApiHook": true,
     "useApiHostProcess": true,
@@ -42,7 +42,9 @@
     "compileWorklet": false,
     "localPlugins": false,
     "disableUseStrict": false,
-    "useCompilerPlugins": false,
+    "useCompilerPlugins": [
+      "typescript"
+    ],
     "condition": false,
     "swc": false,
     "disableSWC": true
@@ -55,5 +57,6 @@
     "include": []
   },
   "isGameTourist": false,
-  "editorSetting": {}
+  "editorSetting": {},
+  "libVersion": "3.15.0"
 }

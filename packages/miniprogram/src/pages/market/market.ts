@@ -1,117 +1,310 @@
 // pages/market/market.ts
-import { getMarketListings, getInventory, createMarketListing, buyMarketListing, getCoinBalance } from '../../utils/api';
+import { getMarketListings, getInventory, createMarketListing, buyMarketListing, cancelMarketListing, getCoinBalance } from '../../utils/api'
+import { showLoading, hideLoading, showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
+
+const MARKET_FEE_RATE = 0.1
 
 Page({
   data: {
     listings: [] as any[],
+    filteredListings: [] as any[],
     myItems: [] as any[],
+    myListings: [] as any[],
     balance: 0,
     loading: true,
-    activeTab: 'buy',
-    sellModal: {
-      isOpen: false,
-      item: null as any,
-      price: 100,
-      quantity: 1
-    }
+    activeTab: 'buy' as 'buy' | 'sell',
+    isLoggedIn: false,
+    // Search & filter
+    searchQuery: '',
+    rarityFilter: '',
+    showFilters: false,
+    // Buy modal
+    buyModalOpen: false,
+    buyListing: null as any,
+    buyLoading: false,
+    // Sell modal
+    sellModalOpen: false,
+    sellItemData: null as any,
+    sellQty: 1,
+    sellMaxQty: 1,
+    sellPrice: 100,
+    sellTotalPrice: 100,
+    sellFee: 10,
+    sellNetIncome: 90,
+    sellLoading: false,
+    // Success modal
+    successModalOpen: false,
+    successMessage: '',
   },
 
   onLoad() {
-    this.loadData();
+    this.setData({ isLoggedIn: checkLogin() })
+    this.loadData()
+  },
+
+  onShow() {
+    this.setData({ isLoggedIn: checkLogin() })
+    if (checkLogin()) {
+      this.loadBalance()
+    }
+  },
+
+  onPullDownRefresh() {
+    this.loadData().then(() => wx.stopPullDownRefresh())
   },
 
   async loadData() {
-    this.setData({ loading: true });
+    this.setData({ loading: true })
 
     try {
-      const [listings, inventory, balance] = await Promise.all([
+      const [listingsRes, inventory, balanceRes] = await Promise.all([
         getMarketListings(),
-        getInventory(),
-        getCoinBalance()
-      ]);
+        checkLogin() ? getInventory() : Promise.resolve([]),
+        checkLogin() ? getCoinBalance() : Promise.resolve({ balance: 0 }),
+      ])
+
+      const rawListings = listingsRes.listings || listingsRes || []
+      const listings = rawListings.map((l: any) => {
+        const rarity = (l.item && l.item.rarity) ? l.item.rarity : 'common'
+        return {
+          ...l,
+          rarityName: RARITY_NAMES[rarity] || '普通',
+          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
+          rarityBgClass: 'rarity-bg-' + rarity,
+          sellerName: (l.seller && l.seller.username) ? l.seller.username : '未知',
+          itemName: (l.item && l.item.name) ? l.item.name : '未知物品',
+          priceText: l.price ? String(l.price) : '0',
+        }
+      })
+
+      const myItems = (inventory || []).filter((i: any) => i.quantity > 0).map((item: any) => {
+        const rarity = (item.item && item.item.rarity) ? item.item.rarity : 'common'
+        return {
+          ...item,
+          rarityName: RARITY_NAMES[rarity] || '普通',
+          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
+          rarityBgClass: 'rarity-bg-' + rarity,
+        }
+      })
 
       this.setData({
-        listings: listings || [],
-        myItems: inventory || [],
-        balance: balance.balance,
-        loading: false
-      });
+        listings,
+        filteredListings: listings,
+        myItems,
+        balance: balanceRes.balance || 0,
+        loading: false,
+      })
     } catch (error) {
-      console.error('加载市场数据失败:', error);
-      this.setData({ loading: false });
+      console.error('加载市场数据失败:', error)
+      this.setData({ loading: false })
     }
+  },
+
+  async loadBalance() {
+    try {
+      const res = await getCoinBalance()
+      this.setData({ balance: res.balance || 0 })
+    } catch (err) {
+      console.error('获取余额失败:', err)
+    }
+  },
+
+  goToLogin() {
+    wx.navigateTo({ url: '/pages/login/login' })
   },
 
   switchTab(e: any) {
-    const tab = e.currentTarget.dataset.tab;
-    this.setData({ activeTab: tab });
+    const tab = e.currentTarget.dataset.tab
+    this.setData({ activeTab: tab })
   },
 
-  openSellModal(e: any) {
-    const item = e.currentTarget.dataset.item;
+  // Search
+  onSearchInput(e: any) {
+    const query = e.detail.value || ''
+    this.setData({ searchQuery: query })
+    this.applyFilters()
+  },
+
+  toggleFilters() {
+    this.setData({ showFilters: !this.data.showFilters })
+  },
+
+  setRarityFilter(e: any) {
+    const rarity = e.currentTarget.dataset.rarity || ''
+    this.setData({ rarityFilter: rarity })
+    this.applyFilters()
+  },
+
+  applyFilters() {
+    const { listings, searchQuery, rarityFilter } = this.data
+    const query = searchQuery.toLowerCase()
+    const filtered = listings.filter((l: any) => {
+      const matchesSearch = !query || (l.itemName && l.itemName.toLowerCase().indexOf(query) >= 0)
+      const matchesRarity = !rarityFilter || (l.item && l.item.rarity === rarityFilter)
+      return matchesSearch && matchesRarity
+    })
+    this.setData({ filteredListings: filtered })
+  },
+
+  // Buy
+  openBuyModal(e: any) {
+    if (!checkLogin()) {
+      this.goToLogin()
+      return
+    }
+    const index = e.currentTarget.dataset.index
+    const listing = this.data.filteredListings[index]
+    if (!listing) return
+
     this.setData({
-      sellModal: {
-        isOpen: true,
-        item,
-        price: 100,
-        quantity: 1
-      }
-    });
+      buyModalOpen: true,
+      buyListing: listing,
+      buyLoading: false,
+    })
+  },
+
+  closeBuyModal() {
+    this.setData({ buyModalOpen: false, buyListing: null })
+  },
+
+  async confirmBuy() {
+    const { buyListing } = this.data
+    if (!buyListing) return
+
+    this.setData({ buyLoading: true })
+
+    try {
+      await buyMarketListing(buyListing.id)
+
+      this.setData({
+        buyModalOpen: false,
+        buyListing: null,
+        buyLoading: false,
+        successModalOpen: true,
+        successMessage: '成功购买 ' + buyListing.itemName,
+      })
+
+      this.loadData()
+    } catch (err: any) {
+      this.setData({ buyLoading: false })
+      showToast(err.message || '购买失败')
+    }
+  },
+
+  // Sell
+  openSellModal(e: any) {
+    if (!checkLogin()) {
+      this.goToLogin()
+      return
+    }
+    const index = e.currentTarget.dataset.index
+    const item = this.data.myItems[index]
+    if (!item) return
+
+    const price = 100
+    const qty = 1
+    const total = price * qty
+    const fee = Math.floor(total * MARKET_FEE_RATE)
+    const net = total - fee
+
+    this.setData({
+      sellModalOpen: true,
+      sellItemData: item,
+      sellQty: qty,
+      sellMaxQty: item.quantity,
+      sellPrice: price,
+      sellTotalPrice: total,
+      sellFee: fee,
+      sellNetIncome: net,
+      sellLoading: false,
+    })
   },
 
   closeSellModal() {
-    this.setData({
-      sellModal: { isOpen: false, item: null, price: 100, quantity: 1 }
-    });
+    this.setData({ sellModalOpen: false, sellItemData: null })
   },
 
-  onPriceInput(e: any) {
-    this.setData({ 'sellModal.price': parseInt(e.detail.value) || 0 });
+  decreaseSellQty() {
+    const qty = Math.max(1, this.data.sellQty - 1)
+    this.updateSellCalc(qty, this.data.sellPrice)
+  },
+
+  increaseSellQty() {
+    const qty = Math.min(this.data.sellMaxQty, this.data.sellQty + 1)
+    this.updateSellCalc(qty, this.data.sellPrice)
+  },
+
+  onSellPriceInput(e: any) {
+    const price = parseInt(e.detail.value) || 0
+    this.updateSellCalc(this.data.sellQty, price)
+  },
+
+  updateSellCalc(qty: number, price: number) {
+    const total = price * qty
+    const fee = Math.floor(total * MARKET_FEE_RATE)
+    const net = total - fee
+    this.setData({
+      sellQty: qty,
+      sellPrice: price,
+      sellTotalPrice: total,
+      sellFee: fee,
+      sellNetIncome: net,
+    })
   },
 
   async confirmSell() {
-    const { sellModal } = this.data;
-    if (!sellModal.item) return;
+    const { sellItemData, sellQty, sellPrice } = this.data
+    if (!sellItemData || sellPrice <= 0) return
+
+    this.setData({ sellLoading: true })
 
     try {
-      wx.showLoading({ title: '上架中...' });
+      await createMarketListing(sellItemData.id, sellQty, sellPrice)
 
-      await createMarketListing(sellModal.item.id, sellModal.quantity, sellModal.price);
+      const itemName = (sellItemData.item && sellItemData.item.name) ? sellItemData.item.name : '物品'
 
-      wx.hideLoading();
-      wx.showToast({ title: '上架成功！', icon: 'success' });
+      this.setData({
+        sellModalOpen: false,
+        sellItemData: null,
+        sellLoading: false,
+        successModalOpen: true,
+        successMessage: '成功上架 ' + itemName,
+      })
 
-      this.closeSellModal();
-      this.loadData();
-    } catch (error) {
-      wx.hideLoading();
-      console.error('上架失败:', error);
+      this.loadData()
+    } catch (err: any) {
+      this.setData({ sellLoading: false })
+      showToast(err.message || '上架失败')
     }
   },
 
-  async buyItem(e: any) {
-    const listing = e.currentTarget.dataset.item;
+  // Cancel listing
+  async cancelListing(e: any) {
+    const listingId = e.currentTarget.dataset.id
 
+    const result = await new Promise<boolean>((resolve) => {
+      wx.showModal({
+        title: '取消上架',
+        content: '确定要取消这个上架吗？',
+        success: (res) => resolve(res.confirm),
+        fail: () => resolve(false),
+      })
+    })
+    if (!result) return
+
+    showLoading('取消中...')
     try {
-      const result = await wx.showModal({
-        title: '确认购买',
-        content: `确定以 ${listing.price} 金币购买 ${listing.item.name}？`
-      });
-
-      if (result.confirm) {
-        wx.showLoading({ title: '购买中...' });
-        await buyMarketListing(listing.id);
-        wx.hideLoading();
-        wx.showToast({ title: '购买成功！', icon: 'success' });
-        this.loadData();
-      }
-    } catch (error) {
-      wx.hideLoading();
-      console.error('购买失败:', error);
+      await cancelMarketListing(listingId)
+      hideLoading()
+      showToast('取消成功', 'success')
+      this.loadData()
+    } catch (err: any) {
+      hideLoading()
+      showToast(err.message || '取消失败')
     }
   },
 
-  goBack() {
-    wx.navigateBack();
-  }
-});
+  closeSuccessModal() {
+    this.setData({ successModalOpen: false })
+  },
+})

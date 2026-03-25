@@ -1,6 +1,6 @@
 // pages/gacha/gacha.ts
 import { getGachaPools, pullGacha, getCoinBalance } from '../../utils/api'
-import { showLoading, hideLoading, showToast, requireLogin, checkLogin } from '../../utils/util'
+import { showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
 
 Page({
   data: {
@@ -8,10 +8,24 @@ Page({
     selectedPool: null as any,
     balance: 0,
     loading: true,
-    pullLoading: false,
-    results: [] as any[],
+    isPulling: false,
+    pityCount: 0,
+    pityThreshold: 90,
+    pityProgress: 0,
+    pityMinRarityName: '',
+    isLoggedIn: false,
+    // Drop rates
+    dropRates: [] as any[],
+    // Single/ten prices
+    singlePrice: 0,
+    tenPrice: 0,
+    canSingle: false,
+    canTen: false,
+    // Results modal
     showResults: false,
-    isLoggedIn: false
+    results: [] as any[],
+    // Pull animation
+    showPullAnimation: false,
   },
 
   onLoad() {
@@ -28,14 +42,24 @@ Page({
 
   async loadData() {
     this.setData({ loading: true })
-    
+
     try {
       const pools = await getGachaPools()
-      this.setData({
-        pools: pools || [],
-        selectedPool: pools?.[0] || null,
-        loading: false
-      })
+      const processedPools = (pools || []).map((p: any) => ({
+        ...p,
+        isSelected: false,
+      }))
+
+      if (processedPools.length > 0) {
+        processedPools[0].isSelected = true
+        this.setData({
+          pools: processedPools,
+          loading: false,
+        })
+        this.selectPoolData(processedPools[0])
+      } else {
+        this.setData({ pools: processedPools, loading: false })
+      }
     } catch (err: any) {
       showToast(err.message || '加载失败')
       this.setData({ loading: false })
@@ -46,6 +70,7 @@ Page({
     try {
       const res = await getCoinBalance()
       this.setData({ balance: res.balance || 0 })
+      this.updateAffordability()
     } catch (err) {
       console.error('获取余额失败:', err)
     }
@@ -57,52 +82,129 @@ Page({
 
   selectPool(e: any) {
     const poolId = e.currentTarget.dataset.id
-    const pool = this.data.pools.find((p: any) => p.id === poolId)
-    this.setData({ selectedPool: pool })
+    const pools = this.data.pools.map((p: any) => ({
+      ...p,
+      isSelected: p.id === poolId,
+    }))
+    const pool = pools.find((p: any) => p.id === poolId)
+    this.setData({ pools })
+    if (pool) {
+      this.selectPoolData(pool)
+    }
+  },
+
+  selectPoolData(pool: any) {
+    const pityThreshold = pool.pityThreshold || 90
+    const pityMinRarity = pool.pityMinRarity || 'epic'
+    const pityProgress = pityThreshold > 0 ? Math.min(100, Math.round((this.data.pityCount / pityThreshold) * 100)) : 0
+
+    // Calculate drop rates
+    const items = pool.items || []
+    const totalWeight = items.reduce((sum: number, i: any) => sum + (i.weight || 0), 0)
+    const rarities = ['legendary', 'epic', 'rare', 'common']
+    const dropRates = rarities.map((rarity: string) => {
+      const rarityItems = items.filter((i: any) => i.rarity === rarity)
+      const weight = rarityItems.reduce((sum: number, i: any) => sum + (i.weight || 0), 0)
+      const pct = totalWeight > 0 ? ((weight / totalWeight) * 100).toFixed(1) : '0'
+      return {
+        rarity,
+        name: RARITY_NAMES[rarity] || rarity,
+        color: RARITY_COLORS[rarity] || '#6B7280',
+        percentage: pct,
+      }
+    })
+
+    const singlePrice = pool.singlePrice || pool.cost || 100
+    const tenPrice = pool.tenPrice || pool.costTen || 900
+
+    this.setData({
+      selectedPool: pool,
+      pityThreshold,
+      pityProgress,
+      pityMinRarityName: RARITY_NAMES[pityMinRarity] || '史诗',
+      dropRates,
+      singlePrice,
+      tenPrice,
+    })
+
+    this.updateAffordability()
+  },
+
+  updateAffordability() {
+    const { balance, singlePrice, tenPrice } = this.data
+    this.setData({
+      canSingle: balance >= singlePrice,
+      canTen: balance >= tenPrice,
+    })
   },
 
   async handlePull(e: any) {
-    // 检查登录
-    const loggedIn = await requireLogin()
-    if (!loggedIn) return
-    
-    const pullType = e.currentTarget.dataset.type
-    const { selectedPool, balance } = this.data
-    
+    if (!checkLogin()) {
+      this.goToLogin()
+      return
+    }
+
+    const pullType = e.currentTarget.dataset.type as 'single' | 'ten'
+    const { selectedPool, balance, singlePrice, tenPrice } = this.data
+
     if (!selectedPool) {
       showToast('请选择抽奖池')
       return
     }
-    
-    const cost = pullType === 'ten' ? selectedPool.costTen : selectedPool.cost
+
+    const cost = pullType === 'ten' ? tenPrice : singlePrice
     if (balance < cost) {
       showToast('金币不足')
       return
     }
-    
-    this.setData({ pullLoading: true })
-    showLoading('抽奖中...')
-    
+
+    this.setData({ isPulling: true, showPullAnimation: true })
+
     try {
       const res = await pullGacha(selectedPool.id, pullType)
-      hideLoading()
-      
-      this.setData({
-        results: res.items || [],
-        showResults: true,
-        isLoggedIn: true
+
+      // Update balance
+      const newBalance = res.newCoinBalance !== undefined ? res.newCoinBalance : (balance - cost)
+      const newPity = res.newPityCount || 0
+
+      // Process results
+      const results = (res.results || res.items || []).map((r: any) => {
+        const rarity = r.rarity || (r.item && r.item.rarity) || 'common'
+        return {
+          id: r.id || (r.item && r.item.id) || '',
+          name: r.name || (r.item && r.item.name) || '未知物品',
+          rarity: rarity,
+          rarityName: RARITY_NAMES[rarity] || '普通',
+          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
+          rarityBgClass: 'rarity-bg-' + rarity,
+          isPity: r.isPity || false,
+        }
       })
-      
-      this.loadBalance()
+
+      // Delay to show animation
+      setTimeout(() => {
+        const pityProgress = this.data.pityThreshold > 0
+          ? Math.min(100, Math.round((newPity / this.data.pityThreshold) * 100))
+          : 0
+
+        this.setData({
+          isPulling: false,
+          showPullAnimation: false,
+          balance: newBalance,
+          pityCount: newPity,
+          pityProgress,
+          results,
+          showResults: true,
+        })
+        this.updateAffordability()
+      }, 1500)
     } catch (err: any) {
-      hideLoading()
+      this.setData({ isPulling: false, showPullAnimation: false })
       showToast(err.message || '抽奖失败')
-    } finally {
-      this.setData({ pullLoading: false })
     }
   },
 
   closeResults() {
     this.setData({ showResults: false, results: [] })
-  }
+  },
 })

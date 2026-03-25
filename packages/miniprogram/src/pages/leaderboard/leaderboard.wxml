@@ -1,35 +1,104 @@
 <!--pages/leaderboard/leaderboard.wxml-->
 <view class="leaderboard-container">
-  <!-- 头部 -->
-  <view class="header cartoon-card">
-    <view class="back-btn" bindtap="goBack">‹</view>
-    <text class="header-title">📊 排行榜</text>
-    <view class="placeholder"></view>
-  </view>
-
-  <!-- 排行榜列表 -->
-  <view class="leaderboard-list">
-    <block wx:if="{{ leaderboard.length > 0 }}">
-      <view class="rank-card cartoon-card {{ index < 3 ? 'top-rank' : '' }}" wx:for="{{ leaderboard }}" wx:key="id">
-        <view class="rank-number">{{ index + 1 }}</view>
-        <view class="rank-avatar">{{ item.username[0] }}</view>
-        <view class="rank-info">
-          <view class="rank-name">{{ item.username }}</view>
-          <view class="rank-stats">收集 {{ item.collectionCount }} 件</view>
-        </view>
-        <view class="rank-score">{{ item.collectionCount }}</view>
-      </view>
-    </block>
-
-    <!-- 空状态 -->
-    <view class="empty-state" wx:else>
-      <view class="empty-icon">📊</view>
-      <text class="empty-text">暂无排行数据</text>
-    </view>
-  </view>
-
   <!-- 加载中 -->
-  <view class="loading-overlay" wx:if="{{ loading }}">
+  <view class="loading-container" wx:if="{{ loading }}">
     <view class="loading-spinner"></view>
   </view>
+
+  <block wx:else>
+    <!-- 我的排名卡片 -->
+    <view class="my-rank-card cartoon-card" wx:if="{{ myRank }}">
+      <view class="my-rank-left">
+        <view class="my-rank-avatar">
+          <text class="my-rank-avatar-letter">{{ myAvatarLetter }}</text>
+        </view>
+        <view class="my-rank-info">
+          <text class="my-rank-label">我的排名</text>
+          <text class="my-rank-name">{{ myUsername }}</text>
+        </view>
+      </view>
+      <view class="my-rank-right">
+        <text class="my-rank-number">#{{ myRank }}</text>
+      </view>
+    </view>
+
+    <!-- 领奖台 Top 3 -->
+    <view class="podium-card cartoon-card" wx:if="{{ top3.length > 0 }}">
+      <view class="podium-row">
+        <!-- 第2名 (左) -->
+        <view class="podium-item" wx:if="{{ top3.length > 1 }}">
+          <view class="podium-avatar podium-avatar-silver">
+            <text class="podium-avatar-letter">{{ top3[1].avatarLetter }}</text>
+          </view>
+          <text class="podium-name">{{ top3[1].username }}</text>
+          <view class="podium-count-row">
+            <text class="podium-count silver-text">{{ top3[1].collectionCount }}</text>
+          </view>
+          <view class="podium-bar podium-bar-silver">
+            <image class="icon-lg podium-medal-icon" src="/images/icons/medal.svg" mode="aspectFit" />
+          </view>
+        </view>
+        <view class="podium-item podium-placeholder" wx:else></view>
+
+        <!-- 第1名 (中，最高) -->
+        <view class="podium-item" wx:if="{{ top3.length > 0 }}">
+          <image class="icon-lg podium-crown-icon" src="/images/icons/trophy.svg" mode="aspectFit" />
+          <view class="podium-avatar podium-avatar-gold">
+            <text class="podium-avatar-letter-gold">{{ top3[0].avatarLetter }}</text>
+          </view>
+          <text class="podium-name podium-name-gold">{{ top3[0].username }}</text>
+          <view class="podium-count-row">
+            <text class="podium-count gold-text">{{ top3[0].collectionCount }}</text>
+          </view>
+          <view class="podium-bar podium-bar-gold">
+            <text class="podium-rank-text">#1</text>
+          </view>
+        </view>
+
+        <!-- 第3名 (右) -->
+        <view class="podium-item" wx:if="{{ top3.length > 2 }}">
+          <view class="podium-avatar podium-avatar-bronze">
+            <text class="podium-avatar-letter">{{ top3[2].avatarLetter }}</text>
+          </view>
+          <text class="podium-name">{{ top3[2].username }}</text>
+          <view class="podium-count-row">
+            <text class="podium-count bronze-text">{{ top3[2].collectionCount }}</text>
+          </view>
+          <view class="podium-bar podium-bar-bronze">
+            <image class="icon-lg podium-medal-icon" src="/images/icons/medal.svg" mode="aspectFit" />
+          </view>
+        </view>
+        <view class="podium-item podium-placeholder" wx:else></view>
+      </view>
+    </view>
+
+    <!-- 第4名以后的列表 -->
+    <view class="rest-list" wx:if="{{ rest.length > 0 }}">
+      <view
+        class="rank-card cartoon-card {{ item.userId === currentUserId ? 'rank-card-highlight' : '' }}"
+        wx:for="{{ rest }}"
+        wx:key="userId"
+      >
+        <view class="rank-badge">
+          <text class="rank-badge-text">#{{ item.rank }}</text>
+        </view>
+        <view class="rank-user-info">
+          <text class="rank-username">{{ item.username }}</text>
+          <text class="rank-stats">收集 {{ item.collectionCount }} 件</text>
+        </view>
+        <text class="rank-score">{{ item.collectionCount }}</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{ leaderboard.length === 0 }}">
+      <view class="empty-state-icon">
+        <image class="icon-xl" src="/images/icons/target.svg" mode="aspectFit" />
+      </view>
+      <text class="empty-state-text">暂无排行数据</text>
+      <view class="cartoon-btn empty-btn" bindtap="goToMap">
+        <text>去收集宝藏</text>
+      </view>
+    </view>
+  </block>
 </view>

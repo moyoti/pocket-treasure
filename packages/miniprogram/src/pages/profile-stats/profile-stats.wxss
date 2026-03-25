@@ -1,0 +1,219 @@
+.icon {
+  width: 36rpx;
+  height: 36rpx;
+  vertical-align: middle;
+}
+.icon-sm {
+  width: 28rpx;
+  height: 28rpx;
+}
+.icon-lg {
+  width: 48rpx;
+  height: 48rpx;
+}
+.icon-xl {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.container {
+  min-height: 100vh;
+  padding: 24rpx;
+  padding-bottom: 120rpx;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: var(--text-muted);
+  margin-top: 20rpx;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 24rpx;
+  border: 6rpx solid var(--border-color);
+  box-shadow: 0 8rpx 0 rgba(0, 0, 0, 0.1);
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 24rpx;
+}
+
+.card-icon {
+  flex-shrink: 0;
+}
+
+/* Overview Grid */
+.overview-grid {
+  display: flex;
+  gap: 20rpx;
+}
+
+.overview-item {
+  flex: 1;
+  text-align: center;
+  padding: 30rpx 20rpx;
+  border-radius: 20rpx;
+  border: 4rpx solid;
+}
+
+.overview-item-yellow {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+}
+
+.overview-item-green {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+}
+
+.overview-item-blue {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+}
+
+.overview-item-purple {
+  background: #FAF5FF;
+  border-color: #DDD6FE;
+}
+
+.overview-number {
+  display: block;
+  font-size: 56rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.overview-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-muted);
+  margin-top: 8rpx;
+}
+
+/* Rarity Rows */
+.rarity-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.rarity-label {
+  width: 80rpx;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+.progress-bar {
+  flex: 1;
+  height: 32rpx;
+  background: #F3F4F6;
+  border-radius: 16rpx;
+  border: 4rpx solid #D1D5DB;
+  overflow: hidden;
+}
+
+.progress-bar-large {
+  height: 40rpx;
+  border-radius: 20rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 16rpx;
+  transition: width 0.5s ease;
+}
+
+.progress-common {
+  background: #E5E7EB;
+}
+
+.progress-rare {
+  background: #93C5FD;
+}
+
+.progress-epic {
+  background: #C4B5FD;
+}
+
+.progress-legendary {
+  background: #FDE68A;
+}
+
+.progress-achievement {
+  background: linear-gradient(90deg, #FDE047, #FB923C);
+  border-radius: 20rpx;
+}
+
+.rarity-count {
+  width: 60rpx;
+  text-align: right;
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.rarity-count-common { color: #6B7280; }
+.rarity-count-rare { color: #3B82F6; }
+.rarity-count-epic { color: #8B5CF6; }
+.rarity-count-legendary { color: #F59E0B; }
+
+/* Achievement */
+.achievement-box {
+  background: #F9FAFB;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  border: 4rpx solid #D1D5DB;
+}
+
+.achievement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.achievement-label {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.achievement-value {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.achievement-hint {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 16rpx;
+}
+
+/* Empty */
+.empty-hint {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 26rpx;
+  color: var(--text-muted);
+}

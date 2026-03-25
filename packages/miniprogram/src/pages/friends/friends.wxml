@@ -1,84 +1,188 @@
 <view class="container">
-  <!-- 标题 -->
-  <view class="header">
-    <view class="title">👥 好友</view>
-  </view>
-  
   <!-- 标签切换 -->
   <view class="tabs">
-    <view class="tab {{ activeTab === 'friends' ? 'active' : '' }}" bindtap="switchTab" data-tab="friends">
-      好友 {{ friends.length > 0 ? '(' + friends.length + ')' : '' }}
+    <view class="tab {{activeTab === 'friends' ? 'active' : ''}}" bindtap="switchTab" data-tab="friends">
+      <text>好友</text>
+      <text class="tab-badge" wx:if="{{friends.length > 0}}">{{friends.length}}</text>
     </view>
-    <view class="tab {{ activeTab === 'requests' ? 'active' : '' }}" bindtap="switchTab" data-tab="requests">
-      申请 {{ requests.length > 0 ? '(' + requests.length + ')' : '' }}
+    <view class="tab {{activeTab === 'requests' ? 'active' : ''}}" bindtap="switchTab" data-tab="requests">
+      <text>申请</text>
+      <text class="tab-badge tab-badge-red" wx:if="{{requests.length > 0}}">{{requests.length}}</text>
+    </view>
+    <view class="tab {{activeTab === 'trades' ? 'active' : ''}}" bindtap="switchTab" data-tab="trades">
+      <text>交易</text>
+      <text class="tab-badge tab-badge-orange" wx:if="{{trades.length > 0}}">{{trades.length}}</text>
     </view>
   </view>
-  
-  <!-- 好友列表 -->
-  <view class="content" wx:if="{{ activeTab === 'friends' }}">
-    <!-- 搜索 -->
+
+  <!-- 好友标签 -->
+  <view class="content" wx:if="{{activeTab === 'friends'}}">
+    <!-- 搜索栏 -->
     <view class="search-bar">
-      <input class="search-input" placeholder="搜索用户" value="{{ searchQuery }}" bindinput="onSearchInput" bindconfirm="handleSearch" />
-      <button class="search-btn" bindtap="handleSearch">搜索</button>
+      <input
+        class="search-input"
+        placeholder="搜索用户名或邮箱..."
+        value="{{searchQuery}}"
+        bindinput="onSearchInput"
+        bindconfirm="handleSearch"
+      />
+      <view class="search-btn" bindtap="handleSearch">
+        <text wx:if="{{searching}}">...</text>
+        <text wx:else>搜索</text>
+      </view>
     </view>
-    
+
     <!-- 搜索结果 -->
-    <view class="search-results" wx:if="{{ searchResults.length > 0 }}">
-      <view class="result-item" wx:for="{{ searchResults }}" wx:key="id">
-        <view class="user-info">
-          <view class="user-avatar">{{ item.username[0].toUpperCase() }}</view>
-          <view class="user-name">{{ item.username }}</view>
+    <view class="search-results" wx:if="{{searchResults.length > 0}}">
+      <view class="section-title">搜索结果</view>
+      <view class="result-item" wx:for="{{searchResults}}" wx:key="id">
+        <view class="user-avatar-wrap">
+          <view class="user-avatar">{{item.avatarLetter}}</view>
         </view>
-        <button 
-          class="add-btn" 
-          bindtap="handleSendRequest"
-          data-id="{{ item.id }}"
-          disabled="{{ item.isFriend || item.hasPendingRequest }}"
-        >
-          {{ item.isFriend ? '已是好友' : item.hasPendingRequest ? '已申请' : '添加' }}
-        </button>
+        <view class="user-detail">
+          <view class="user-name">{{item.username}}</view>
+          <view class="user-email" wx:if="{{item.email}}">{{item.email}}</view>
+        </view>
+        <view class="result-status" wx:if="{{item.isFriend}}">
+          <text class="status-text status-friend">已是好友</text>
+        </view>
+        <view class="result-status" wx:elif="{{item.hasPendingRequest}}">
+          <text class="status-text status-pending">已申请</text>
+        </view>
+        <view class="add-btn" wx:else bindtap="handleSendRequest" data-id="{{item.id}}">
+          添加
+        </view>
       </view>
     </view>
-    
-    <!-- 好友列表 -->
-    <view class="friend-list" wx:if="{{ friends.length > 0 }}">
-      <view class="friend-item" wx:for="{{ friends }}" wx:key="id" bindtap="startChat" data-friend="{{ item }}">
-        <view class="friend-avatar">
-          {{ item.username[0].toUpperCase() }}
-          <view class="online-dot" wx:if="{{ item.isOnline }}"></view>
+
+    <!-- 在线好友 -->
+    <view class="friend-section" wx:if="{{onlineFriends.length > 0}}">
+      <view class="section-header">
+        <view class="online-indicator"></view>
+        <text class="section-label">在线 - {{onlineFriends.length}}</text>
+      </view>
+      <view class="friend-list">
+        <view class="friend-item" wx:for="{{onlineFriends}}" wx:key="id" bindtap="startChat" data-friend="{{item}}">
+          <view class="friend-avatar-wrap">
+            <view class="friend-avatar">{{item.avatarLetter}}</view>
+            <view class="online-dot"></view>
+          </view>
+          <view class="friend-info">
+            <view class="friend-name">{{item.username}}</view>
+            <view class="friend-status online">在线</view>
+          </view>
+          <view class="friend-actions">
+            <view class="action-btn action-chat" catchtap="startChat" data-friend="{{item}}"><image class="icon" src="/images/icons/message-circle.svg" mode="aspectFit" /></view>
+            <view class="action-btn action-trade" catchtap="startTrade" data-friend="{{item}}"><image class="icon" src="/images/icons/refresh-cw.svg" mode="aspectFit" /></view>
+          </view>
         </view>
-        <view class="friend-info">
-          <view class="friend-name">{{ item.username }}</view>
-          <view class="friend-status">{{ item.isOnline ? '在线' : '离线' }}</view>
-        </view>
-        <view class="chat-icon">💬</view>
       </view>
     </view>
-    
-    <view class="empty-state" wx:else>
-      <view class="empty-state-icon">👥</view>
-      <view class="empty-state-text">暂无好友</view>
+
+    <!-- 离线好友 -->
+    <view class="friend-section" wx:if="{{offlineFriends.length > 0}}">
+      <view class="section-header">
+        <view class="offline-indicator"></view>
+        <text class="section-label">离线 - {{offlineFriends.length}}</text>
+      </view>
+      <view class="friend-list">
+        <view class="friend-item" wx:for="{{offlineFriends}}" wx:key="id" bindtap="startChat" data-friend="{{item}}">
+          <view class="friend-avatar-wrap">
+            <view class="friend-avatar friend-avatar-offline">{{item.avatarLetter}}</view>
+          </view>
+          <view class="friend-info">
+            <view class="friend-name">{{item.username}}</view>
+            <view class="friend-status offline">离线</view>
+          </view>
+          <view class="friend-actions">
+            <view class="action-btn action-chat" catchtap="startChat" data-friend="{{item}}"><image class="icon" src="/images/icons/message-circle.svg" mode="aspectFit" /></view>
+            <view class="action-btn action-trade" catchtap="startTrade" data-friend="{{item}}"><image class="icon" src="/images/icons/refresh-cw.svg" mode="aspectFit" /></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{friends.length === 0 && !loading}}">
+      <view class="empty-icon"><image class="icon-xl" src="/images/icons/users.svg" mode="aspectFit" /></view>
+      <view class="empty-title">暂无好友</view>
+      <view class="empty-desc">搜索并添加好友一起游戏吧！</view>
     </view>
   </view>
-  
-  <!-- 申请列表 -->
-  <view class="content" wx:if="{{ activeTab === 'requests' }}">
-    <view class="request-list" wx:if="{{ requests.length > 0 }}">
-      <view class="request-item" wx:for="{{ requests }}" wx:key="id">
-        <view class="user-info">
-          <view class="user-avatar">{{ item.requester.username[0].toUpperCase() }}</view>
-          <view class="user-name">{{ item.requester.username }}</view>
+
+  <!-- 申请标签 -->
+  <view class="content" wx:if="{{activeTab === 'requests'}}">
+    <view class="request-list" wx:if="{{requests.length > 0}}">
+      <view class="request-item" wx:for="{{requests}}" wx:key="id">
+        <view class="user-avatar-wrap">
+          <view class="user-avatar">{{item.requesterAvatarLetter}}</view>
+        </view>
+        <view class="user-detail">
+          <view class="user-name">{{item.requester.username}}</view>
+          <view class="user-email" wx:if="{{item.requester.email}}">{{item.requester.email}}</view>
         </view>
         <view class="request-actions">
-          <button class="accept-btn" bindtap="handleAccept" data-id="{{ item.id }}">接受</button>
-          <button class="reject-btn" bindtap="handleReject" data-id="{{ item.id }}">拒绝</button>
+          <view class="accept-btn" bindtap="handleAccept" data-id="{{item.id}}">接受</view>
+          <view class="reject-btn" bindtap="handleReject" data-id="{{item.id}}">拒绝</view>
         </view>
       </view>
     </view>
-    
-    <view class="empty-state" wx:else>
-      <view class="empty-state-icon">📭</view>
-      <view class="empty-state-text">暂无好友申请</view>
+
+    <view class="empty-state" wx:if="{{requests.length === 0 && !loading}}">
+      <view class="empty-icon"><image class="icon-xl" src="/images/icons/mail-x.svg" mode="aspectFit" /></view>
+      <view class="empty-title">暂无好友申请</view>
+      <view class="empty-desc">新的好友申请会显示在这里</view>
     </view>
+  </view>
+
+  <!-- 交易标签 -->
+  <view class="content" wx:if="{{activeTab === 'trades'}}">
+    <view class="trade-list" wx:if="{{trades.length > 0}}">
+      <view class="trade-item" wx:for="{{trades}}" wx:key="id">
+        <view class="trade-header" bindtap="toggleTradeExpand" data-id="{{item.id}}">
+          <view class="user-avatar-wrap">
+            <view class="user-avatar trade-avatar">{{item.initiatorAvatarLetter}}</view>
+          </view>
+          <view class="user-detail">
+            <view class="user-name">{{item.initiator.username}}</view>
+            <view class="trade-summary">提供 {{item.initiatorItems.length}} 件物品</view>
+          </view>
+          <view class="expand-arrow">{{expandedTradeIds[item.id] ? '▲' : '▼'}}</view>
+        </view>
+
+        <view class="trade-detail" wx:if="{{expandedTradeIds[item.id]}}">
+          <view class="trade-columns">
+            <view class="trade-column">
+              <view class="trade-column-title">对方提供:</view>
+              <view class="trade-item-tag" wx:for="{{item.initiatorItems}}" wx:for-item="tItem" wx:key="itemName">
+                {{tItem.itemName}} x{{tItem.quantity}}
+              </view>
+            </view>
+            <view class="trade-column">
+              <view class="trade-column-title">对方想要:</view>
+              <view class="trade-item-tag" wx:for="{{item.receiverItems}}" wx:for-item="tItem" wx:key="itemName">
+                {{tItem.itemName}} x{{tItem.quantity}}
+              </view>
+            </view>
+          </view>
+          <view class="trade-actions">
+            <view class="accept-btn" bindtap="handleAcceptTrade" data-id="{{item.id}}">接受</view>
+            <view class="reject-btn" bindtap="handleRejectTrade" data-id="{{item.id}}">拒绝</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{trades.length === 0 && !loading}}">
+      <view class="empty-icon"><image class="icon-xl" src="/images/icons/refresh-cw.svg" mode="aspectFit" /></view>
+      <view class="empty-title">暂无交易请求</view>
+      <view class="empty-desc">交易请求会显示在这里</view>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">加载中...</view>
   </view>
 </view>

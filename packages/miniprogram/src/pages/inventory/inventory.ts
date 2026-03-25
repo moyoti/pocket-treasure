@@ -1,6 +1,13 @@
 // pages/inventory/inventory.ts
-import { getInventory, sellItem, getCoinBalance } from '../../utils/api'
-import { showLoading, hideLoading, showToast, showConfirm, requireLogin, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
+import { getInventory, getInventoryStats, sellItem as apiSellItem, getCoinBalance } from '../../utils/api'
+import { showLoading, hideLoading, showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
+
+const NPC_PRICES: Record<string, number> = {
+  common: 5,
+  rare: 25,
+  epic: 100,
+  legendary: 500,
+}
 
 Page({
   data: {
@@ -8,8 +15,28 @@ Page({
     balance: 0,
     loading: true,
     selectionMode: false,
-    selectedItems: new Set<string>(),
-    isLoggedIn: false
+    selectedCount: 0,
+    selectedTotalValue: 0,
+    isLoggedIn: false,
+    // Sell modal
+    sellModalOpen: false,
+    sellItemData: null as any,
+    sellQuantity: 1,
+    sellMaxQuantity: 1,
+    sellUnitPrice: 0,
+    sellTotalPrice: 0,
+    sellLoading: false,
+    // Success modal
+    successModalOpen: false,
+    successMessage: '',
+    successCoins: 0,
+    // Stats display
+    totalItems: 0,
+    uniqueItems: 0,
+    commonCount: 0,
+    rareCount: 0,
+    epicCount: 0,
+    legendaryCount: 0,
   },
 
   onLoad() {
@@ -36,10 +63,41 @@ Page({
 
   async loadData() {
     this.setData({ loading: true })
-    
+
     try {
-      const items = await getInventory()
-      this.setData({ items, loading: false })
+      const [rawItems, stats] = await Promise.all([
+        getInventory(),
+        getInventoryStats().catch(() => null),
+      ])
+
+      const items = (rawItems || []).map((item: any) => {
+        const rarity = (item.item && item.item.rarity) ? item.item.rarity : 'common'
+        const npcPrice = NPC_PRICES[rarity] || 5
+        return {
+          ...item,
+          rarityName: RARITY_NAMES[rarity] || '普通',
+          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
+          rarityBgClass: 'rarity-bg-' + rarity,
+          npcPrice: npcPrice,
+          totalPrice: npcPrice * (item.quantity || 1),
+          selected: false,
+        }
+      })
+
+      const totalItems = stats ? (stats.totalItems || 0) : items.reduce((s: number, i: any) => s + (i.quantity || 0), 0)
+      const uniqueItems = stats ? (stats.uniqueItems || 0) : items.length
+      const byRarity = (stats && stats.byRarity) ? stats.byRarity : {}
+
+      this.setData({
+        items,
+        totalItems,
+        uniqueItems,
+        commonCount: byRarity.common || 0,
+        rareCount: byRarity.rare || 0,
+        epicCount: byRarity.epic || 0,
+        legendaryCount: byRarity.legendary || 0,
+        loading: false,
+      })
     } catch (err: any) {
       showToast(err.message || '加载失败')
       this.setData({ loading: false })
@@ -59,87 +117,164 @@ Page({
     wx.navigateTo({ url: '/pages/login/login' })
   },
 
-  async toggleSelectionMode() {
-    // 检查登录
-    const loggedIn = await requireLogin()
-    if (!loggedIn) return
-    
+  toggleSelectionMode() {
+    if (!checkLogin()) {
+      this.goToLogin()
+      return
+    }
     const newMode = !this.data.selectionMode
-    this.setData({ 
+    const items = this.data.items.map((i: any) => ({ ...i, selected: false }))
+    this.setData({
       selectionMode: newMode,
-      selectedItems: new Set()
+      items,
+      selectedCount: 0,
+      selectedTotalValue: 0,
     })
   },
 
   toggleItemSelection(e: any) {
-    const itemId = e.currentTarget.dataset.id
-    const selectedItems = new Set(this.data.selectedItems)
-    
-    if (selectedItems.has(itemId)) {
-      selectedItems.delete(itemId)
-    } else {
-      selectedItems.add(itemId)
+    const index = e.currentTarget.dataset.index
+    const items = this.data.items
+    const item = items[index]
+    if (!item) return
+
+    const newSelected = !item.selected
+    const key = `items[${index}].selected`
+    this.setData({ [key]: newSelected } as any)
+
+    // Recalculate
+    let selectedCount = 0
+    let selectedTotalValue = 0
+    for (let i = 0; i < this.data.items.length; i++) {
+      const it = this.data.items[i]
+      if (it.selected) {
+        selectedCount++
+        selectedTotalValue += it.totalPrice
+      }
     }
-    
-    this.setData({ selectedItems })
+    this.setData({ selectedCount, selectedTotalValue })
   },
 
   selectAll() {
-    const allIds = this.data.items.map(item => item.id)
-    this.setData({ selectedItems: new Set(allIds) })
+    const items = this.data.items.map((i: any) => ({ ...i, selected: true }))
+    const selectedCount = items.length
+    const selectedTotalValue = items.reduce((s: number, i: any) => s + i.totalPrice, 0)
+    this.setData({ items, selectedCount, selectedTotalValue })
   },
 
-  async handleSellItem(e: any) {
-    // 检查登录
-    const loggedIn = await requireLogin()
-    if (!loggedIn) return
-    
-    const item = e.currentTarget.dataset.item
-    
-    const confirmed = await showConfirm(`确定要出售 ${item.item.name} x${item.quantity} 吗？`)
-    if (!confirmed) return
-    
-    showLoading('出售中...')
-    
+  openSellModal(e: any) {
+    if (!checkLogin()) {
+      this.goToLogin()
+      return
+    }
+    const index = e.currentTarget.dataset.index
+    const item = this.data.items[index]
+    if (!item) return
+
+    this.setData({
+      sellModalOpen: true,
+      sellItemData: item,
+      sellQuantity: 1,
+      sellMaxQuantity: item.quantity,
+      sellUnitPrice: item.npcPrice,
+      sellTotalPrice: item.npcPrice,
+      sellLoading: false,
+    })
+  },
+
+  closeSellModal() {
+    this.setData({ sellModalOpen: false, sellItemData: null })
+  },
+
+  decreaseSellQty() {
+    const qty = Math.max(1, this.data.sellQuantity - 1)
+    this.setData({
+      sellQuantity: qty,
+      sellTotalPrice: qty * this.data.sellUnitPrice,
+    })
+  },
+
+  increaseSellQty() {
+    const qty = Math.min(this.data.sellMaxQuantity, this.data.sellQuantity + 1)
+    this.setData({
+      sellQuantity: qty,
+      sellTotalPrice: qty * this.data.sellUnitPrice,
+    })
+  },
+
+  async confirmSell() {
+    const { sellItemData, sellQuantity, sellTotalPrice } = this.data
+    if (!sellItemData) return
+
+    this.setData({ sellLoading: true })
+
     try {
-      await sellItem(item.id, item.quantity)
-      hideLoading()
-      showToast('出售成功', 'success')
+      await apiSellItem(sellItemData.id, sellQuantity)
+
+      const itemName = sellItemData.item ? sellItemData.item.name : '物品'
+
+      this.setData({
+        sellModalOpen: false,
+        sellItemData: null,
+        sellLoading: false,
+        successModalOpen: true,
+        successMessage: '成功出售 ' + sellQuantity + '个 ' + itemName,
+        successCoins: sellTotalPrice,
+      })
+
       this.loadData()
       this.loadBalance()
     } catch (err: any) {
-      hideLoading()
+      this.setData({ sellLoading: false })
       showToast(err.message || '出售失败')
     }
+  },
+
+  closeSuccessModal() {
+    this.setData({ successModalOpen: false })
   },
 
   async handleBatchSell() {
-    const { items, selectedItems } = this.data
-    if (selectedItems.size === 0) {
+    const { items, selectedCount, selectedTotalValue } = this.data
+    if (selectedCount === 0) {
       showToast('请选择要出售的物品')
       return
     }
-    
-    const confirmed = await showConfirm(`确定要出售选中的 ${selectedItems.size} 个物品吗？`)
+
+    const confirmed = await new Promise<boolean>((resolve) => {
+      wx.showModal({
+        title: '批量出售',
+        content: '确定以 ' + selectedTotalValue + ' 金币出售 ' + selectedCount + ' 个物品？',
+        success: (res) => resolve(res.confirm),
+        fail: () => resolve(false),
+      })
+    })
     if (!confirmed) return
-    
+
     showLoading('出售中...')
-    
+
     try {
-      for (const itemId of selectedItems) {
-        const item = items.find(i => i.id === itemId)
-        if (item) {
-          await sellItem(itemId, item.quantity)
+      for (const item of items) {
+        if (item.selected) {
+          await apiSellItem(item.id, item.quantity)
         }
       }
       hideLoading()
-      showToast('出售成功', 'success')
-      this.setData({ selectionMode: false, selectedItems: new Set() })
+
+      this.setData({
+        selectionMode: false,
+        selectedCount: 0,
+        selectedTotalValue: 0,
+        successModalOpen: true,
+        successMessage: '成功出售 ' + selectedCount + ' 个物品',
+        successCoins: selectedTotalValue,
+      })
+
       this.loadData()
       this.loadBalance()
     } catch (err: any) {
       hideLoading()
       showToast(err.message || '出售失败')
     }
-  }
+  },
 })

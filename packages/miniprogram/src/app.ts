@@ -7,11 +7,15 @@ interface IAppOption {
     apiBaseUrl: string
     isCloud: boolean
     cloudEnv: string
+    darkMode: boolean
+    highContrast: boolean
+    reducedMotion: boolean
   }
   checkLogin(): boolean
   requireLogin(): Promise<boolean>
   doLogin(): Promise<void>
   logout(): void
+  applyTheme(): void
 }
 
 // 环境配置
@@ -31,6 +35,9 @@ App<IAppOption>({
     apiBaseUrl: useCloud ? PROD_API_URL : DEV_API_URL,
     isCloud: useCloud,
     cloudEnv: CLOUD_ENV_ID,
+    darkMode: false,
+    highContrast: false,
+    reducedMotion: false,
   },
 
   onLaunch() {
@@ -98,6 +105,23 @@ App<IAppOption>({
 
   async doLogin(): Promise<void> {
     wx.navigateTo({ url: '/pages/login/login' })
+  },
+
+  applyTheme(): void {
+    const pages = getCurrentPages()
+    if (pages.length === 0) return
+
+    const page = pages[pages.length - 1]
+    const { darkMode, highContrast, reducedMotion } = this.globalData
+
+    const bodyClass = []
+    if (darkMode) bodyClass.push('dark-mode')
+    if (highContrast) bodyClass.push('high-contrast')
+    if (reducedMotion) bodyClass.push('reduced-motion')
+
+    if (page.setData) {
+      page.setData({ bodyClass: bodyClass.join(' ') } as any)
+    }
   },
 
   logout() {

@@ -2,37 +2,45 @@
   <!-- Logo和标题 -->
   <view class="hero-section">
     <view class="logo-wrapper">
-      <view class="logo-icon">🗺️</view>
-      <view class="logo-icon-small">💎</view>
+      <view class="logo-main animate-chest-bounce"><image class="icon-xl" src="/images/icons/map.svg" mode="aspectFit" /></view>
+      <view class="logo-sub animate-float"><image class="icon-lg" src="/images/icons/gem.svg" mode="aspectFit" /></view>
     </view>
-    <view class="title">寻宝记</view>
-    <view class="subtitle">探索世界，收集宝藏</view>
-    <view class="slogan">开启你的探险之旅</view>
+    <view class="hero-title">宝藏地图</view>
+    <view class="hero-subtitle">探索世界，收集宝藏</view>
+    <view class="hero-slogan">开启你的探险之旅</view>
   </view>
-  
-  <!-- 功能介绍 -->
-  <view class="features-section">
-    <view class="feature-item" wx:for="{{ features }}" wx:key="title">
-      <view class="feature-icon">{{ item.icon }}</view>
-      <view class="feature-info">
-        <view class="feature-title">{{ item.title }}</view>
-        <view class="feature-desc">{{ item.desc }}</view>
+
+  <!-- 特色卡片 -->
+  <view class="features-grid">
+    <view
+      class="feature-card animate-slide-in-up stagger-{{ index + 1 }}"
+      wx:for="{{ features }}"
+      wx:key="title"
+      hover-class="feature-card-hover"
+      style="background: {{ item.gradient }};"
+    >
+      <view class="feature-icon-wrap">
+        <image class="feature-icon" src="{{ item.icon }}" mode="aspectFit" />
+      </view>
+      <view class="feature-content">
+        <text class="feature-title">{{ item.title }}</text>
+        <text class="feature-desc">{{ item.desc }}</text>
       </view>
     </view>
   </view>
-  
-  <!-- 操作按钮 -->
-  <view class="action-section">
-    <button class="cartoon-btn primary-btn" bindtap="onStartExplore">
-      🚀 开始探险
+
+  <!-- CTA按钮 -->
+  <view class="cta-section">
+    <button class="cartoon-btn cta-primary" hover-class="cartoon-btn-hover" bindtap="onStartExplore">
+      <image class="icon-sm" src="/images/icons/rocket.svg" mode="aspectFit" /> 开始探险
     </button>
-    <button class="cartoon-btn secondary-btn" bindtap="onLogin">
-      🔐 登录账号
+    <button class="cta-secondary" hover-class="cta-secondary-hover" bindtap="onLogin">
+      <image class="icon-sm" src="/images/icons/lock.svg" mode="aspectFit" /> 登录账号
     </button>
   </view>
-  
+
   <!-- 底部提示 -->
-  <view class="footer">
+  <view class="footer-hint">
     <text class="footer-text">登录后可保存游戏进度</text>
   </view>
 </view>

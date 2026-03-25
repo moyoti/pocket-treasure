@@ -1,65 +1,115 @@
 <view class="container">
-  <!-- 标题 -->
+  <!-- 顶部栏 -->
   <view class="header">
-    <view class="title">📋 每日任务</view>
-  </view>
-  
-  <!-- 进度统计 -->
-  <view class="stats-card" wx:if="{{ stats }}">
-    <view class="stats-info">
-      <view class="stats-label">今日进度</view>
-      <view class="stats-value">{{ stats.todayCompleted }} / {{ stats.todayTotal }}</view>
-    </view>
-    <view class="stats-bar">
-      <view class="stats-fill" style="width: {{ (stats.todayCompleted / stats.todayTotal) * 100 }}%"></view>
+    <view class="header-center">
+      <image class="icon-lg title-icon" src="/images/icons/clipboard-list.svg" mode="aspectFit" />
+      <text class="title-text">每日任务</text>
     </view>
   </view>
-  
+
+  <!-- 成功提示 -->
+  <view class="success-toast animate-slide-in-down" wx:if="{{ showSuccess }}">
+    <image class="icon-sm" src="/images/icons/check.svg" mode="aspectFit" />
+    <text class="toast-text">任务奖励领取成功!</text>
+    <view class="toast-coin">
+      <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+      <text> +{{ successRewardCoins }}</text>
+    </view>
+    <view class="toast-exp">
+      <image class="icon-sm" src="/images/icons/star.svg" mode="aspectFit" />
+      <text> +{{ successRewardExp }}</text>
+    </view>
+  </view>
+
   <!-- 加载中 -->
   <view class="loading-container" wx:if="{{ loading }}">
-    <view class="loading-spinner"></view>
+    <view class="cartoon-loader"></view>
   </view>
-  
-  <!-- 空状态 -->
-  <view class="empty-state" wx:elif="{{ tasks.length === 0 }}">
-    <view class="empty-state-icon">📋</view>
-    <view class="empty-state-text">暂无每日任务</view>
-    <view class="empty-state-subtext">明天再来查看新任务</view>
-  </view>
-  
-  <!-- 任务列表 -->
-  <view class="task-list" wx:else>
-    <view class="task-card" wx:for="{{ tasks }}" wx:key="id">
-      <view class="task-header">
-        <view class="task-icon">{{ item.icon || '📌' }}</view>
-        <view class="task-info">
-          <view class="task-name">{{ item.name }}</view>
-          <view class="task-desc">{{ item.description }}</view>
-        </view>
+
+  <block wx:else>
+    <!-- 进度统计卡片 -->
+    <view class="stats-card">
+      <view class="stats-left">
+        <text class="stats-label">今日进度</text>
+        <text class="stats-value">{{ todayCompleted }} / {{ todayTotal }}</text>
       </view>
-      
-      <view class="task-progress">
-        <view class="progress-bar">
-          <view class="progress-fill" style="width: {{ (item.progress / item.requirement) * 100 }}%"></view>
+      <view class="stats-right">
+        <view class="stats-percent-circle">
+          <text class="stats-percent">{{ progressPercent }}%</text>
         </view>
-        <view class="progress-text">{{ item.progress }} / {{ item.requirement }}</view>
-      </view>
-      
-      <view class="task-footer">
-        <view class="task-rewards">
-          <text>💰 {{ item.rewards?.coins || 10 }}</text>
-          <text>⭐ {{ item.rewards?.experience || 5 }}</text>
-        </view>
-        
-        <button 
-          class="claim-btn {{ item.status === 'claimed' ? 'claimed' : '' }}"
-          bindtap="handleClaim"
-          data-id="{{ item.id }}"
-          disabled="{{ item.status !== 'completed' }}"
-        >
-          {{ item.status === 'claimed' ? '已领取' : item.status === 'completed' ? '领取奖励' : '进行中' }}
-        </button>
       </view>
     </view>
-  </view>
+
+    <!-- 进度条 -->
+    <view class="progress-bar-wrap">
+      <view class="progress-bar-bg">
+        <view class="progress-bar-fill" style="width: {{ progressPercent }}%;"></view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{ tasks.length === 0 }}">
+      <view class="empty-icon-circle">
+        <image class="icon-xl" src="/images/icons/clipboard-list.svg" mode="aspectFit" />
+      </view>
+      <view class="empty-state-text">暂无每日任务</view>
+      <view class="empty-state-subtext">明天再来查看新任务</view>
+    </view>
+
+    <!-- 任务列表 -->
+    <view class="task-list animate-page-enter" wx:else>
+      <view
+        class="task-card {{ item.canClaim ? 'claimable' : '' }} {{ item.isClaimed ? 'claimed' : '' }}"
+        wx:for="{{ tasks }}"
+        wx:key="id"
+      >
+        <!-- 任务头部 -->
+        <view class="task-top">
+          <view class="task-icon-wrap">
+            <image class="icon" src="{{ item.icon || '/images/icons/pin.svg' }}" mode="aspectFit" />
+          </view>
+          <view class="task-info">
+            <text class="task-name">{{ item.name }}</text>
+            <text class="task-desc">{{ item.description }}</text>
+          </view>
+          <view class="task-status {{ item.statusClass }}">
+            <text>{{ item.statusText }}</text>
+          </view>
+        </view>
+
+        <!-- 进度条 -->
+        <view class="task-progress">
+          <view class="task-progress-bar">
+            <view class="task-progress-fill {{ item.isClaimed ? 'completed' : '' }}" style="width: {{ item.progressPct }}%;"></view>
+          </view>
+          <text class="task-progress-text">{{ item.progressText }}</text>
+        </view>
+
+        <!-- 底部：奖励 + 按钮 -->
+        <view class="task-bottom">
+          <view class="task-rewards">
+            <view class="task-reward-coin">
+              <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+              <text> {{ item.rewardCoins }}</text>
+            </view>
+            <view class="task-reward-exp">
+              <image class="icon-sm" src="/images/icons/star.svg" mode="aspectFit" />
+              <text> {{ item.rewardExp }}</text>
+            </view>
+          </view>
+
+          <view
+            class="task-claim-btn {{ item.isClaimed ? 'is-claimed' : '' }} {{ !item.canClaim && !item.isClaimed ? 'is-disabled' : '' }}"
+            bindtap="handleClaim"
+            data-id="{{ item.id }}"
+          >
+            <text wx:if="{{ item.isClaimed }}">已领取</text>
+            <text wx:elif="{{ item.canClaim && claimingId !== item.id }}">领取奖励</text>
+            <text wx:elif="{{ claimingId === item.id }}">领取中...</text>
+            <text wx:else>进行中</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
 </view>

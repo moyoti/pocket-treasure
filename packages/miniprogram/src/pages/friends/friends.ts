@@ -5,15 +5,23 @@ import { showLoading, hideLoading, showToast } from '../../utils/util'
 Page({
   data: {
     friends: [] as any[],
+    onlineFriends: [] as any[],
+    offlineFriends: [] as any[],
     requests: [] as any[],
+    trades: [] as any[],
     loading: true,
     searchQuery: '',
     searchResults: [] as any[],
     searching: false,
-    activeTab: 'friends'
+    activeTab: 'friends',
+    expandedTradeIds: {} as Record<string, boolean>
   },
 
   onLoad() {
+    this.loadData()
+  },
+
+  onShow() {
     this.loadData()
   },
 
@@ -25,16 +33,31 @@ Page({
 
   async loadData() {
     this.setData({ loading: true })
-    
+
     try {
       const [friends, requests] = await Promise.all([
         getFriends(),
         getFriendRequests()
       ])
-      
+
+      const addAvatarLetter = (list: any[]) => (list || []).map((item: any) => ({
+        ...item,
+        avatarLetter: item.username ? item.username[0].toUpperCase() : '?',
+      }))
+      const addRequesterLetter = (list: any[]) => (list || []).map((item: any) => ({
+        ...item,
+        requesterAvatarLetter: item.requester && item.requester.username ? item.requester.username[0].toUpperCase() : '?',
+      }))
+
+      const processedFriends = addAvatarLetter(friends)
+      const onlineFriends = processedFriends.filter((f: any) => f.isOnline)
+      const offlineFriends = processedFriends.filter((f: any) => !f.isOnline)
+
       this.setData({
-        friends: friends || [],
-        requests: requests || [],
+        friends: processedFriends,
+        onlineFriends,
+        offlineFriends,
+        requests: addRequesterLetter(requests),
         loading: false
       })
     } catch (err: any) {
@@ -54,13 +77,19 @@ Page({
 
   async handleSearch() {
     const { searchQuery } = this.data
-    if (!searchQuery.trim()) return
-    
+    if (!searchQuery.trim()) {
+      this.setData({ searchResults: [] })
+      return
+    }
+
     this.setData({ searching: true })
-    
+
     try {
-      const results = await searchUsers(searchQuery.trim())
-      this.setData({ searchResults: results || [] })
+      const results = (await searchUsers(searchQuery.trim()) || []).map((item: any) => ({
+        ...item,
+        avatarLetter: item.username ? item.username[0].toUpperCase() : '?',
+      }))
+      this.setData({ searchResults: results })
     } catch (err: any) {
       showToast(err.message || '搜索失败')
     } finally {
@@ -70,15 +99,14 @@ Page({
 
   async handleSendRequest(e: any) {
     const userId = e.currentTarget.dataset.id
-    
+
     showLoading('发送中...')
-    
+
     try {
       await sendFriendRequest(userId)
       hideLoading()
       showToast('申请已发送', 'success')
-      
-      // 更新搜索结果
+
       this.setData({
         searchResults: this.data.searchResults.map((r: any) =>
           r.id === userId ? { ...r, hasPendingRequest: true } : r
@@ -92,9 +120,9 @@ Page({
 
   async handleAccept(e: any) {
     const requestId = e.currentTarget.dataset.id
-    
+
     showLoading('处理中...')
-    
+
     try {
       await acceptFriendRequest(requestId)
       hideLoading()
@@ -108,9 +136,9 @@ Page({
 
   async handleReject(e: any) {
     const requestId = e.currentTarget.dataset.id
-    
+
     showLoading('处理中...')
-    
+
     try {
       await rejectFriendRequest(requestId)
       hideLoading()
@@ -125,7 +153,27 @@ Page({
   startChat(e: any) {
     const friend = e.currentTarget.dataset.friend
     wx.navigateTo({
-      url: `/pages/chat/chat?userId=${friend.id}&username=${friend.username}`
+      url: `/pages/chat/chat?userId=${friend.id}&username=${encodeURIComponent(friend.username)}`
     })
+  },
+
+  startTrade() {
+    showToast('交易功能即将上线')
+  },
+
+  toggleTradeExpand(e: any) {
+    const tradeId = e.currentTarget.dataset.id
+    const key = `expandedTradeIds.${tradeId}`
+    this.setData({
+      [key]: !this.data.expandedTradeIds[tradeId]
+    })
+  },
+
+  async handleAcceptTrade() {
+    showToast('交易功能即将上线')
+  },
+
+  async handleRejectTrade() {
+    showToast('交易功能即将上线')
   }
 })

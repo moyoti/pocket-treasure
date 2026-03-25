@@ -1,73 +1,164 @@
 <view class="container">
   <!-- 顶部栏 -->
   <view class="header">
-    <view class="title">🎲 抽奖</view>
-    <view class="balance" wx:if="{{ isLoggedIn }}">
-      <text class="balance-icon">💰</text>
+    <view class="header-left">
+      <image class="icon-lg title-icon" src="/images/icons/dices.svg" mode="aspectFit" />
+      <text class="title-text">抽奖</text>
+    </view>
+    <view class="balance-pill" wx:if="{{ isLoggedIn }}">
+      <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
       <text class="balance-value">{{ balance }}</text>
     </view>
     <view class="login-hint" wx:else bindtap="goToLogin">
-      <text class="login-icon">🔐</text>
-      <text class="login-text">登录抽奖</text>
+      <view class="login-hint-inner">
+        <image class="icon-sm" src="/images/icons/lock.svg" mode="aspectFit" />
+        <text> 登录抽奖</text>
+      </view>
     </view>
   </view>
-  
-  <!-- 抽奖池选择 -->
-  <scroll-view class="pool-list" scroll-x wx:if="{{ pools.length > 0 }}">
-    <view 
-      class="pool-item {{ selectedPool.id === item.id ? 'active' : '' }}"
-      wx:for="{{ pools }}"
-      wx:key="id"
-      bindtap="selectPool"
-      data-id="{{ item.id }}"
-    >
-      {{ item.name }}
-    </view>
-  </scroll-view>
-  
-  <!-- 抽奖区域 -->
-  <view class="gacha-area" wx:if="{{ selectedPool }}">
-    <view class="gacha-icon">🎁</view>
-    <view class="gacha-name">{{ selectedPool.name }}</view>
-    <view class="gacha-desc">{{ selectedPool.description }}</view>
-    
-    <view class="gacha-buttons">
-      <button 
-        class="cartoon-btn pull-btn" 
-        bindtap="handlePull"
-        data-type="single"
-        disabled="{{ pullLoading }}"
-      >
-        单抽 💰{{ selectedPool.cost }}
-      </button>
-      <button 
-        class="cartoon-btn pull-btn secondary" 
-        bindtap="handlePull"
-        data-type="ten"
-        disabled="{{ pullLoading }}"
-      >
-        十连 💰{{ selectedPool.costTen }}
-      </button>
-    </view>
-    
-    <view class="login-tip" wx:if="{{ !isLoggedIn }}" bindtap="goToLogin">
-      💡 登录后可进行抽奖
-    </view>
+
+  <!-- 加载中 -->
+  <view class="loading-container" wx:if="{{ loading }}">
+    <view class="cartoon-loader"></view>
   </view>
-  
-  <!-- 结果弹窗 -->
-  <view class="results-modal" wx:if="{{ showResults }}">
-    <view class="results-mask" bindtap="closeResults"></view>
-    <view class="results-content">
-      <view class="results-title">🎉 恭喜获得</view>
-      <scroll-view class="results-list" scroll-y>
-        <view class="result-item" wx:for="{{ results }}" wx:key="id">
-          <view class="result-icon rarity-bg-{{ item.rarity }}">💎</view>
-          <view class="result-name">{{ item.name }}</view>
-          <view class="result-rarity rarity-{{ item.rarity }}">{{ item.rarity === 'common' ? '普通' : item.rarity === 'rare' ? '稀有' : item.rarity === 'epic' ? '史诗' : '传说' }}</view>
+
+  <block wx:elif="{{ selectedPool }}">
+    <!-- 池子选择 -->
+    <scroll-view class="pool-selector" scroll-x wx:if="{{ pools.length > 1 }}">
+      <view
+        class="pool-tab {{ item.isSelected ? 'active' : '' }}"
+        wx:for="{{ pools }}"
+        wx:key="id"
+        bindtap="selectPool"
+        data-id="{{ item.id }}"
+      >
+        {{ item.name }}
+      </view>
+    </scroll-view>
+
+    <!-- 主抽奖区 -->
+    <view class="gacha-main animate-page-enter">
+      <view class="gacha-card">
+        <!-- 动画礼盒 -->
+        <view class="gacha-gift-wrap {{ showPullAnimation ? 'pulling' : '' }}">
+          <image class="gacha-gift-img" src="/images/icons/gift.svg" mode="aspectFit" />
+        </view>
+
+        <text class="gacha-pool-name">{{ selectedPool.name }}</text>
+        <text class="gacha-pool-desc">{{ selectedPool.description }}</text>
+
+        <!-- 保底进度条 -->
+        <view class="pity-section">
+          <view class="pity-header">
+            <text class="pity-label">保底进度</text>
+            <text class="pity-count">{{ pityCount }} / {{ pityThreshold }}</text>
+          </view>
+          <view class="pity-bar">
+            <view class="pity-fill" style="width: {{ pityProgress }}%;"></view>
+          </view>
+          <text class="pity-hint">{{ pityThreshold }}抽保底{{ pityMinRarityName }}+!</text>
+        </view>
+
+        <!-- 抽奖按钮 -->
+        <view class="pull-buttons">
+          <view
+            class="pull-btn single {{ isPulling || !canSingle ? 'disabled' : '' }}"
+            bindtap="handlePull"
+            data-type="single"
+          >
+            <image class="icon" src="/images/icons/zap.svg" mode="aspectFit" />
+            <text class="pull-btn-label">单抽</text>
+            <view class="pull-btn-cost-row">
+              <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+              <text class="pull-btn-cost"> {{ singlePrice }}</text>
+            </view>
+          </view>
+          <view
+            class="pull-btn ten {{ isPulling || !canTen ? 'disabled' : '' }}"
+            bindtap="handlePull"
+            data-type="ten"
+          >
+            <image class="icon" src="/images/icons/sparkles.svg" mode="aspectFit" />
+            <text class="pull-btn-label">十连抽</text>
+            <view class="pull-btn-cost-row">
+              <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+              <text class="pull-btn-cost"> {{ tenPrice }}</text>
+              <text class="pull-btn-discount">优惠</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 抽奖动画 -->
+        <view class="pull-animation" wx:if="{{ showPullAnimation }}">
+          <image class="pull-anim-icon-img" src="/images/icons/dices.svg" mode="aspectFit" />
+          <text class="pull-anim-text">抽奖中...</text>
+        </view>
+
+        <!-- 掉落概率表 -->
+        <view class="drop-rates">
+          <view class="drop-rates-title">
+            <image class="icon-sm" src="/images/icons/star.svg" mode="aspectFit" />
+            <text>掉落概率</text>
+          </view>
+          <view class="drop-rates-grid">
+            <view class="drop-rate-item" wx:for="{{ dropRates }}" wx:key="rarity">
+              <text class="drop-rate-name" style="color: {{ item.color }};">{{ item.name }}</text>
+              <text class="drop-rate-pct">{{ item.percentage }}%</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 无池子 -->
+  <view class="empty-state" wx:elif="{{ !loading }}">
+    <view class="empty-icon-circle">
+      <image class="icon-xl" src="/images/icons/dices.svg" mode="aspectFit" />
+    </view>
+    <view class="empty-state-text">暂无抽奖池</view>
+    <view class="empty-state-subtext">请稍后再来</view>
+  </view>
+
+  <!-- 结果模态框 -->
+  <view class="modal-overlay" wx:if="{{ showResults }}" catchtap="closeResults">
+    <view class="modal-content results-modal animate-bounce-in" catchtap="">
+      <view class="modal-header">
+        <view class="modal-title-row">
+          <image class="icon" src="/images/icons/party-popper.svg" mode="aspectFit" />
+          <text class="modal-title"> 抽奖结果!</text>
+        </view>
+        <view class="modal-close" bindtap="closeResults">
+          <image class="icon" src="/images/icons/x.svg" mode="aspectFit" />
+        </view>
+      </view>
+
+      <scroll-view class="results-scroll" scroll-y>
+        <view
+          class="result-card {{ item.rarityBgClass }}"
+          wx:for="{{ results }}"
+          wx:key="id"
+        >
+          <view class="result-icon {{ item.rarityBgClass }}">
+            <image class="icon" src="/images/icons/gem.svg" mode="aspectFit" />
+          </view>
+          <view class="result-info">
+            <text class="result-name">{{ item.name }}</text>
+            <text class="result-rarity" style="color: {{ item.rarityColor }};">{{ item.rarityName }}</text>
+            <view class="result-pity" wx:if="{{ item.isPity }}">
+              <image class="icon-sm" src="/images/icons/sparkles.svg" mode="aspectFit" />
+              <text> 保底触发</text>
+            </view>
+          </view>
         </view>
       </scroll-view>
-      <button class="cartoon-btn close-btn" bindtap="closeResults">确定</button>
+
+      <view class="modal-btn-full" bindtap="closeResults">
+        <view class="btn-inner">
+          <image class="icon-sm" src="/images/icons/check.svg" mode="aspectFit" />
+          <text> 确定</text>
+        </view>
+      </view>
     </view>
   </view>
 </view>

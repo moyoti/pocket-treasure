@@ -1,95 +1,277 @@
-<!--pages/market/market.wxml-->
-<view class="market-container">
-  <!-- 头部 -->
-  <view class="header cartoon-card">
-    <view class="back-btn" bindtap="goBack">‹</view>
-    <text class="header-title">🏪 玩家市场</text>
-    <view class="coin-display">
-      <image class="coin-icon" src="/assets/icons/coin.png" mode="aspectFit" />
-      <text class="coin-amount">{{ balance }}</text>
+<view class="container">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="header-left">
+      <image class="icon-lg title-icon" src="/images/icons/store.svg" mode="aspectFit" />
+      <text class="title-text">交易市场</text>
+    </view>
+    <view class="balance-pill" wx:if="{{ isLoggedIn }}">
+      <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+      <text class="balance-value">{{ balance }}</text>
+    </view>
+    <view class="login-hint" wx:else bindtap="goToLogin">
+      <view class="login-hint-inner">
+        <image class="icon-sm" src="/images/icons/lock.svg" mode="aspectFit" />
+        <text> 登录交易</text>
+      </view>
     </view>
   </view>
 
-  <!-- 切换标签 -->
-  <view class="tab-bar cartoon-card">
-    <view class="tab-item {{ activeTab === 'buy' ? 'active' : '' }}" data-tab="buy" bindtap="switchTab">购买</view>
-    <view class="tab-item {{ activeTab === 'sell' ? 'active' : '' }}" data-tab="sell" bindtap="switchTab">出售</view>
-  </view>
-
-  <!-- 购买列表 -->
-  <view class="listings-list" wx:if="{{ activeTab === 'buy' }}">
-    <block wx:if="{{ listings.length > 0 }}">
-      <view class="listing-card cartoon-card" wx:for="{{ listings }}" wx:key="id" data-item="{{ item }}" bindtap="buyItem">
-        <view class="listing-icon">💎</view>
-        <view class="listing-info">
-          <view class="listing-name">{{ item.item.name }}</view>
-          <view class="listing-meta">
-            <text class="listing-seller">{{ item.seller.username }}</text>
-            <text class="listing-qty">x{{ item.quantity }}</text>
-          </view>
-        </view>
-        <view class="listing-price">
-          <image class="coin-icon-small" src="/assets/icons/coin.png" />
-          <text>{{ item.price }}</text>
-        </view>
-      </view>
-    </block>
-    <view class="empty-state" wx:else>
-      <view class="empty-icon">🏪</view>
-      <text class="empty-text">暂无商品</text>
+  <!-- 标签切换 -->
+  <view class="tab-bar">
+    <view class="tab-item {{ activeTab === 'buy' ? 'active' : '' }}" data-tab="buy" bindtap="switchTab">
+      <image class="icon-sm" src="/images/icons/trending-up.svg" mode="aspectFit" />
+      <text>浏览</text>
     </view>
-  </view>
-
-  <!-- 出售列表 -->
-  <view class="my-items-list" wx:if="{{ activeTab === 'sell' }}">
-    <block wx:if="{{ myItems.length > 0 }}">
-      <view class="my-item-card cartoon-card" wx:for="{{ myItems }}" wx:key="id" data-item="{{ item }}" bindtap="openSellModal">
-        <view class="item-icon">💎</view>
-        <view class="item-info">
-          <view class="item-name">{{ item.item.name }}</view>
-          <view class="item-qty">x{{ item.quantity }}</view>
-        </view>
-        <button class="cartoon-btn sell-btn">上架</button>
-      </view>
-    </block>
-    <view class="empty-state" wx:else>
-      <view class="empty-icon">📦</view>
-      <text class="empty-text">背包为空</text>
-    </view>
-  </view>
-
-  <!-- 上架弹窗 -->
-  <view class="modal-overlay" wx:if="{{ sellModal.isOpen }}" bindtap="closeSellModal">
-    <view class="modal-content cartoon-card" catchtap="">
-      <view class="modal-title">上架商品</view>
-
-      <view class="item-preview">
-        <view class="preview-icon">💎</view>
-        <view class="preview-info">
-          <text class="preview-name">{{ sellModal.item.item.name }}</text>
-          <text class="preview-qty">拥有: {{ sellModal.item.quantity }}</text>
-        </view>
-      </view>
-
-      <view class="form-group">
-        <text class="form-label">价格</text>
-        <input class="form-input" type="number" value="{{ sellModal.price }}" bindinput="onPriceInput" />
-      </view>
-
-      <view class="price-note">
-        <text>手续费: 10%</text>
-        <text>实际获得: {{ Math.floor(sellModal.price * 0.9) }} 金币</text>
-      </view>
-
-      <view class="modal-buttons">
-        <button class="cartoon-btn cartoon-btn-secondary" bindtap="closeSellModal">取消</button>
-        <button class="cartoon-btn" bindtap="confirmSell">确认上架</button>
-      </view>
+    <view class="tab-item {{ activeTab === 'sell' ? 'active' : '' }}" data-tab="sell" bindtap="switchTab">
+      <image class="icon-sm" src="/images/icons/user.svg" mode="aspectFit" />
+      <text>我的上架</text>
     </view>
   </view>
 
   <!-- 加载中 -->
-  <view class="loading-overlay" wx:if="{{ loading }}">
-    <view class="loading-spinner"></view>
+  <view class="loading-container" wx:if="{{ loading }}">
+    <view class="cartoon-loader"></view>
+  </view>
+
+  <!-- 购买标签页 -->
+  <block wx:elif="{{ activeTab === 'buy' }}">
+    <!-- 搜索和筛选 -->
+    <view class="search-section">
+      <view class="search-row">
+        <view class="search-input-wrap">
+          <image class="icon-sm search-icon" src="/images/icons/search.svg" mode="aspectFit" />
+          <input class="search-input" placeholder="搜索物品..." value="{{ searchQuery }}" bindinput="onSearchInput" />
+        </view>
+        <view class="filter-toggle {{ showFilters ? 'active' : '' }}" bindtap="toggleFilters">
+          <image class="icon-sm" src="/images/icons/chevron-down.svg" mode="aspectFit" />
+        </view>
+      </view>
+
+      <!-- 稀有度筛选 -->
+      <view class="filter-options" wx:if="{{ showFilters }}">
+        <text class="filter-label">按稀有度筛选:</text>
+        <view class="filter-chips">
+          <view class="filter-chip {{ rarityFilter === '' ? 'active' : '' }}" data-rarity="" bindtap="setRarityFilter">全部</view>
+          <view class="filter-chip {{ rarityFilter === 'common' ? 'active' : '' }}" data-rarity="common" bindtap="setRarityFilter" style="border-color: #6B7280;">普通</view>
+          <view class="filter-chip {{ rarityFilter === 'rare' ? 'active' : '' }}" data-rarity="rare" bindtap="setRarityFilter" style="border-color: #0EA5E9;">稀有</view>
+          <view class="filter-chip {{ rarityFilter === 'epic' ? 'active' : '' }}" data-rarity="epic" bindtap="setRarityFilter" style="border-color: #8B5CF6;">史诗</view>
+          <view class="filter-chip {{ rarityFilter === 'legendary' ? 'active' : '' }}" data-rarity="legendary" bindtap="setRarityFilter" style="border-color: #F59E0B;">传说</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 商品列表 -->
+    <view class="listing-grid animate-page-enter" wx:if="{{ filteredListings.length > 0 }}">
+      <view class="listing-card" wx:for="{{ filteredListings }}" wx:key="id">
+        <view class="listing-top">
+          <view class="listing-icon {{ item.rarityBgClass }}">
+            <image class="icon" src="/images/icons/gem.svg" mode="aspectFit" />
+          </view>
+          <view class="listing-info">
+            <text class="listing-name">{{ item.itemName }}</text>
+            <text class="listing-rarity" style="color: {{ item.rarityColor }};">{{ item.rarityName }}</text>
+          </view>
+        </view>
+
+        <view class="listing-seller">
+          <image class="icon-sm" src="/images/icons/user.svg" mode="aspectFit" />
+          <text class="seller-name">{{ item.sellerName }}</text>
+        </view>
+
+        <view class="listing-bottom">
+          <view class="listing-price">
+            <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+            <text class="price-amount">{{ item.priceText }}</text>
+          </view>
+          <text class="listing-qty">x{{ item.quantity }}</text>
+        </view>
+
+        <view
+          class="listing-buy-btn {{ balance < item.price ? 'disabled' : '' }}"
+          bindtap="openBuyModal"
+          data-index="{{ index }}"
+        >
+          <text wx:if="{{ balance < item.price }}">金币不足</text>
+          <text wx:else>购买</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:else>
+      <view class="empty-icon-circle">
+        <image class="icon-xl" src="/images/icons/store.svg" mode="aspectFit" />
+      </view>
+      <view class="empty-state-text">未找到物品</view>
+      <view class="empty-state-subtext">请调整搜索条件或筛选</view>
+    </view>
+  </block>
+
+  <!-- 出售标签页 -->
+  <block wx:elif="{{ activeTab === 'sell' }}">
+    <!-- 出售物品 -->
+    <view class="section-title">出售物品</view>
+    <view class="my-items-list" wx:if="{{ myItems.length > 0 }}">
+      <view class="my-item-card" wx:for="{{ myItems }}" wx:key="id">
+        <view class="my-item-icon {{ item.rarityBgClass }}">
+          <image class="icon" src="/images/icons/gem.svg" mode="aspectFit" />
+        </view>
+        <view class="my-item-info">
+          <text class="my-item-name">{{ item.item.name }}</text>
+          <text class="my-item-qty">x{{ item.quantity }}</text>
+        </view>
+        <view class="my-item-sell-btn" bindtap="openSellModal" data-index="{{ index }}">
+          <view class="btn-inner">
+            <image class="icon-sm" src="/images/icons/tag.svg" mode="aspectFit" />
+            <text> 出售</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="empty-state-mini" wx:else>
+      <view class="empty-mini-row">
+        <image class="icon" src="/images/icons/package.svg" mode="aspectFit" />
+        <text> 背包为空</text>
+      </view>
+    </view>
+
+    <!-- 我的上架列表 -->
+    <view class="section-title">我的上架列表</view>
+    <view class="empty-state-mini" wx:if="{{ myListings.length === 0 }}">
+      <view class="empty-icon-circle-sm">
+        <image class="icon-lg" src="/images/icons/store.svg" mode="aspectFit" />
+      </view>
+      <text class="empty-mini-text">暂无上架物品</text>
+      <text class="empty-mini-sub">从背包中选择物品上架出售</text>
+    </view>
+  </block>
+
+  <!-- 购买确认模态框 -->
+  <view class="modal-overlay" wx:if="{{ buyModalOpen }}" catchtap="closeBuyModal">
+    <view class="modal-content animate-bounce-in" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">确认购买</text>
+        <view class="modal-close" bindtap="closeBuyModal">
+          <image class="icon" src="/images/icons/x.svg" mode="aspectFit" />
+        </view>
+      </view>
+
+      <view class="buy-preview" wx:if="{{ buyListing }}">
+        <view class="preview-icon {{ buyListing.rarityBgClass }}">
+          <image class="icon-lg" src="/images/icons/gem.svg" mode="aspectFit" />
+        </view>
+        <view class="preview-info">
+          <text class="preview-name">{{ buyListing.itemName }}</text>
+          <text class="preview-seller">卖家: {{ buyListing.sellerName }}</text>
+        </view>
+      </view>
+
+      <view class="buy-price-card" wx:if="{{ buyListing }}">
+        <view class="buy-price-row">
+          <text class="buy-price-label">价格:</text>
+          <view class="buy-price-value">
+            <image class="icon" src="/images/icons/coins.svg" mode="aspectFit" />
+            <text class="buy-price-amount">{{ buyListing.priceText }}</text>
+          </view>
+        </view>
+        <view class="buy-qty-row">
+          <text>数量:</text>
+          <text>x{{ buyListing.quantity }}</text>
+        </view>
+      </view>
+
+      <view class="modal-buttons">
+        <view class="modal-btn-cancel" bindtap="closeBuyModal">取消</view>
+        <view class="modal-btn-confirm {{ buyLoading ? 'loading' : '' }}" bindtap="confirmBuy">
+          <view wx:if="{{ !buyLoading }}" class="btn-inner">
+            <image class="icon-sm" src="/images/icons/check.svg" mode="aspectFit" />
+            <text> 购买</text>
+          </view>
+          <text wx:else>购买中...</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 上架模态框 -->
+  <view class="modal-overlay" wx:if="{{ sellModalOpen }}" catchtap="closeSellModal">
+    <view class="modal-content animate-bounce-in" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">创建上架</text>
+        <view class="modal-close" bindtap="closeSellModal">
+          <image class="icon" src="/images/icons/x.svg" mode="aspectFit" />
+        </view>
+      </view>
+
+      <view class="sell-preview" wx:if="{{ sellItemData }}">
+        <view class="preview-icon {{ sellItemData.rarityBgClass }}">
+          <image class="icon-lg" src="/images/icons/gem.svg" mode="aspectFit" />
+        </view>
+        <view class="preview-info">
+          <text class="preview-name">{{ sellItemData.item.name }}</text>
+          <text class="preview-own">拥有: {{ sellItemData.quantity }}</text>
+        </view>
+      </view>
+
+      <!-- 数量 -->
+      <view class="form-section">
+        <text class="form-label">数量</text>
+        <view class="qty-controls">
+          <view class="qty-btn" bindtap="decreaseSellQty">-</view>
+          <text class="qty-value">{{ sellQty }}</text>
+          <view class="qty-btn" bindtap="increaseSellQty">+</view>
+        </view>
+      </view>
+
+      <!-- 单价 -->
+      <view class="form-section">
+        <text class="form-label">单价</text>
+        <view class="price-input-row">
+          <image class="icon" src="/images/icons/coins.svg" mode="aspectFit" />
+          <input class="price-input" type="number" value="{{ sellPrice }}" bindinput="onSellPriceInput" />
+        </view>
+      </view>
+
+      <!-- 费用计算 -->
+      <view class="fee-card">
+        <view class="fee-row">
+          <text class="fee-label">总价:</text>
+          <text class="fee-value">{{ sellTotalPrice }} 金币</text>
+        </view>
+        <view class="fee-row">
+          <text class="fee-label-sub">手续费 (10%):</text>
+          <text class="fee-value-red">-{{ sellFee }} 金币</text>
+        </view>
+        <view class="fee-divider"></view>
+        <view class="fee-row">
+          <text class="fee-label">您将获得:</text>
+          <text class="fee-value-green">{{ sellNetIncome }} 金币</text>
+        </view>
+      </view>
+
+      <view class="modal-buttons">
+        <view class="modal-btn-cancel" bindtap="closeSellModal">取消</view>
+        <view class="modal-btn-confirm {{ sellLoading || sellPrice <= 0 ? 'disabled' : '' }}" bindtap="confirmSell">
+          <view wx:if="{{ !sellLoading }}" class="btn-inner">
+            <image class="icon-sm" src="/images/icons/tag.svg" mode="aspectFit" />
+            <text> 上架</text>
+          </view>
+          <text wx:else>上架中...</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 成功模态框 -->
+  <view class="modal-overlay" wx:if="{{ successModalOpen }}" catchtap="closeSuccessModal">
+    <view class="modal-content animate-bounce-in success-modal" catchtap="">
+      <view class="success-icon-circle">
+        <image class="icon-lg" src="/images/icons/check.svg" mode="aspectFit" />
+      </view>
+      <text class="success-title">成功！</text>
+      <text class="success-msg">{{ successMessage }}</text>
+      <view class="modal-btn-confirm" bindtap="closeSuccessModal">确定</view>
+    </view>
   </view>
 </view>
