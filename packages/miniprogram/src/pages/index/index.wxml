@@ -5,7 +5,7 @@
       <view class="logo-main animate-chest-bounce"><image class="icon-xl" src="/images/icons/map.svg" mode="aspectFit" /></view>
       <view class="logo-sub animate-float"><image class="icon-lg" src="/images/icons/gem.svg" mode="aspectFit" /></view>
     </view>
-    <view class="hero-title">宝藏地图</view>
+    <view class="hero-title">寻宝记</view>
     <view class="hero-subtitle">探索世界，收集宝藏</view>
     <view class="hero-slogan">开启你的探险之旅</view>
   </view>

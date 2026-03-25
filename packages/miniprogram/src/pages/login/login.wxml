@@ -4,7 +4,7 @@
       <view class="logo-map"><image class="icon-xl" src="/images/icons/map.svg" mode="aspectFit" /></view>
       <view class="logo-gem"><image class="icon-lg" src="/images/icons/gem.svg" mode="aspectFit" /></view>
     </view>
-    <view class="app-name">宝藏地图</view>
+    <view class="app-name">寻宝记</view>
     <view class="app-slogan">探索世界，收集宝藏</view>
   </view>
 

@@ -2,7 +2,7 @@
   "miniprogramRoot": "src/",
   "compileType": "miniprogram",
   "projectname": "treasure-hunt",
-  "description": "宝藏地图 - 探索世界，收集宝藏",
+  "description": "寻宝记 - 探索世界，收集宝藏",
   "appid": "wxd1be069ddbf4cad1",
   "setting": {
     "urlCheck": true,
