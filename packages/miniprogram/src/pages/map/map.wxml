@@ -17,6 +17,18 @@
   <view class="top-overlay">
   </view>
 
+  <!-- 右上角：距离图例 -->
+  <view class="distance-legend" wx:if="{{ nearbyDistances.length > 0 }}">
+    <view class="distance-legend-title">附近宝藏</view>
+    <view class="distance-legend-items">
+      <view class="distance-legend-item" wx:for="{{ nearbyDistances }}" wx:key="id">
+        <view class="distance-legend-dot rarity-dot-{{ item.rarity }}"></view>
+        <text class="distance-legend-name">{{ item.name }}</text>
+        <text class="distance-legend-dist">{{ item.distance }}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 底部操作栏：宝藏池 + 刷新 -->
   <view class="bottom-action-bar">
     <view class="pool-btn" hover-class="pool-btn-hover" bindtap="toggleItemPool">

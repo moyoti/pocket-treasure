@@ -211,6 +211,8 @@ Page({
           id: r.id || (r.item && r.item.id) || '',
           name: r.name || (r.item && r.item.name) || '未知物品',
           rarity: rarity,
+          rarityName: RARITY_NAMES[rarity] || rarity,
+          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
           isPity: r.isPity || false,
         }
       })

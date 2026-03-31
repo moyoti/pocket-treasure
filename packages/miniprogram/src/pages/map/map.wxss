@@ -233,6 +233,71 @@
   color: var(--text-secondary);
 }
 
+/* ===== 距离图例 ===== */
+.distance-legend {
+  position: absolute;
+  top: calc(100rpx + env(safe-area-inset-top));
+  right: 24rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 16rpx 24rpx;
+  border: 4rpx solid var(--border-color);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  max-width: 360rpx;
+}
+
+.distance-legend-title {
+  font-size: 20rpx;
+  font-weight: bold;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2rpx;
+  margin-bottom: 12rpx;
+}
+
+.distance-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.distance-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.distance-legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.rarity-dot-common { background-color: #6B7280; }
+.rarity-dot-rare { background-color: #0EA5E9; }
+.rarity-dot-epic { background-color: #8B5CF6; }
+.rarity-dot-legendary { background-color: #F59E0B; }
+
+.distance-legend-name {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distance-legend-dist {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
 /* ===== 附近物品列表面板 ===== */
 .item-pool-panel {
   position: absolute;

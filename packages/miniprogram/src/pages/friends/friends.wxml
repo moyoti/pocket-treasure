@@ -1,4 +1,18 @@
 <view class="container">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="header-left">
+      <image class="icon title-icon" src="/images/icons/users.svg" mode="aspectFit" />
+      <text class="title-text">好友</text>
+    </view>
+    <view class="header-right">
+      <view class="balance-pill" wx:if="{{ isLoggedIn }}">
+        <image class="icon-sm balance-icon" src="/images/icons/coins.svg" mode="aspectFit" />
+        <text class="balance-value">{{ balance }}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 标签切换 -->
   <view class="tabs">
     <view class="tab {{activeTab === 'friends' ? 'active' : ''}}" bindtap="switchTab" data-tab="friends">
@@ -182,7 +196,7 @@
 
   <!-- 加载中 -->
   <view class="loading-container" wx:if="{{loading}}">
-    <view class="loading-spinner"></view>
+    <view class="cartoon-loader"></view>
     <view class="loading-text">加载中...</view>
   </view>
 </view>

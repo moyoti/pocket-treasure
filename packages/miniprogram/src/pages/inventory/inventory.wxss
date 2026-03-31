@@ -1,25 +1,3 @@
-/* ===== Icon sizes ===== */
-.icon {
-  width: 36rpx;
-  height: 36rpx;
-  vertical-align: middle;
-}
-.icon-sm {
-  width: 28rpx;
-  height: 28rpx;
-  vertical-align: middle;
-}
-.icon-lg {
-  width: 48rpx;
-  height: 48rpx;
-  vertical-align: middle;
-}
-.icon-xl {
-  width: 64rpx;
-  height: 64rpx;
-  vertical-align: middle;
-}
-
 .container {
   min-height: 100vh;
   padding-bottom: 120rpx;

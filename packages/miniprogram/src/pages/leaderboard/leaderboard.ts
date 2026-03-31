@@ -1,6 +1,6 @@
 // pages/leaderboard/leaderboard.ts
-import { getLeaderboard, getMyLeaderboardRank } from '../../utils/api';
-import { showToast } from '../../utils/util';
+import { getLeaderboard, getMyLeaderboardRank, getCoinBalance } from '../../utils/api';
+import { showToast, checkLogin } from '../../utils/util';
 
 interface LeaderboardEntry {
   rank: number;
@@ -20,7 +20,9 @@ Page({
     myUsername: '',
     myAvatarLetter: '',
     loading: true,
-    currentUserId: ''
+    currentUserId: '',
+    balance: 0,
+    isLoggedIn: false
   },
 
   onLoad() {
@@ -33,7 +35,27 @@ Page({
         myAvatarLetter: username.charAt(0).toUpperCase() || '?'
       });
     }
+    this.setData({ isLoggedIn: checkLogin() });
     this.loadData();
+    if (checkLogin()) {
+      this.loadBalance();
+    }
+  },
+
+  onShow() {
+    this.setData({ isLoggedIn: checkLogin() });
+    if (checkLogin()) {
+      this.loadBalance();
+    }
+  },
+
+  async loadBalance() {
+    try {
+      const res = await getCoinBalance();
+      this.setData({ balance: res.balance || 0 });
+    } catch (err) {
+      console.error('获取余额失败:', err);
+    }
   },
 
   onPullDownRefresh() {

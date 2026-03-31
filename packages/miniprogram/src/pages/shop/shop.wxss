@@ -1,22 +1,3 @@
-/* ===== Icon Sizes ===== */
-.icon {
-  width: 36rpx;
-  height: 36rpx;
-  vertical-align: middle;
-}
-.icon-sm {
-  width: 28rpx;
-  height: 28rpx;
-}
-.icon-lg {
-  width: 48rpx;
-  height: 48rpx;
-}
-.icon-xl {
-  width: 64rpx;
-  height: 64rpx;
-}
-
 .btn-inner {
   display: flex;
   align-items: center;

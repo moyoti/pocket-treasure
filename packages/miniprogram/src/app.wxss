@@ -255,6 +255,28 @@ page.reduced-motion .rarity-glow-legendary {
   pointer-events: none;
 }
 
+/* ==================== 图标尺寸 ==================== */
+.icon {
+  width: 36rpx;
+  height: 36rpx;
+  vertical-align: middle;
+}
+.icon-sm {
+  width: 28rpx;
+  height: 28rpx;
+  vertical-align: middle;
+}
+.icon-lg {
+  width: 48rpx;
+  height: 48rpx;
+  vertical-align: middle;
+}
+.icon-xl {
+  width: 64rpx;
+  height: 64rpx;
+  vertical-align: middle;
+}
+
 /* ==================== 输入框样式 ==================== */
 .cartoon-input {
   background: white;

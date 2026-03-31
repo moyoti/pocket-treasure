@@ -51,6 +51,7 @@ Page({
       { name: '史诗', color: '#8B5CF6' },
       { name: '传说', color: '#F59E0B' }
     ],
+    nearbyDistances: [] as { id: string; name: string; distance: string; rarity: string }[],
     collectionRadius: COLLECTION_RADIUS_METERS,
 
     // 疯狂点击收集相关状态
@@ -152,9 +153,9 @@ Page({
       }).map((item: any) => ({
         ...item,
         item: {
-          name: '神秘宝藏',
-          description: item.poiName ? `在${item.poiName}发现的宝藏` : '一个神秘的宝藏',
-          rarity: item.itemRarity || 'common'
+          name: item.item?.name || item.name || item.poiName || '神秘宝藏',
+          description: item.item?.description || (item.poiName ? `在${item.poiName}发现的宝藏` : '一个神秘的宝藏'),
+          rarity: item.itemRarity || item.rarity || 'common'
         }
       }))
 
@@ -185,6 +186,8 @@ Page({
         circles: circles,
         loading: false
       })
+
+      this.calculateNearbyDistances()
     } catch (err) {
       console.error('获取宝藏失败:', err)
       this.setData({
@@ -214,6 +217,39 @@ Page({
       legendary: '/images/treasure-legendary.png'
     }
     return icons[rarity] || icons.common
+  },
+
+  calculateNearbyDistances() {
+    const { items, latitude, longitude } = this.data
+    if (!items || items.length === 0 || !latitude || !longitude) {
+      this.setData({ nearbyDistances: [] })
+      return
+    }
+
+    const distances = items.map((item: MapItem) => {
+      const dist = calculateDistance(latitude, longitude, item.latitude, item.longitude)
+      let distText = ''
+      if (dist < 1000) {
+        distText = Math.round(dist) + '米'
+      } else {
+        distText = (dist / 1000).toFixed(1) + '公里'
+      }
+      return {
+        id: item.id,
+        name: item.item?.name || '宝藏',
+        distance: distText,
+        rarity: item.item?.rarity || 'common'
+      }
+    })
+
+    distances.sort((a, b) => {
+      const rarityOrder: Record<string, number> = { legendary: 0, epic: 1, rare: 2, common: 3 }
+      const orderA = rarityOrder[a.rarity] ?? 3
+      const orderB = rarityOrder[b.rarity] ?? 3
+      return orderA - orderB
+    })
+
+    this.setData({ nearbyDistances: distances.slice(0, 5) })
   },
 
   onMapTap(e: any) {
@@ -355,8 +391,8 @@ Page({
 
       const inactiveTime = Date.now() - lastActiveTime
       
-      if (inactiveTime > 400 && collectProgress > 0) {
-        const decayAmount = Math.min(2, (inactiveTime - 400) / 200)
+      if (inactiveTime > 1500 && collectProgress > 0) {
+        const decayAmount = Math.min(2, (inactiveTime - 1500) / 200)
         const newProgress = Math.max(0, collectProgress - decayAmount)
         const newDisplayProgress = Math.max(0, this.data.displayProgress - decayAmount * 0.8)
         
@@ -401,7 +437,14 @@ Page({
     const x = touch ? touch.clientX - 25 : Math.random() * 300 + 50
     const y = touch ? touch.clientY - 25 : Math.random() * 200 + 100
 
-    const colors = ['#FCD34D', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#10B981', '#06B6D4', '#84CC16']
+    const rarityEffectColors: Record<string, string[]> = {
+      common: ['#6B7280', '#9CA3AF', '#D1D5DB'],
+      rare: ['#0EA5E9', '#38BDF8', '#7DD3FC'],
+      epic: ['#8B5CF6', '#A78BFA', '#C4B5FD'],
+      legendary: ['#F59E0B', '#FBBF24', '#FCD34D']
+    }
+    const rarityKey = selectedItem.item?.rarity || 'common'
+    const colors = rarityEffectColors[rarityKey] || rarityEffectColors.common
     const color = colors[Math.floor(Math.random() * colors.length)]
     const scale = 0.8 + Math.random() * 0.8
 

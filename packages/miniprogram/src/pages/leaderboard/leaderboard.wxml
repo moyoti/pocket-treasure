@@ -1,8 +1,22 @@
 <!--pages/leaderboard/leaderboard.wxml-->
 <view class="leaderboard-container">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="header-left">
+      <image class="icon title-icon" src="/images/icons/trophy.svg" mode="aspectFit" />
+      <text class="title-text">排行榜</text>
+    </view>
+    <view class="header-right">
+      <view class="balance-pill" wx:if="{{ isLoggedIn }}">
+        <image class="icon-sm balance-icon" src="/images/icons/coins.svg" mode="aspectFit" />
+        <text class="balance-value">{{ balance }}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 加载中 -->
-  <view class="loading-container" wx:if="{{ loading }}">
-    <view class="loading-spinner"></view>
+  <view class="loading-container" wx:if="{{ loading}}">
+    <view class="cartoon-loader"></view>
   </view>
 
   <block wx:else>

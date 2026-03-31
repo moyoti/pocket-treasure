@@ -1,6 +1,6 @@
 // pages/friends/friends.ts
-import { getFriends, getFriendRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, searchUsers } from '../../utils/api'
-import { showLoading, hideLoading, showToast } from '../../utils/util'
+import { getFriends, getFriendRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, searchUsers, getCoinBalance } from '../../utils/api'
+import { showLoading, hideLoading, showToast, checkLogin } from '../../utils/util'
 
 interface User {
   id: string
@@ -42,6 +42,8 @@ interface PageData {
   searching: boolean
   activeTab: string
   expandedTradeIds: Record<string, boolean>
+  balance: number
+  isLoggedIn: boolean
 }
 
 Page({
@@ -56,16 +58,32 @@ Page({
     searchResults: [] as SearchResultUser[],
     searching: false,
     activeTab: 'friends',
-    expandedTradeIds: {} as Record<string, boolean>
+    expandedTradeIds: {} as Record<string, boolean>,
+    balance: 0,
+    isLoggedIn: false
   } as PageData,
 
   onLoad() {
+    this.setData({ isLoggedIn: checkLogin() })
     this.loadData()
   },
 
   onShow() {
+    this.setData({ isLoggedIn: checkLogin() })
     if (this.data.friends.length === 0 && !this.data.loading) {
       this.loadData()
+    }
+    if (checkLogin()) {
+      this.loadBalance()
+    }
+  },
+
+  async loadBalance() {
+    try {
+      const res = await getCoinBalance()
+      this.setData({ balance: res.balance || 0 })
+    } catch (err) {
+      console.error('获取余额失败:', err)
     }
   },
 
