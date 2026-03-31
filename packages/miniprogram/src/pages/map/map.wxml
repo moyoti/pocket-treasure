@@ -112,7 +112,7 @@
 
   <!-- 加载中 -->
   <view class="loading-overlay" wx:if="{{ loading }}">
-    <view class="loading-spinner"></view>
+    <view class="cartoon-loader"></view>
     <text class="loading-text">正在寻找宝藏...</text>
   </view>
 

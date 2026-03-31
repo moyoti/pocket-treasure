@@ -443,7 +443,7 @@ Page({
       epic: ['#8B5CF6', '#A78BFA', '#C4B5FD'],
       legendary: ['#F59E0B', '#FBBF24', '#FCD34D']
     }
-    const rarityKey = selectedItem.item?.rarity || 'common'
+    const rarityKey = this.data.selectedItem?.item?.rarity || 'common'
     const colors = rarityEffectColors[rarityKey] || rarityEffectColors.common
     const color = colors[Math.floor(Math.random() * colors.length)]
     const scale = 0.8 + Math.random() * 0.8
