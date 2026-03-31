@@ -76,6 +76,13 @@ export default function GachaScreen() {
     return Math.ceil(coinPrice / 10);
   };
 
+  const getDisplayGemPrice = (pool: GachaPool, pullType: 'single' | 'ten'): number => {
+    if (pool.isPremium) {
+      return pullType === 'single' ? pool.gemPrice : pool.tenGemPrice;
+    }
+    return pullType === 'single' ? getGemPrice(pool.singlePrice) : getGemPrice(pool.tenPrice);
+  };
+
   const fetchData = useCallback(async () => {
     try {
       const [poolsData, coinData, gemData] = await Promise.all([
@@ -246,7 +253,7 @@ export default function GachaScreen() {
                   styles.currencyTabText,
                   selectedCurrency === 'gems' && styles.currencyTabTextActive,
                 ]}>
-                  {getGemPrice(selectedPool.singlePrice)} Gems
+                  {getDisplayGemPrice(selectedPool, 'single')} Gems
                 </Text>
               </TouchableOpacity>
             </View>
@@ -298,7 +305,7 @@ export default function GachaScreen() {
                       <>
                         <Ionicons name="diamond-outline" size={14} color="#E0B0FF" />
                         <Text style={styles.pullButtonPriceText}>
-                          {getGemPrice(selectedPool.singlePrice)}
+                          {getDisplayGemPrice(selectedPool, 'single')}
                         </Text>
                       </>
                     ) : (
@@ -333,7 +340,7 @@ export default function GachaScreen() {
                       <>
                         <Ionicons name="diamond-outline" size={14} color="#E0B0FF" />
                         <Text style={styles.pullButtonPriceText}>
-                          {getGemPrice(selectedPool.tenPrice)}
+                          {getDisplayGemPrice(selectedPool, 'ten')}
                         </Text>
                       </>
                     ) : (
