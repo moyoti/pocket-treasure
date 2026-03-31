@@ -1,5 +1,6 @@
 // pages/leaderboard/leaderboard.ts
 import { getLeaderboard, getMyLeaderboardRank } from '../../utils/api';
+import { showToast } from '../../utils/util';
 
 interface LeaderboardEntry {
   rank: number;
@@ -72,6 +73,7 @@ Page({
       });
     } catch (error) {
       console.error('加载排行榜失败:', error);
+      showToast('加载排行榜失败');
       this.setData({ loading: false });
     }
   },

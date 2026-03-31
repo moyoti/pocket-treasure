@@ -2,10 +2,45 @@
 import { getGachaPools, pullGacha, getCoinBalance } from '../../utils/api'
 import { showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
 
+interface GachaItem {
+  id: string
+  name: string
+  rarity: string
+  weight: number
+  image?: string
+}
+
+interface GachaPool {
+  id: string
+  name: string
+  description?: string
+  cost: number
+  costTen?: number
+  singlePrice?: number
+  tenPrice?: number
+  pityThreshold: number
+  pityMinRarity: string
+  items: GachaItem[]
+}
+
+interface GachaResult {
+  id: string
+  name: string
+  rarity: string
+  isPity: boolean
+}
+
+interface DropRate {
+  rarity: string
+  name: string
+  color: string
+  percentage: string
+}
+
 Page({
   data: {
-    pools: [] as any[],
-    selectedPool: null as any,
+    pools: [] as GachaPool[],
+    selectedPool: null as GachaPool | null,
     balance: 0,
     loading: true,
     isPulling: false,
@@ -15,7 +50,7 @@ Page({
     pityMinRarityName: '',
     isLoggedIn: false,
     // Drop rates
-    dropRates: [] as any[],
+    dropRates: [] as DropRate[],
     // Single/ten prices
     singlePrice: 0,
     tenPrice: 0,
@@ -23,7 +58,7 @@ Page({
     canTen: false,
     // Results modal
     showResults: false,
-    results: [] as any[],
+    results: [] as GachaResult[],
     // Pull animation
     showPullAnimation: false,
   },
@@ -45,7 +80,7 @@ Page({
 
     try {
       const pools = await getGachaPools()
-      const processedPools = (pools || []).map((p: any) => ({
+      const processedPools = (pools || []).map((p: GachaPool) => ({
         ...p,
         isSelected: false,
       }))
@@ -60,8 +95,9 @@ Page({
       } else {
         this.setData({ pools: processedPools, loading: false })
       }
-    } catch (err: any) {
-      showToast(err.message || '加载失败')
+    } catch (err: { message?: string } | unknown) {
+      const message = err instanceof Error ? err.message : '加载失败'
+      showToast(message || '加载失败')
       this.setData({ loading: false })
     }
   },
@@ -73,6 +109,7 @@ Page({
       this.updateAffordability()
     } catch (err) {
       console.error('获取余额失败:', err)
+      showToast('获取余额失败')
     }
   },
 
@@ -80,31 +117,31 @@ Page({
     wx.navigateTo({ url: '/pages/login/login' })
   },
 
-  selectPool(e: any) {
+  selectPool(e: { currentTarget: { dataset: { id: string } } }) {
     const poolId = e.currentTarget.dataset.id
-    const pools = this.data.pools.map((p: any) => ({
+    const pools = this.data.pools.map((p: GachaPool) => ({
       ...p,
       isSelected: p.id === poolId,
     }))
-    const pool = pools.find((p: any) => p.id === poolId)
+    const pool = pools.find((p: GachaPool) => p.id === poolId)
     this.setData({ pools })
     if (pool) {
       this.selectPoolData(pool)
     }
   },
 
-  selectPoolData(pool: any) {
+  selectPoolData(pool: GachaPool) {
     const pityThreshold = pool.pityThreshold || 90
     const pityMinRarity = pool.pityMinRarity || 'epic'
     const pityProgress = pityThreshold > 0 ? Math.min(100, Math.round((this.data.pityCount / pityThreshold) * 100)) : 0
 
     // Calculate drop rates
     const items = pool.items || []
-    const totalWeight = items.reduce((sum: number, i: any) => sum + (i.weight || 0), 0)
+    const totalWeight = items.reduce((sum: number, i: GachaItem) => sum + (i.weight || 0), 0)
     const rarities = ['legendary', 'epic', 'rare', 'common']
     const dropRates = rarities.map((rarity: string) => {
-      const rarityItems = items.filter((i: any) => i.rarity === rarity)
-      const weight = rarityItems.reduce((sum: number, i: any) => sum + (i.weight || 0), 0)
+      const rarityItems = items.filter((i: GachaItem) => i.rarity === rarity)
+      const weight = rarityItems.reduce((sum: number, i: GachaItem) => sum + (i.weight || 0), 0)
       const pct = totalWeight > 0 ? ((weight / totalWeight) * 100).toFixed(1) : '0'
       return {
         rarity,
@@ -138,13 +175,13 @@ Page({
     })
   },
 
-  async handlePull(e: any) {
+  async handlePull(e: { currentTarget: { dataset: { type: 'single' | 'ten' } } }) {
     if (!checkLogin()) {
       this.goToLogin()
       return
     }
 
-    const pullType = e.currentTarget.dataset.type as 'single' | 'ten'
+    const pullType = e.currentTarget.dataset.type
     const { selectedPool, balance, singlePrice, tenPrice } = this.data
 
     if (!selectedPool) {
@@ -168,15 +205,12 @@ Page({
       const newPity = res.newPityCount || 0
 
       // Process results
-      const results = (res.results || res.items || []).map((r: any) => {
+      const results = (res.results || res.items || []).map((r: { id?: string; name?: string; rarity?: string; isPity?: boolean; item?: { id?: string; name?: string; rarity?: string } }) => {
         const rarity = r.rarity || (r.item && r.item.rarity) || 'common'
         return {
           id: r.id || (r.item && r.item.id) || '',
           name: r.name || (r.item && r.item.name) || '未知物品',
           rarity: rarity,
-          rarityName: RARITY_NAMES[rarity] || '普通',
-          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
-          rarityBgClass: 'rarity-bg-' + rarity,
           isPity: r.isPity || false,
         }
       })
@@ -198,9 +232,11 @@ Page({
         })
         this.updateAffordability()
       }, 1500)
-    } catch (err: any) {
+    } catch (err: { message?: string } | unknown) {
       this.setData({ isPulling: false, showPullAnimation: false })
-      showToast(err.message || '抽奖失败')
+      const message = err instanceof Error ? err.message : '抽奖失败'
+      showToast(message || '抽奖失败')
+      this.loadBalance()
     }
   },
 

@@ -2,15 +2,39 @@
 import { getShopItems, purchaseItem, getCoinBalance } from '../../utils/api'
 import { showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
 
+interface ShopItem {
+  id: string
+  name: string
+  description?: string
+  price: number
+  category: string
+  rarity?: string
+  image?: string
+  stock?: number
+  isAvailable?: boolean
+  metadata?: {
+    rarity?: string
+  }
+  purchaseLimit?: number
+}
+
+interface PurchaseItemData extends ShopItem {
+  rarityName?: string
+  rarityColor?: string
+  rarityBgClass?: string
+  categoryLabel?: string
+  limitText?: string
+}
+
 Page({
   data: {
-    items: [] as any[],
+    items: [] as ShopItem[],
     balance: 0,
     loading: true,
     isLoggedIn: false,
     // Purchase modal
     purchaseModalOpen: false,
-    purchaseItemData: null as any,
+    purchaseItemData: null as PurchaseItemData | null,
     purchaseQty: 1,
     purchaseMaxQty: 99,
     purchaseUnitPrice: 0,
@@ -45,7 +69,7 @@ Page({
       const res = await getShopItems()
       const rawItems = res.items || res || []
 
-      const items = rawItems.map((item: any) => {
+      const items = rawItems.map((item: ShopItem) => {
         const rarity = (item.metadata && item.metadata.rarity) ? item.metadata.rarity : 'common'
         return {
           ...item,
@@ -59,8 +83,9 @@ Page({
       })
 
       this.setData({ items, loading: false })
-    } catch (err: any) {
-      showToast(err.message || '加载失败')
+    } catch (err) {
+      const error = err as Error
+      showToast(error.message || '加载失败')
       this.setData({ loading: false })
     }
   },
@@ -71,6 +96,7 @@ Page({
       this.setData({ balance: res.balance || 0 })
     } catch (err) {
       console.error('获取余额失败:', err)
+      showToast('获取余额失败')
     }
   },
 
@@ -78,7 +104,7 @@ Page({
     wx.navigateTo({ url: '/pages/login/login' })
   },
 
-  openPurchaseModal(e: any) {
+  openPurchaseModal(e: { currentTarget: { dataset: { index: number } } }) {
     if (!checkLogin()) {
       this.goToLogin()
       return
@@ -149,9 +175,10 @@ Page({
 
       this.loadBalance()
       this.loadData()
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error
       this.setData({ purchaseLoading: false })
-      showToast(err.message || '购买失败')
+      showToast(error.message || '购买失败')
     }
   },
 
@@ -159,7 +186,7 @@ Page({
     this.setData({ successModalOpen: false })
   },
 
-  getButtonText(item: any): string {
+  getButtonText(item: ShopItem): string {
     if (!item.isAvailable) return '已售罄'
     if (this.data.balance < item.price) return '金币不足'
     return '购买'

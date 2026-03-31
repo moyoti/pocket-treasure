@@ -16,6 +16,9 @@ export function formatDistance(meters: number): string {
  */
 export function formatTime(dateStr: string): string {
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) {
+    return dateStr
+  }
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   
@@ -144,7 +147,7 @@ export function checkLogin(): boolean {
 /**
  * 获取用户信息
  */
-export function getUserInfo(): any {
+export function getUserInfo(): WechatMiniprogram.UserInfo | undefined {
   return wx.getStorageSync('userInfo')
 }
 

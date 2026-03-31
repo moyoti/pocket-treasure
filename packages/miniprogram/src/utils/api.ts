@@ -4,13 +4,8 @@
 interface RequestOptions {
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-  data?: any
+  data?: unknown
   needAuth?: boolean
-}
-
-interface ApiResponse<T = any> {
-  statusCode: number
-  data: T
 }
 
 // 获取 app 实例配置
@@ -49,15 +44,15 @@ async function cloudRequest<T = any>(options: RequestOptions): Promise<T> {
       config: { env: cloudEnv },
       service: 'treasure-backend',
       path: `/api${url}`,
-      method: method as any,
+      method,
       header,
       data,
-      success: (res: any) => {
+      success: (res: WechatMiniprogram.RequestSuccessCallbackResult) => {
         console.log(`[Cloud API] ${method} ${url} => ${res.statusCode}`, JSON.stringify(res.data).slice(0, 200))
         if (res.statusCode === 200 || res.statusCode === 201) {
           resolve(res.data as T)
         } else if (res.statusCode === 401) {
-          const errorData = res.data as any
+          const errorData = res.data as { message?: string }
           const errMsg = errorData?.message || '登录已过期'
           console.error('[API 401]', url, errMsg, JSON.stringify(res.data))
           if (needAuth) {
@@ -66,12 +61,12 @@ async function cloudRequest<T = any>(options: RequestOptions): Promise<T> {
           }
           reject(new Error(errMsg))
         } else {
-          const errorData = res.data as any
+          const errorData = res.data as { message?: string }
           console.error(`[API ${res.statusCode}]`, url, JSON.stringify(res.data))
           reject(new Error(errorData?.message || '请求失败'))
         }
       },
-      fail: (err: any) => {
+      fail: (err: WechatMiniprogram.GeneralCallbackResult) => {
         console.error('[Cloud API fail]', url, err)
         reject(new Error(err.errMsg || '网络错误'))
       },
@@ -101,7 +96,7 @@ async function localRequest<T = any>(options: RequestOptions): Promise<T> {
       method,
       data,
       header,
-      success: (res) => {
+      success: (res: WechatMiniprogram.RequestSuccessCallbackResult) => {
         if (res.statusCode === 200 || res.statusCode === 201) {
           resolve(res.data as T)
         } else if (res.statusCode === 401) {
@@ -110,11 +105,11 @@ async function localRequest<T = any>(options: RequestOptions): Promise<T> {
           wx.reLaunch({ url: '/pages/index/index' })
           reject(new Error('登录已过期，请重新登录'))
         } else {
-          const errorData = res.data as any
+          const errorData = res.data as { message?: string }
           reject(new Error(errorData?.message || '请求失败'))
         }
       },
-      fail: (err) => {
+      fail: (err: WechatMiniprogram.GeneralCallbackResult) => {
         reject(new Error(err.errMsg || '网络错误'))
       }
     })
@@ -171,8 +166,7 @@ export async function wechatLogin(code: string) {
 // ==================== 宝藏 API ====================
 export async function getNearbyItems(lat: number, lng: number, radius: number = 5) {
   return request<any[]>({
-    url: '/spawned-items/nearby',
-    data: { lat, lng, radius }
+    url: `/spawned-items/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
   })
 }
 

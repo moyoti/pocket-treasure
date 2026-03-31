@@ -1,15 +1,57 @@
 // pages/market/market.ts
-import { getMarketListings, getInventory, createMarketListing, buyMarketListing, cancelMarketListing, getCoinBalance } from '../../utils/api'
+import { getMarketListings, getInventory, getMyListings, createMarketListing, buyMarketListing, cancelMarketListing, getCoinBalance } from '../../utils/api'
 import { showLoading, hideLoading, showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
 
 const MARKET_FEE_RATE = 0.1
 
+interface ItemInfo {
+  id: string
+  name: string
+  rarity: string
+  price?: number
+}
+
+interface Seller {
+  id: string
+  username: string
+}
+
+interface MarketListing {
+  id: string
+  item: ItemInfo
+  quantity: number
+  price: number
+  seller: Seller
+  createdAt?: string
+}
+
+interface EnrichedListing extends MarketListing {
+  rarityName: string
+  rarityColor: string
+  rarityBgClass: string
+  sellerName: string
+  itemName: string
+  priceText: string
+}
+
+interface InventoryItem {
+  id: string
+  item: ItemInfo
+  quantity: number
+}
+
+interface EnrichedInventoryItem extends InventoryItem {
+  rarityName: string
+  rarityColor: string
+  rarityBgClass: string
+}
+
 Page({
   data: {
-    listings: [] as any[],
-    filteredListings: [] as any[],
-    myItems: [] as any[],
-    myListings: [] as any[],
+    listings: [] as EnrichedListing[],
+    filteredListings: [] as EnrichedListing[],
+    myItems: [] as EnrichedInventoryItem[],
+    myListings: [] as MarketListing[],
     balance: 0,
     loading: true,
     activeTab: 'buy' as 'buy' | 'sell',
@@ -20,11 +62,11 @@ Page({
     showFilters: false,
     // Buy modal
     buyModalOpen: false,
-    buyListing: null as any,
+    buyListing: null as EnrichedListing | null,
     buyLoading: false,
     // Sell modal
     sellModalOpen: false,
-    sellItemData: null as any,
+    sellItemData: null as EnrichedInventoryItem | null,
     sellQty: 1,
     sellMaxQty: 1,
     sellPrice: 100,
@@ -64,7 +106,7 @@ Page({
       ])
 
       const rawListings = listingsRes.listings || listingsRes || []
-      const listings = rawListings.map((l: any) => {
+      const listings = rawListings.map((l: MarketListing) => {
         const rarity = (l.item && l.item.rarity) ? l.item.rarity : 'common'
         return {
           ...l,
@@ -77,7 +119,7 @@ Page({
         }
       })
 
-      const myItems = (inventory || []).filter((i: any) => i.quantity > 0).map((item: any) => {
+      const myItems = (inventory || []).filter((i: InventoryItem) => i.quantity > 0).map((item: InventoryItem) => {
         const rarity = (item.item && item.item.rarity) ? item.item.rarity : 'common'
         return {
           ...item,
@@ -87,10 +129,21 @@ Page({
         }
       })
 
+      let myListings: MarketListing[] = []
+      if (checkLogin()) {
+        try {
+          const myListingsRes = await getMyListings()
+          myListings = myListingsRes || []
+        } catch (err) {
+          console.error('获取我的上架失败:', err)
+        }
+      }
+
       this.setData({
         listings,
         filteredListings: listings,
         myItems,
+        myListings,
         balance: balanceRes.balance || 0,
         loading: false,
       })
@@ -138,7 +191,7 @@ Page({
   applyFilters() {
     const { listings, searchQuery, rarityFilter } = this.data
     const query = searchQuery.toLowerCase()
-    const filtered = listings.filter((l: any) => {
+    const filtered = listings.filter((l: EnrichedListing) => {
       const matchesSearch = !query || (l.itemName && l.itemName.toLowerCase().indexOf(query) >= 0)
       const matchesRarity = !rarityFilter || (l.item && l.item.rarity === rarityFilter)
       return matchesSearch && matchesRarity
@@ -201,7 +254,7 @@ Page({
     const item = this.data.myItems[index]
     if (!item) return
 
-    const price = 100
+    const price = item.item?.price || item.price || 0
     const qty = 1
     const total = price * qty
     const fee = Math.floor(total * MARKET_FEE_RATE)

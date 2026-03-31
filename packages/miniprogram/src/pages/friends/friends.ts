@@ -2,27 +2,71 @@
 import { getFriends, getFriendRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, searchUsers } from '../../utils/api'
 import { showLoading, hideLoading, showToast } from '../../utils/util'
 
+interface User {
+  id: string
+  username: string
+  email?: string
+  avatar?: string
+  isOnline?: boolean
+}
+
+interface Friend {
+  id: string
+  username: string
+  avatar?: string
+  isOnline: boolean
+  avatarLetter?: string
+}
+
+interface FriendRequest {
+  id: string
+  requesterId: string
+  requester: User
+  requesterAvatarLetter?: string
+}
+
+interface SearchResultUser extends User {
+  avatarLetter?: string
+  hasPendingRequest?: boolean
+}
+
+interface PageData {
+  friends: Friend[]
+  onlineFriends: Friend[]
+  offlineFriends: Friend[]
+  requests: FriendRequest[]
+  trades: never[]
+  loading: boolean
+  searchQuery: string
+  searchResults: SearchResultUser[]
+  searching: boolean
+  activeTab: string
+  expandedTradeIds: Record<string, boolean>
+}
+
 Page({
   data: {
-    friends: [] as any[],
-    onlineFriends: [] as any[],
-    offlineFriends: [] as any[],
-    requests: [] as any[],
-    trades: [] as any[],
+    friends: [] as Friend[],
+    onlineFriends: [] as Friend[],
+    offlineFriends: [] as Friend[],
+    requests: [] as FriendRequest[],
+    trades: [] as never[],
     loading: true,
     searchQuery: '',
-    searchResults: [] as any[],
+    searchResults: [] as SearchResultUser[],
     searching: false,
     activeTab: 'friends',
     expandedTradeIds: {} as Record<string, boolean>
-  },
+  } as PageData,
 
   onLoad() {
     this.loadData()
   },
 
   onShow() {
-    this.loadData()
+    if (this.data.friends.length === 0 && !this.data.loading) {
+      this.loadData()
+    }
   },
 
   onPullDownRefresh() {
@@ -40,18 +84,18 @@ Page({
         getFriendRequests()
       ])
 
-      const addAvatarLetter = (list: any[]) => (list || []).map((item: any) => ({
+      const addAvatarLetter = (list: User[]) => (list || []).map((item: User) => ({
         ...item,
-        avatarLetter: item.username ? item.username[0].toUpperCase() : '?',
-      }))
-      const addRequesterLetter = (list: any[]) => (list || []).map((item: any) => ({
+        avatarLetter: (item.username && item.username.length > 0) ? item.username[0].toUpperCase() : '?',
+      })) as Friend[]
+      const addRequesterLetter = (list: FriendRequest[]) => (list || []).map((item: FriendRequest) => ({
         ...item,
-        requesterAvatarLetter: item.requester && item.requester.username ? item.requester.username[0].toUpperCase() : '?',
+        requesterAvatarLetter: (item.requester && item.requester.username && item.requester.username.length > 0) ? item.requester.username[0].toUpperCase() : '?',
       }))
 
       const processedFriends = addAvatarLetter(friends)
-      const onlineFriends = processedFriends.filter((f: any) => f.isOnline)
-      const offlineFriends = processedFriends.filter((f: any) => !f.isOnline)
+      const onlineFriends = processedFriends.filter((f: Friend) => f.isOnline)
+      const offlineFriends = processedFriends.filter((f: Friend) => !f.isOnline)
 
       this.setData({
         friends: processedFriends,
@@ -60,18 +104,18 @@ Page({
         requests: addRequesterLetter(requests),
         loading: false
       })
-    } catch (err: any) {
-      showToast(err.message || '加载失败')
+    } catch (err) {
+      showToast((err as Error).message || '加载失败')
       this.setData({ loading: false })
     }
   },
 
-  switchTab(e: any) {
+  switchTab(e: { currentTarget: { dataset: { tab: string } } }) {
     const tab = e.currentTarget.dataset.tab
     this.setData({ activeTab: tab })
   },
 
-  onSearchInput(e: any) {
+  onSearchInput(e: { detail: { value: string } }) {
     this.setData({ searchQuery: e.detail.value })
   },
 
@@ -85,19 +129,19 @@ Page({
     this.setData({ searching: true })
 
     try {
-      const results = (await searchUsers(searchQuery.trim()) || []).map((item: any) => ({
+      const results = (await searchUsers(searchQuery.trim()) || []).map((item: User) => ({
         ...item,
-        avatarLetter: item.username ? item.username[0].toUpperCase() : '?',
-      }))
+        avatarLetter: (item.username && item.username.length > 0) ? item.username[0].toUpperCase() : '?',
+      })) as SearchResultUser[]
       this.setData({ searchResults: results })
-    } catch (err: any) {
-      showToast(err.message || '搜索失败')
+    } catch (err) {
+      showToast((err as Error).message || '搜索失败')
     } finally {
       this.setData({ searching: false })
     }
   },
 
-  async handleSendRequest(e: any) {
+  async handleSendRequest(e: { currentTarget: { dataset: { id: string } } }) {
     const userId = e.currentTarget.dataset.id
 
     showLoading('发送中...')
@@ -108,17 +152,17 @@ Page({
       showToast('申请已发送', 'success')
 
       this.setData({
-        searchResults: this.data.searchResults.map((r: any) =>
+        searchResults: this.data.searchResults.map((r: SearchResultUser) =>
           r.id === userId ? { ...r, hasPendingRequest: true } : r
         )
       })
-    } catch (err: any) {
+    } catch (err) {
       hideLoading()
-      showToast(err.message || '发送失败')
+      showToast((err as Error).message || '发送失败')
     }
   },
 
-  async handleAccept(e: any) {
+  async handleAccept(e: { currentTarget: { dataset: { id: string } } }) {
     const requestId = e.currentTarget.dataset.id
 
     showLoading('处理中...')
@@ -128,13 +172,13 @@ Page({
       hideLoading()
       showToast('已接受', 'success')
       this.loadData()
-    } catch (err: any) {
+    } catch (err) {
       hideLoading()
-      showToast(err.message || '操作失败')
+      showToast((err as Error).message || '操作失败')
     }
   },
 
-  async handleReject(e: any) {
+  async handleReject(e: { currentTarget: { dataset: { id: string } } }) {
     const requestId = e.currentTarget.dataset.id
 
     showLoading('处理中...')
@@ -144,13 +188,13 @@ Page({
       hideLoading()
       showToast('已拒绝', 'success')
       this.loadData()
-    } catch (err: any) {
+    } catch (err) {
       hideLoading()
-      showToast(err.message || '操作失败')
+      showToast((err as Error).message || '操作失败')
     }
   },
 
-  startChat(e: any) {
+  startChat(e: { currentTarget: { dataset: { friend: Friend } } }) {
     const friend = e.currentTarget.dataset.friend
     wx.navigateTo({
       url: `/pages/chat/chat?userId=${friend.id}&username=${encodeURIComponent(friend.username)}`
@@ -161,7 +205,7 @@ Page({
     showToast('交易功能即将上线')
   },
 
-  toggleTradeExpand(e: any) {
+  toggleTradeExpand(e: { currentTarget: { dataset: { id: string } } }) {
     const tradeId = e.currentTarget.dataset.id
     const key = `expandedTradeIds.${tradeId}`
     this.setData({

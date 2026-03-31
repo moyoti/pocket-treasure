@@ -2,6 +2,50 @@
 import { getInventory, getInventoryStats, sellItem as apiSellItem, getCoinBalance } from '../../utils/api'
 import { showLoading, hideLoading, showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
 
+interface ItemInfo {
+  id: string
+  name: string
+  rarity: string
+  price?: number
+}
+
+interface InventoryItem {
+  id: string
+  item: ItemInfo
+  quantity: number
+  obtainedAt?: string
+}
+
+interface InventoryStats {
+  totalItems: number
+  uniqueItems: number
+  byRarity?: Record<string, number>
+}
+
+interface DisplayInventoryItem extends InventoryItem {
+  rarityName: string
+  rarityColor: string
+  rarityBgClass: string
+  npcPrice: number
+  totalPrice: number
+  selected: boolean
+}
+
+interface SellItemData {
+  id: string
+  quantity: number
+  npcPrice: number
+  item?: ItemInfo
+}
+
+type WechatEvent = {
+  currentTarget: {
+    dataset: {
+      index: number
+    }
+  }
+}
+
 const NPC_PRICES: Record<string, number> = {
   common: 5,
   rare: 25,
@@ -11,7 +55,7 @@ const NPC_PRICES: Record<string, number> = {
 
 Page({
   data: {
-    items: [] as any[],
+    items: [] as DisplayInventoryItem[],
     balance: 0,
     loading: true,
     selectionMode: false,
@@ -20,7 +64,7 @@ Page({
     isLoggedIn: false,
     // Sell modal
     sellModalOpen: false,
-    sellItemData: null as any,
+    sellItemData: null as SellItemData | null,
     sellQuantity: 1,
     sellMaxQuantity: 1,
     sellUnitPrice: 0,
@@ -70,7 +114,7 @@ Page({
         getInventoryStats().catch(() => null),
       ])
 
-      const items = (rawItems || []).map((item: any) => {
+      const items = (rawItems || []).map((item: InventoryItem): DisplayInventoryItem => {
         const rarity = (item.item && item.item.rarity) ? item.item.rarity : 'common'
         const npcPrice = NPC_PRICES[rarity] || 5
         return {
@@ -84,7 +128,7 @@ Page({
         }
       })
 
-      const totalItems = stats ? (stats.totalItems || 0) : items.reduce((s: number, i: any) => s + (i.quantity || 0), 0)
+      const totalItems = stats ? (stats.totalItems || 0) : items.reduce((s: number, i: DisplayInventoryItem) => s + i.quantity, 0)
       const uniqueItems = stats ? (stats.uniqueItems || 0) : items.length
       const byRarity = (stats && stats.byRarity) ? stats.byRarity : {}
 
@@ -98,8 +142,8 @@ Page({
         legendaryCount: byRarity.legendary || 0,
         loading: false,
       })
-    } catch (err: any) {
-      showToast(err.message || '加载失败')
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : '加载失败')
       this.setData({ loading: false })
     }
   },
@@ -110,6 +154,7 @@ Page({
       this.setData({ balance: res.balance || 0 })
     } catch (err) {
       console.error('获取余额失败:', err)
+      showToast('获取余额失败')
     }
   },
 
@@ -123,7 +168,7 @@ Page({
       return
     }
     const newMode = !this.data.selectionMode
-    const items = this.data.items.map((i: any) => ({ ...i, selected: false }))
+    const items = this.data.items.map((i: DisplayInventoryItem): DisplayInventoryItem => ({ ...i, selected: false }))
     this.setData({
       selectionMode: newMode,
       items,
@@ -132,7 +177,7 @@ Page({
     })
   },
 
-  toggleItemSelection(e: any) {
+  toggleItemSelection(e: WechatEvent) {
     const index = e.currentTarget.dataset.index
     const items = this.data.items
     const item = items[index]
@@ -140,7 +185,7 @@ Page({
 
     const newSelected = !item.selected
     const key = `items[${index}].selected`
-    this.setData({ [key]: newSelected } as any)
+    this.setData({ [key]: newSelected })
 
     // Recalculate
     let selectedCount = 0
@@ -156,13 +201,13 @@ Page({
   },
 
   selectAll() {
-    const items = this.data.items.map((i: any) => ({ ...i, selected: true }))
+    const items = this.data.items.map((i: DisplayInventoryItem): DisplayInventoryItem => ({ ...i, selected: true }))
     const selectedCount = items.length
-    const selectedTotalValue = items.reduce((s: number, i: any) => s + i.totalPrice, 0)
+    const selectedTotalValue = items.reduce((s: number, i: DisplayInventoryItem) => s + i.totalPrice, 0)
     this.setData({ items, selectedCount, selectedTotalValue })
   },
 
-  openSellModal(e: any) {
+  openSellModal(e: WechatEvent) {
     if (!checkLogin()) {
       this.goToLogin()
       return
@@ -224,9 +269,9 @@ Page({
 
       this.loadData()
       this.loadBalance()
-    } catch (err: any) {
+    } catch (err: unknown) {
       this.setData({ sellLoading: false })
-      showToast(err.message || '出售失败')
+      showToast(err instanceof Error ? err.message : '出售失败')
     }
   },
 
@@ -272,9 +317,9 @@ Page({
 
       this.loadData()
       this.loadBalance()
-    } catch (err: any) {
+    } catch (err: unknown) {
       hideLoading()
-      showToast(err.message || '出售失败')
+      showToast(err instanceof Error ? err.message : '出售失败')
     }
   },
 })

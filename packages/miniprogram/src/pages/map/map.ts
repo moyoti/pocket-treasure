@@ -88,6 +88,7 @@ Page({
       this.setData({ balance: res.balance || 0 })
     } catch (err) {
       console.error('获取余额失败:', err)
+      showToast('获取余额失败')
     }
   },
 

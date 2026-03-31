@@ -1,5 +1,6 @@
 // pages/profile-stats/profile-stats.ts
 import { getUserStats, getInventoryStats } from '../../utils/api'
+import { showToast } from '../../utils/util'
 
 Page({
   data: {
@@ -80,6 +81,7 @@ Page({
       })
     } catch (err) {
       console.error('加载统计失败:', err)
+      showToast('加载统计失败')
       this.setData({ loading: false })
     }
   },

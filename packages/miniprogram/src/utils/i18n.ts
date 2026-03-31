@@ -140,7 +140,7 @@ const translations: Record<Locale, TranslationObject> = {
       showRarityFilter: 'レアリティフィルター',
       showRarityFilterDesc: 'レアリティでアイテムをフィルター',
       autoCollect: '自動収集',
-      autoCollectDesc: '範囲内有 automat ically collect items',
+      autoCollectDesc: '範囲内に入ると自動的にアイテムを収集します',
       defaultZoom: 'デフォルトズームレベル',
       defaultZoomDesc: 'マップを開く時のズームレベル',
       privacy: 'プライバシー設定',
