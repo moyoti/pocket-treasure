@@ -42,33 +42,6 @@
     </view>
   </view>
 
-  <!-- 联系我们 -->
-  <view class="section-label" style="margin-top: 40rpx;">
-    <image class="icon section-label-icon" src="/images/icons/message-circle.svg" mode="aspectFit" />
-    <text>联系我们</text>
-  </view>
-
-  <view class="contact-card">
-    <view class="contact-item">
-      <view class="contact-icon" style="background-color: #DBEAFE;">
-        <image class="icon" src="/images/icons/mail.svg" mode="aspectFit" />
-      </view>
-      <view class="contact-info">
-        <text class="contact-title">电子邮箱</text>
-        <text class="contact-value">support@treasurehunt.game</text>
-      </view>
-    </view>
-    <view class="contact-item">
-      <view class="contact-icon" style="background-color: #D1FAE5;">
-        <image class="icon" src="/images/icons/message-circle.svg" mode="aspectFit" />
-      </view>
-      <view class="contact-info">
-        <text class="contact-title">官方社区</text>
-        <text class="contact-value">加入我们的 Discord 社区</text>
-      </view>
-    </view>
-  </view>
-
   <!-- 小提示 -->
   <view class="tip-card">
     <image class="icon tip-icon" src="/images/icons/lightbulb.svg" mode="aspectFit" />
