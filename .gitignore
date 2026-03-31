@@ -48,13 +48,6 @@ packages/web/.next/
 package-lock.json
 yarn.lock
 
-# Images
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
-
 # Documentation
 IMPLEMENTATION_COMPLETE.md
 TREASURE_MAP_FEATURE_REPORT.md
