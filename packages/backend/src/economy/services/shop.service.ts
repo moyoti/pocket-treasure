@@ -25,7 +25,7 @@ const DEFAULT_SHOP_ITEMS: Partial<ShopItem>[] = [
     name: 'Wooden Chest',
     description: 'A simple wooden chest containing common treasures',
     category: ShopItemCategory.CHEST,
-    price: 0,
+    price: 100,
     rewards: { chestType: 'wooden' },
     isAvailable: true,
     purchaseLimit: 3,
