@@ -3,7 +3,7 @@
   <view class="header">
     <view class="header-left">
       <image class="icon-lg title-icon" src="/images/icons/store.svg" mode="aspectFit" />
-      <text class="title-text">NPC商店</text>
+      <text class="title-text">{{ locale.title }}</text>
     </view>
     <view class="balance-pill" wx:if="{{ isLoggedIn }}">
       <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
@@ -12,7 +12,7 @@
     <view class="login-hint" wx:else bindtap="goToLogin">
       <view class="login-hint-inner">
         <image class="icon-sm" src="/images/icons/lock.svg" mode="aspectFit" />
-        <text> 登录购买</text>
+        <text> {{ locale.loginToBuy }}</text>
       </view>
     </view>
   </view>
@@ -27,8 +27,8 @@
     <view class="empty-icon-circle">
       <image class="icon-xl" src="/images/icons/store.svg" mode="aspectFit" />
     </view>
-    <view class="empty-state-text">商店暂无商品</view>
-    <view class="empty-state-subtext">请稍后再来看看！</view>
+    <view class="empty-state-text">{{ locale.emptyShop }}</view>
+    <view class="empty-state-subtext">{{ locale.emptyShopHint }}</view>
   </view>
 
   <!-- 商品网格 -->
@@ -68,9 +68,9 @@
         bindtap="openPurchaseModal"
         data-index="{{ index }}"
       >
-        <text wx:if="{{ !item.isAvailable }}">已售罄</text>
-        <text wx:elif="{{ balance < item.price }}">金币不足</text>
-        <text wx:else>购买</text>
+        <text wx:if="{{ !item.isAvailable }}">{{ locale.soldOut }}</text>
+        <text wx:elif="{{ balance < item.price }}">{{ locale.coinsInsufficient }}</text>
+        <text wx:else>{{ locale.purchase }}</text>
       </view>
     </view>
   </view>
@@ -79,7 +79,7 @@
   <view class="modal-overlay" wx:if="{{ purchaseModalOpen }}" catchtap="closePurchaseModal">
     <view class="modal-content animate-bounce-in" catchtap="">
       <view class="modal-header">
-        <text class="modal-title">确认购买</text>
+        <text class="modal-title">{{ locale.confirmPurchase }}</text>
         <view class="modal-close" bindtap="closePurchaseModal">
           <image class="icon" src="/images/icons/x.svg" mode="aspectFit" />
         </view>
@@ -105,24 +105,24 @@
       <!-- 总价 -->
       <view class="purchase-total">
         <view class="total-row">
-          <text class="total-label">总计:</text>
+          <text class="total-label">{{ locale.total }}:</text>
           <view class="total-value">
             <image class="icon" src="/images/icons/coins.svg" mode="aspectFit" />
             <text class="total-amount">{{ purchaseTotalPrice }}</text>
           </view>
         </view>
-        <text class="insufficient-text" wx:if="{{ !canAfford }}">金币不足！</text>
+        <text class="insufficient-text" wx:if="{{ !canAfford }}">{{ locale.coinsInsufficient }}!</text>
       </view>
 
       <!-- 按钮 -->
       <view class="modal-buttons">
-        <view class="modal-btn-cancel" bindtap="closePurchaseModal">取消</view>
+        <view class="modal-btn-cancel" bindtap="closePurchaseModal">{{ locale.cancel }}</view>
         <view class="modal-btn-confirm {{ purchaseLoading || !canAfford ? 'disabled' : '' }}" bindtap="confirmPurchase">
           <view wx:if="{{ !purchaseLoading }}" class="btn-inner">
             <image class="icon-sm" src="/images/icons/check.svg" mode="aspectFit" />
-            <text> 确认</text>
+            <text> {{ locale.confirm }}</text>
           </view>
-          <text wx:else>购买中...</text>
+          <text wx:else>{{ locale.purchasing }}</text>
         </view>
       </view>
     </view>
@@ -134,9 +134,9 @@
       <view class="success-icon-circle">
         <image class="icon-lg" src="/images/icons/check.svg" mode="aspectFit" />
       </view>
-      <text class="success-title">购买成功！</text>
+      <text class="success-title">{{ locale.purchaseSuccess }}</text>
       <text class="success-msg">{{ successMessage }}</text>
-      <view class="modal-btn-confirm" bindtap="closeSuccessModal">确定</view>
+      <view class="modal-btn-confirm" bindtap="closeSuccessModal">{{ locale.ok }}</view>
     </view>
   </view>
 </view>

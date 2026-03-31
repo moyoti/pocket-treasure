@@ -1,6 +1,7 @@
 // pages/shop/shop.ts
 import { getShopItems, purchaseItem, getCoinBalance } from '../../utils/api'
 import { showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
+import { t } from '../../utils/i18n'
 
 interface ShopItem {
   id: string
@@ -32,6 +33,23 @@ Page({
     balance: 0,
     loading: true,
     isLoggedIn: false,
+    // Localized strings
+    locale: {
+      title: 'NPC商店',
+      loginToBuy: '登录购买',
+      emptyShop: '商店暂无商品',
+      emptyShopHint: '请稍后再来看看！',
+      confirmPurchase: '确认购买',
+      total: '总计',
+      soldOut: '已售罄',
+      coinsInsufficient: '金币不足',
+      purchase: '购买',
+      cancel: '取消',
+      confirm: '确认',
+      purchasing: '购买中...',
+      purchaseSuccess: '购买成功！',
+      ok: '确定',
+    },
     // Purchase modal
     purchaseModalOpen: false,
     purchaseItemData: null as PurchaseItemData | null,
@@ -48,14 +66,37 @@ Page({
 
   onLoad() {
     this.setData({ isLoggedIn: checkLogin() })
+    this.initLocaleStrings()
     this.loadData()
   },
 
   onShow() {
     this.setData({ isLoggedIn: checkLogin() })
+    this.initLocaleStrings()
     if (checkLogin()) {
       this.loadBalance()
     }
+  },
+
+  initLocaleStrings() {
+    this.setData({
+      locale: {
+        title: t('shop.title'),
+        loginToBuy: t('shop.loginToBuy'),
+        emptyShop: t('shop.emptyShop'),
+        emptyShopHint: t('shop.emptyShopHint'),
+        confirmPurchase: t('shop.confirmPurchase'),
+        total: t('shop.total'),
+        soldOut: t('common.soldOut'),
+        coinsInsufficient: t('common.coinsInsufficient'),
+        purchase: t('common.purchase'),
+        cancel: t('common.cancel'),
+        confirm: t('common.confirm'),
+        purchasing: t('shop.purchasing'),
+        purchaseSuccess: t('common.purchaseSuccess'),
+        ok: t('common.close'),
+      }
+    })
   },
 
   onPullDownRefresh() {
@@ -77,7 +118,9 @@ Page({
           rarityColor: RARITY_COLORS[rarity] || '#6B7280',
           rarityBgClass: 'rarity-bg-' + rarity,
           categoryLabel: item.category || '道具',
-          limitText: item.purchaseLimit > 0 ? ('限购: ' + item.purchaseLimit) : '无限购',
+          limitText: item.purchaseLimit && item.purchaseLimit > 0 
+            ? t('shop.itemLimit', { limit: item.purchaseLimit }) 
+            : t('shop.noItemLimit'),
           isAvailable: item.isAvailable !== false,
         }
       })
@@ -85,7 +128,7 @@ Page({
       this.setData({ items, loading: false })
     } catch (err) {
       const error = err as Error
-      showToast(error.message || '加载失败')
+      showToast(error.message || 'Failed to load')
       this.setData({ loading: false })
     }
   },
@@ -156,7 +199,7 @@ Page({
     const { purchaseItemData, purchaseQty, purchaseTotalPrice } = this.data
     if (!purchaseItemData) return
     if (this.data.balance < purchaseTotalPrice) {
-      showToast('金币不足')
+      showToast(t('common.coinsInsufficient'))
       return
     }
 
@@ -170,7 +213,7 @@ Page({
         purchaseItemData: null,
         purchaseLoading: false,
         successModalOpen: true,
-        successMessage: '成功购买 ' + purchaseQty + '个 ' + purchaseItemData.name,
+        successMessage: t('shop.purchaseSuccessMsg', { count: purchaseQty, name: purchaseItemData.name }),
       })
 
       this.loadBalance()
@@ -178,7 +221,7 @@ Page({
     } catch (err) {
       const error = err as Error
       this.setData({ purchaseLoading: false })
-      showToast(error.message || '购买失败')
+      showToast(error.message || t('common.purchaseFailed'))
     }
   },
 
@@ -187,8 +230,8 @@ Page({
   },
 
   getButtonText(item: ShopItem): string {
-    if (!item.isAvailable) return '已售罄'
-    if (this.data.balance < item.price) return '金币不足'
-    return '购买'
+    if (!item.isAvailable) return t('common.soldOut')
+    if (this.data.balance < item.price) return t('common.coinsInsufficient')
+    return t('common.purchase')
   },
 })
