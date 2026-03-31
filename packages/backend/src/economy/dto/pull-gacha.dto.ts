@@ -1,8 +1,13 @@
-import { IsString, IsNumber, Min, Max, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNumber, Min, Max, IsOptional, IsEnum, IsIn } from 'class-validator';
 
 export enum PullType {
   SINGLE = 'single',
   TEN = 'ten',
+}
+
+export enum CurrencyType {
+  COINS = 'coins',
+  GEMS = 'gems',
 }
 
 export class PullGachaDto {
@@ -12,4 +17,8 @@ export class PullGachaDto {
   @IsEnum(PullType)
   @IsOptional()
   pullType?: PullType = PullType.SINGLE;
+
+  @IsIn(['coins', 'gems'])
+  @IsOptional()
+  currency?: CurrencyType = CurrencyType.COINS;
 }

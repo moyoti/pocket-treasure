@@ -390,3 +390,90 @@ export interface CurrentBonuses {
   isWeekend: boolean;
   activeEvents: number;
 }
+
+// ============================================
+// GEM TYPES (Premium Currency)
+// ============================================
+
+export enum GemTransactionType {
+  EARN = 'earn',
+  SPEND = 'spend',
+}
+
+export enum GemTransactionSource {
+  RECHARGE = 'recharge',
+  GACHA = 'gacha',
+  SHOP_PURCHASE = 'shop_purchase',
+  REFUND = 'refund',
+  ACHIEVEMENT = 'achievement',
+  ADMIN = 'admin',
+}
+
+export interface GemBalance {
+  balance: number;
+  totalEarned: number;
+  totalSpent: number;
+}
+
+export interface GemTransaction {
+  id: string;
+  userId: string;
+  type: GemTransactionType;
+  source: GemTransactionSource;
+  amount: number;
+  description?: string;
+  createdAt: Date;
+}
+
+// ============================================
+// RECHARGE TYPES
+// ============================================
+
+export enum RechargeStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+}
+
+export interface RechargePackage {
+  id: string;
+  name: string;
+  price: number;
+  gemsAmount: number;
+  bonusGems: number;
+  isFirstRechargeBonus: boolean;
+  iconUrl?: string;
+  sortOrder: number;
+  isActive?: boolean;
+}
+
+export interface RechargeRecord {
+  id: string;
+  userId: string;
+  packageId: string;
+  orderId: string;
+  amount: number;
+  gemsAwarded: number;
+  status: RechargeStatus;
+  paymentChannel?: string;
+  transactionId?: string;
+  createdAt: Date;
+  completedAt?: Date;
+}
+
+export interface CreateOrderRequest {
+  packageId: string;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  amount: number;
+  status: string;
+}
+
+export interface RechargeCallbackDto {
+  orderId: string;
+  transactionId?: string;
+  status: 'completed' | 'failed';
+}

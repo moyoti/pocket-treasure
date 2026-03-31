@@ -174,7 +174,7 @@ export async function getGachaPools() {
   return response.data;
 }
 
-export async function pullGacha(data: { poolId: string; pullType?: 'single' | 'ten' }) {
+export async function pullGacha(data: { poolId: string; pullType?: 'single' | 'ten'; currency?: 'coins' | 'gems' }) {
   const response = await api.post('/gacha/pull', data);
   return response.data;
 }
@@ -210,5 +210,44 @@ export async function buyMarketListing(listingId: string) {
 
 export async function cancelMarketListing(listingId: string) {
   const response = await api.post(`/market/cancel/${listingId}`);
+  return response.data;
+}
+
+// ==================== Gems API ====================
+
+export async function getGemBalance(): Promise<{ balance: number; totalEarned: number; totalSpent: number }> {
+  const response = await api.get('/gems/balance');
+  return response.data;
+}
+
+export async function getGemTransactions(page = 1, limit = 20) {
+  const response = await api.get('/gems/transactions', { params: { page, limit } });
+  return response.data;
+}
+
+// ==================== Recharge API ====================
+
+export async function getRechargePackages() {
+  const response = await api.get('/recharge/packages');
+  return response.data;
+}
+
+export async function createRechargeOrder(packageId: string) {
+  const response = await api.post('/recharge/orders', { packageId });
+  return response.data;
+}
+
+export async function getRechargeHistory() {
+  const response = await api.get('/recharge/history');
+  return response.data;
+}
+
+export async function mockPaymentCallback(orderId: string) {
+  // Mock: simulate WeChat/Alipay callback for development
+  const response = await api.post('/recharge/callback', {
+    orderId,
+    transactionId: `MOCK_${Date.now()}`,
+    status: 'completed',
+  });
   return response.data;
 }

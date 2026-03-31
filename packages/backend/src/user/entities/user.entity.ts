@@ -62,6 +62,16 @@ export class User {
   @Column({ default: 0 })
   totalCoinsSpent: number;
 
+  // Premium currency (gems)
+  @Column({ default: 0 })
+  gems: number;
+
+  @Column({ default: 0 })
+  totalGemsEarned: number;
+
+  @Column({ default: 0 })
+  totalGemsSpent: number;
+
   @Column({ default: 0 })
   experience: number;
 

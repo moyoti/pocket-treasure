@@ -82,6 +82,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="gacha"
+        options={{
+          title: 'Gacha',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'gift' : 'gift-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="tasks"
         options={{
           title: 'Quests',
@@ -107,11 +120,17 @@ export default function TabsLayout() {
           ),
         }}
       />
-      {/* Hidden tabs - accessible via navigation but not shown in tab bar */}
       <Tabs.Screen
-        name="chat"
+        name="recharge"
         options={{
-          href: null,
+          title: 'Recharge',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'diamond' : 'diamond-outline'}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen

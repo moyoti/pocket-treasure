@@ -15,6 +15,7 @@ import { MapView, Marker, Circle } from 'react-native-amap3d';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
 import { getNearbyItems, collectItem } from '@/api/items';
+import { getCoinBalance, getGemBalance } from '@/lib/api';
 import { ItemRarity } from '@/types';
 import { COLLECTION_RADIUS_METERS, RARITY_COLORS as SHARED_RARITY_COLORS } from '@treasure-hunt/shared';
 import { ApiError } from '@/lib/api';
@@ -67,6 +68,8 @@ export default function MapScreen() {
   const [selectedItem, setSelectedItem] = useState<SpawnedItem | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
+  const [coinBalance, setCoinBalance] = useState(0);
+  const [gemBalance, setGemBalance] = useState(0);
 
   const requestLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -116,6 +119,13 @@ export default function MapScreen() {
   useFocusEffect(
     useCallback(() => {
       requestLocation();
+      // Fetch balances
+      getCoinBalance()
+        .then((data) => setCoinBalance(data.balance ?? data))
+        .catch((err) => console.error('Failed to fetch coin balance:', err));
+      getGemBalance()
+        .then((data) => setGemBalance(data.balance))
+        .catch((err) => console.error('Failed to fetch gem balance:', err));
     }, [])
   );
 
@@ -247,8 +257,17 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      {/* Top overlay - nearby count */}
       <View style={[styles.topOverlay, { top: insets.top + 12 }]}>
+        <View style={styles.balancesContainer}>
+          <View style={styles.balancePill}>
+            <Ionicons name="cash-outline" size={16} color="#D4A017" />
+            <Text style={styles.balanceText}>{coinBalance}</Text>
+          </View>
+          <View style={[styles.balancePill, { borderColor: '#F0E0E8' }]}>
+            <Ionicons name="diamond" size={16} color="#E91E63" />
+            <Text style={[styles.balanceText, { color: '#E91E63' }]}>{gemBalance}</Text>
+          </View>
+        </View>
         <View style={styles.countPill}>
           <Ionicons name="compass" size={16} color="#D4A017" />
           <Text style={styles.countText}>
@@ -376,6 +395,35 @@ const styles = StyleSheet.create({
   topOverlay: {
     position: 'absolute',
     left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  balancesContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  balancePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  balanceText: {
+    color: '#D4A017',
+    fontSize: 14,
+    fontWeight: '700',
   },
   countPill: {
     flexDirection: 'row',

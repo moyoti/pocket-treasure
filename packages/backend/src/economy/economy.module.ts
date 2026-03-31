@@ -8,6 +8,9 @@ import { MarketListing } from './entities/market-listing.entity';
 import { ShopItem } from './entities/shop-item.entity';
 import { PurchaseRecord } from './entities/purchase-record.entity';
 import { CoinTransaction } from './entities/coin-transaction.entity';
+import { GemTransaction } from './entities/gem-transaction.entity';
+import { RechargePackage } from './entities/recharge-package.entity';
+import { RechargeRecord } from './entities/recharge-record.entity';
 import { InventoryItem } from '../inventory/entities/inventory-item.entity';
 import { Item } from '../item/entities/item.entity';
 import { User } from '../user/entities/user.entity';
@@ -16,11 +19,15 @@ import { ChestService } from './services/chest.service';
 import { GachaService } from './services/gacha.service';
 import { MarketService } from './services/market.service';
 import { ShopService } from './services/shop.service';
+import { GemService } from './services/gem.service';
+import { RechargeService } from './services/recharge.service';
 import { ChestController } from './chest.controller';
 import { GachaController } from './gacha.controller';
 import { MarketController } from './market.controller';
 import { ShopController } from './shop.controller';
 import { EconomyController } from './economy.controller';
+import { GemsController } from './gems.controller';
+import { RechargeController } from './recharge.controller';
 import { InventoryModule } from '../inventory/inventory.module';
 import { ItemModule } from '../item/item.module';
 
@@ -35,6 +42,9 @@ import { ItemModule } from '../item/item.module';
       ShopItem,
       PurchaseRecord,
       CoinTransaction,
+      GemTransaction,
+      RechargePackage,
+      RechargeRecord,
       InventoryItem,
       Item,
       User,
@@ -42,8 +52,8 @@ import { ItemModule } from '../item/item.module';
     InventoryModule,
     ItemModule,
   ],
-  controllers: [ChestController, GachaController, MarketController, ShopController, EconomyController],
-  providers: [CoinService, ChestService, GachaService, MarketService, ShopService],
-  exports: [CoinService, ChestService, GachaService, MarketService, ShopService],
+  controllers: [ChestController, GachaController, MarketController, ShopController, EconomyController, GemsController, RechargeController],
+  providers: [CoinService, ChestService, GachaService, MarketService, ShopService, GemService, RechargeService],
+  exports: [CoinService, ChestService, GachaService, MarketService, ShopService, GemService, RechargeService],
 })
 export class EconomyModule {}

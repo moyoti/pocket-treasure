@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(curl:*)",
+      "Bash(docker-compose:*)",
+      "Bash(yarn install:*)",
+      "Bash(yarn build:*)",
+      "Bash(ls:*)",
+      "Bash(lsof:*)",
+      "Bash(yarn add:*)",
+      "Bash(timeout 15 yarn start:dev:*)"
+    ]
+  }
+}

@@ -7,7 +7,9 @@ import { User } from '../../user/entities/user.entity';
 import { Item, ItemRarity } from '../../item/entities/item.entity';
 import { InventoryItem } from '../../inventory/entities/inventory-item.entity';
 import { CoinService } from './coin.service';
+import { GemService } from './gem.service';
 import { CoinTransactionSource } from '../entities/coin-transaction.entity';
+import { GemTransactionSource } from '../../../../shared/src/types';
 import { PullGachaDto, PullType } from '../dto/pull-gacha.dto';
 
 // Default gacha pool
@@ -40,6 +42,23 @@ const DEFAULT_GACHA_POOLS: Partial<GachaPool>[] = [
       { rarity: 'legendary', weight: 5 },
     ],
   },
+  {
+    name: '高级抽奖池',
+    description: '限定宝藏抽奖池，宝石专属，15%传奇概率',
+    singlePrice: 100,
+    tenPrice: 900,
+    gemPrice: 50,
+    tenGemPrice: 450,
+    pityThreshold: 10,
+    pityMinRarity: 'epic',
+    isPremium: true,
+    items: [
+      { rarity: 'common', weight: 20 },
+      { rarity: 'rare', weight: 40 },
+      { rarity: 'epic', weight: 25 },
+      { rarity: 'legendary', weight: 15 },
+    ],
+  },
 ];
 
 // Rarity order for pity comparison
@@ -55,8 +74,11 @@ export interface GachaPullResult {
     isPity: boolean;
   }[];
   coinsSpent: number;
+  gemsSpent: number;
   newCoinBalance: number;
+  newGemBalance: number;
   newPityCount: number;
+  currencyUsed: 'coins' | 'gems';
 }
 
 @Injectable()
@@ -75,6 +97,7 @@ export class GachaService {
     @InjectRepository(InventoryItem)
     private inventoryItemRepository: Repository<InventoryItem>,
     private coinService: CoinService,
+    private gemService: GemService,
   ) {}
 
   /**
@@ -126,7 +149,7 @@ export class GachaService {
   /**
    * Perform gacha pull
    */
-  async pull(userId: string, dto: PullGachaDto): Promise<GachaPullResult> {
+  async pull(userId: string, dto: PullGachaDto, currency: 'coins' | 'gems' = 'coins'): Promise<GachaPullResult> {
     await this.initializePools();
 
     const { poolId, pullType = PullType.SINGLE } = dto;
@@ -140,23 +163,43 @@ export class GachaService {
       throw new NotFoundException('Gacha pool not found');
     }
 
-    // Calculate cost
+    // Determine cost based on currency type
     const pullCount = pullType === PullType.TEN ? 10 : 1;
-    const cost = pullType === PullType.TEN ? pool.tenPrice : pool.singlePrice;
+    const coinCost = pullType === PullType.TEN ? pool.tenPrice : pool.singlePrice;
+    const gemCost = pullType === PullType.TEN ? pool.tenGemPrice : pool.gemPrice;
 
-    // Check if user has enough coins
-    const hasEnoughCoins = await this.coinService.hasEnoughCoins(userId, cost);
-    if (!hasEnoughCoins) {
-      throw new BadRequestException(`Insufficient coins. Required: ${cost}`);
+    let coinResult: { newBalance: number } | null = null;
+    let gemResult: { newBalance: number } | null = null;
+
+    if (currency === 'gems') {
+      if (!pool.isPremium || !gemCost) {
+        throw new BadRequestException('This pool does not support gem purchases');
+      }
+      const hasEnoughGems = await this.gemService.hasEnoughGems(userId, gemCost);
+      if (!hasEnoughGems) {
+        throw new BadRequestException(`Insufficient gems. Required: ${gemCost}`);
+      }
+      gemResult = await this.gemService.deductGems(
+        userId,
+        gemCost,
+        GemTransactionSource.GACHA,
+        `Gacha pull: ${pool.name}`,
+      );
+    } else {
+      if (pool.isPremium && !gemCost) {
+        throw new BadRequestException('This pool requires gems to purchase');
+      }
+      const hasEnoughCoins = await this.coinService.hasEnoughCoins(userId, coinCost);
+      if (!hasEnoughCoins) {
+        throw new BadRequestException(`Insufficient coins. Required: ${coinCost}`);
+      }
+      coinResult = await this.coinService.spendCoins(
+        userId,
+        coinCost,
+        CoinTransactionSource.GACHA,
+        `Gacha pull: ${pool.name}`,
+      );
     }
-
-    // Spend coins first (has its own transaction)
-    const coinResult = await this.coinService.spendCoins(
-      userId,
-      cost,
-      CoinTransactionSource.GACHA,
-      `Gacha pull: ${pullType} from ${pool.name}`,
-    );
 
     // Use transaction for gacha pulls
     return await this.gachaRecordRepository.manager.transaction(async (manager) => {
@@ -213,7 +256,7 @@ export class GachaService {
           isPity: shouldPity,
           pityCount,
           pullType,
-          cost: pullType === PullType.TEN ? pool.tenPrice / 10 : pool.singlePrice,
+          cost: currency === 'coins' ? (pullType === PullType.TEN ? coinCost / 10 : coinCost) : 0,
         });
         await manager.save(record);
       }
@@ -225,9 +268,12 @@ export class GachaService {
         pool,
         pullType,
         results,
-        coinsSpent: cost,
-        newCoinBalance: coinResult.newBalance,
+        coinsSpent: currency === 'coins' ? coinCost : 0,
+        gemsSpent: currency === 'gems' ? gemCost : 0,
+        newCoinBalance: coinResult?.newBalance ?? 0,
+        newGemBalance: gemResult?.newBalance ?? 0,
         newPityCount: pityCount,
+        currencyUsed: currency,
       };
     });
   }

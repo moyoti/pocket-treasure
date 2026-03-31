@@ -37,6 +37,6 @@ export class GachaController {
 
   @Post('pull')
   async pull(@Request() req: any, @Body() dto: PullGachaDto): Promise<GachaPullResult> {
-    return this.gachaService.pull(req.user.id, dto);
+    return this.gachaService.pull(req.user.id, dto, dto.currency || 'coins');
   }
 }

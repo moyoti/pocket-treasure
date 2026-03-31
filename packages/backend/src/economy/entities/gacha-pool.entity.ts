@@ -42,6 +42,18 @@ export class GachaPool {
   @Column({ type: 'simple-json' })
   items: GachaPoolItem[];
 
+  // 宝石单抽价格（仅高级抽奖池可用）
+  @Column({ default: 0 })
+  gemPrice: number;
+
+  // 宝石十连价格（仅高级抽奖池可用）
+  @Column({ default: 0 })
+  tenGemPrice: number;
+
+  // 是否为高级抽奖池（宝石专属）
+  @Column({ default: false })
+  isPremium: boolean;
+
   @Column({ default: true })
   isActive: boolean;
 
