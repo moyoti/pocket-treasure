@@ -112,12 +112,20 @@ Page({
 
       const items = rawItems.map((item: ShopItem) => {
         const rarity = (item.metadata && item.metadata.rarity) ? item.metadata.rarity : 'common'
+        const itemKey = item.name
+        const allTranslations = t('items') as unknown as Record<string, { name?: string; desc?: string }>
+        const itemTranslations = allTranslations[itemKey] || {}
+        const allCategories = t('categories') as unknown as Record<string, string>
+        const categoryTranslations = allCategories[item.category || ''] || item.category || '道具'
+
         return {
           ...item,
+          name: itemTranslations.name || item.name,
+          description: itemTranslations.desc || item.description,
           rarityName: RARITY_NAMES[rarity] || '普通',
           rarityColor: RARITY_COLORS[rarity] || '#6B7280',
           rarityBgClass: 'rarity-bg-' + rarity,
-          categoryLabel: item.category || '道具',
+          categoryLabel: categoryTranslations,
           limitText: item.purchaseLimit && item.purchaseLimit > 0 
             ? t('shop.itemLimit', { limit: item.purchaseLimit }) 
             : t('shop.noItemLimit'),
