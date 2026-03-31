@@ -35,3 +35,26 @@ docker-compose.override.yml
 # Temp files
 tmp/
 temp/
+
+# Next.js build output
+packages/web/.next/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Lock files (use yarn.lock for workspaces)
+package-lock.json
+yarn.lock
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+
+# Documentation
+IMPLEMENTATION_COMPLETE.md
+TREASURE_MAP_FEATURE_REPORT.md
