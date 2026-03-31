@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 import { RechargeService } from './services/recharge.service';
 
 @Controller('recharge')
@@ -7,11 +8,13 @@ import { RechargeService } from './services/recharge.service';
 export class RechargeController {
   constructor(private readonly rechargeService: RechargeService) {}
 
+  @Public()
   @Get('packages')
   async getPackages() {
     return this.rechargeService.getPackages();
   }
 
+  @Public()
   @Get('packages/:id')
   async getPackage(@Param('id') id: string) {
     return this.rechargeService.getPackage(id);
@@ -22,6 +25,7 @@ export class RechargeController {
     return this.rechargeService.createOrder(req.user.id, body.packageId);
   }
 
+  @Public()
   @Post('callback')
   async paymentCallback(@Body() body: { orderId: string; transactionId?: string; status: string }) {
     if (body.status === 'completed') {

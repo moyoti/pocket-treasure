@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, UseGuards, Request, Query } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 import { GachaService, GachaPullResult } from './services/gacha.service';
 import { PullGachaDto } from './dto/pull-gacha.dto';
 
@@ -8,6 +9,7 @@ import { PullGachaDto } from './dto/pull-gacha.dto';
 export class GachaController {
   constructor(private readonly gachaService: GachaService) {}
 
+  @Public()
   @Get('pools')
   async getPools() {
     return this.gachaService.getPools();
