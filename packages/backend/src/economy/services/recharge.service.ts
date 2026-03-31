@@ -15,7 +15,7 @@ export class RechargeService implements OnModuleInit {
   private readonly logger = new Logger(RechargeService.name);
 
   private readonly DEFAULT_PACKAGES: Partial<RechargePackage>[] = [
-    { name: '小宝石袋', price: 6, gemsAmount: 60, bonusGems: 0, sortOrder: 1 },
+    { name: '小宝石袋', price: 6, gemsAmount: 60, bonusGems: 0, isFirstRechargeBonus: true, sortOrder: 1 },
     { name: '中宝石袋', price: 30, gemsAmount: 320, bonusGems: 0, sortOrder: 2 },
     { name: '大宝石袋', price: 68, gemsAmount: 700, bonusGems: 0, sortOrder: 3 },
     { name: '宝石箱', price: 128, gemsAmount: 1380, bonusGems: 0, sortOrder: 4 },

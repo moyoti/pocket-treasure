@@ -102,11 +102,15 @@ export default function GachaScreen() {
   const handlePull = async (pullType: 'single' | 'ten') => {
     if (!selectedPool) return;
 
-    const price = pullType === 'single' ? selectedPool.singlePrice : selectedPool.tenPrice;
-    const gemPrice = getGemPrice(price);
+    const coinPrice = pullType === 'single' ? selectedPool.singlePrice : selectedPool.tenPrice;
+    // For premium pools, use backend-provided gemPrice/tenGemPrice
+    // For standard pools, calculate gem price based on coin price
+    const gemPrice = selectedPool.isPremium
+      ? (pullType === 'single' ? selectedPool.gemPrice : selectedPool.tenGemPrice)
+      : getGemPrice(coinPrice);
 
     if (selectedCurrency === 'coins') {
-      if (coinBalance < price) {
+      if (coinBalance < coinPrice) {
         Alert.alert('Insufficient Balance', 'You don\'t have enough coins for this pull.');
         return;
       }

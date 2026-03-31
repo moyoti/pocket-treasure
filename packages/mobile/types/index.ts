@@ -330,12 +330,15 @@ export interface GachaPool {
   description: string;
   singlePrice: number;
   tenPrice: number;
+  gemPrice: number;
+  tenGemPrice: number;
   pityMinRarity: ItemRarity;
   pityThreshold: number;
   items: {
     rarity: ItemRarity;
     weight: number;
   }[];
+  isPremium: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -359,8 +362,11 @@ export interface GachaPullResponse {
     isPity: boolean;
   }[];
   coinsSpent: number;
+  gemsSpent: number;
   newCoinBalance: number;
+  newGemBalance: number;
   newPityCount: number;
+  currencyUsed: 'coins' | 'gems';
 }
 
 // ==================== Market Types ====================
