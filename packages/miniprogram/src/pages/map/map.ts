@@ -153,7 +153,7 @@ Page({
       }).map((item: any) => ({
         ...item,
         item: {
-          name: item.item?.name || item.name || item.poiName || '神秘宝藏',
+          name: item.name || item.item?.name || item.poiName || '神秘宝藏',
           description: item.item?.description || (item.poiName ? `在${item.poiName}发现的宝藏` : '一个神秘的宝藏'),
           rarity: item.itemRarity || item.rarity || 'common'
         }
@@ -501,7 +501,7 @@ Page({
         return
       }
 
-      const itemName = result.item?.name || '神秘宝藏'
+      const itemName = result.item?.name || result.name || '神秘宝藏'
       const itemRarity = result.item?.rarity || selectedItem.item?.rarity || 'common'
       const coins = result.rewards?.coins || 0
 
