@@ -257,6 +257,11 @@ export interface SellItemResponse {
 
 // ==================== Shop Types ====================
 
+export interface PurchaseRequest {
+  shopItemId: string;
+  quantity: number;
+}
+
 export interface ShopItem {
   id: string;
   name: string;
@@ -370,6 +375,18 @@ export interface GachaPullResponse {
 }
 
 // ==================== Market Types ====================
+
+export interface CreateListingRequest {
+  inventoryItemId: string;
+  quantity: number;
+  price: number;
+}
+
+export interface SellItemRequest {
+  inventoryItemId: string;
+  quantity: number;
+  price: number;
+}
 
 export interface MarketListing {
   id: string;
