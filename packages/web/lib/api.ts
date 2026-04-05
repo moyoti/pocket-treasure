@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
+import { InventoryItem } from '@treasure-hunt/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -121,6 +122,11 @@ export async function getInventory() {
 
 export async function getInventoryStats() {
   const response = await api.get('/inventory/stats');
+  return response.data;
+}
+
+export async function getInventoryItem(id: string): Promise<InventoryItem> {
+  const response = await api.get(`/inventory/${id}`);
   return response.data;
 }
 
