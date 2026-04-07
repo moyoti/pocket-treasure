@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import BottomNav from '@/components/BottomNav';
-import { AmapProvider } from '@/components/AmapProvider';
+import { MapboxProvider } from '@/components/MapboxProvider';
 import { LocaleProvider } from '@/contexts/LocaleContext';
 import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
 
@@ -28,7 +28,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className}`}>
         <ThemeProvider>
-          <AmapProvider>
+          <MapboxProvider>
             <LocaleProvider>
               <AccessibilityProvider>
                 <AuthProvider>
@@ -41,7 +41,7 @@ export default function RootLayout({
                 </AuthProvider>
               </AccessibilityProvider>
             </LocaleProvider>
-          </AmapProvider>
+          </MapboxProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@treasure-hunt/shared": ["../../shared/src/index.ts"],
+      "@treasure-hunt/shared/*": ["../../shared/src/*"]
     },
     "types": ["@testing-library/jest-dom"]
   },

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { getShopItems, purchaseShopItem, getCoinBalance } from '@/lib/api';
 import { ShopItem, ItemRarity, CoinBalance } from '@/types';
 import { TreasureIcon, RARITY_COLORS } from '@/components/Icon';
@@ -22,6 +23,19 @@ export default function ShopPage() {
   const [error, setError] = useState('');
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useLocale();
+
+  // Helper function to translate shop items
+  const translateShopItem = (item: ShopItem): ShopItem => {
+    const key = item.name.toLowerCase().replace(/\s+/g, '_');
+    const translatedName = t(`shop.items.${key}`) || item.name;
+    const translatedDesc = t(`shop.items.${key}_desc`) || item.description;
+    return {
+      ...item,
+      name: translatedName,
+      description: translatedDesc,
+    };
+  };
 
   // Purchase modal state
   const [purchaseModal, setPurchaseModal] = useState<{
@@ -187,7 +201,7 @@ export default function ShopPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((shopItem, index) => {
-              // Determine rarity from category or metadata
+              const translatedItem = translateShopItem(shopItem);
               const itemRarity = (shopItem.metadata?.rarity as ItemRarity) || 'common';
               return (
               <div
@@ -203,7 +217,7 @@ export default function ShopPage() {
                     <TreasureIcon size={32} rarity={itemRarity} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-black text-gray-800 truncate">{shopItem.name}</h3>
+                    <h3 className="font-black text-gray-800 truncate">{translatedItem.name}</h3>
                     <p
                       className="text-sm font-bold"
                       style={{ color: RARITY_COLORS[itemRarity] }}
@@ -214,7 +228,7 @@ export default function ShopPage() {
                 </div>
 
                 <p className="text-sm text-gray-600 mb-3 flex-1 line-clamp-2">
-                  {shopItem.description}
+                  {translatedItem.description}
                 </p>
 
                 <div className="flex items-center justify-between pt-3 border-t-2 border-gray-200">
@@ -262,7 +276,7 @@ export default function ShopPage() {
                 <TreasureIcon size={32} rarity={(purchaseModal.item.metadata?.rarity as ItemRarity) || 'common'} />
               </div>
               <div>
-                <p className="font-black text-gray-800">{purchaseModal.item.name}</p>
+                <p className="font-black text-gray-800">{translateShopItem(purchaseModal.item).name}</p>
                 <p className="text-sm font-bold text-gray-500">
                   {purchaseModal.item.category}
                 </p>

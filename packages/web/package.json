@@ -12,18 +12,16 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@next/swc-darwin-arm64": "^16.1.6",
-    "@types/leaflet": "^1.9.21",
     "axios": "^1.6.3",
     "date-fns": "^3.0.0",
-    "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
+    "mapbox-gl": "^3.3.0",
     "next": "14.0.4",
     "next-intl": "^4.8.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-leaflet": "4.2.1",
+    "react-map-gl": "^7.1.7",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
@@ -32,7 +30,6 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
-    "@types/leaflet": "^1.9.21",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
