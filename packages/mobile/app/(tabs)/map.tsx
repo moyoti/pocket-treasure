@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { MapView, Marker, Circle } from 'react-native-amap3d';
+import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
 import { getNearbyItems, collectItem } from '@/api/items';
@@ -38,13 +38,6 @@ interface SpawnedItem {
   itemIconUrl?: string;
   poiName?: string;
 }
-
-const RARITY_COLORS: Record<ItemRarity, string> = {
-  common: '#8D99AE',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#F59E0B',
-};
 
 const RARITY_LABEL: Record<ItemRarity, string> = {
   common: 'Common',
@@ -119,7 +112,6 @@ export default function MapScreen() {
   useFocusEffect(
     useCallback(() => {
       requestLocation();
-      // Fetch balances
       getCoinBalance()
         .then((data) => setCoinBalance(data.balance ?? data))
         .catch((err) => console.error('Failed to fetch coin balance:', err));
@@ -195,27 +187,25 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
-        initialCameraPosition={{
-          target: {
-            latitude: mapRegion.latitude,
-            longitude: mapRegion.longitude,
-          },
-          zoom: 15,
+        initialRegion={{
+          latitude: mapRegion.latitude,
+          longitude: mapRegion.longitude,
+          latitudeDelta: mapRegion.latitudeDelta,
+          longitudeDelta: mapRegion.longitudeDelta,
         }}
         showsUserLocation={true}
         showsCompass={true}
         showsScale={true}
         zoomControlsEnabled={false}
-        onCameraIdle={(event) => {
-          if (event.nativeEvent) {
-            setMapRegion({
-              latitude: event.nativeEvent.latitude,
-              longitude: event.nativeEvent.longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            });
-          }
+        onRegionChangeComplete={(region) => {
+          setMapRegion({
+            latitude: region.latitude,
+            longitude: region.longitude,
+            latitudeDelta: region.latitudeDelta,
+            longitudeDelta: region.longitudeDelta,
+          });
         }}
       >
         {items.map((item) => (
@@ -226,33 +216,20 @@ export default function MapScreen() {
                 longitude: item.longitude,
               }}
               radius={COLLECTION_RADIUS_METERS}
-              strokeWidth={1.5}
-              strokeColor={`${RARITY_COLORS[item.itemRarity]}80`}
-              fillColor={`${RARITY_COLORS[item.itemRarity]}15`}
+              strokeWidth={2}
+              strokeColor={`${SHARED_RARITY_COLORS[item.itemRarity]}80`}
+              fillColor={`${SHARED_RARITY_COLORS[item.itemRarity]}26`}
             />
             <Marker
-              position={{
+              coordinate={{
                 latitude: item.latitude,
                 longitude: item.longitude,
               }}
               title={item.itemName}
-              snippet={`${RARITY_LABEL[item.itemRarity]} - ${item.poiName || 'Treasure'}`}
+              description={`${RARITY_LABEL[item.itemRarity]} - ${item.poiName || 'Treasure'}`}
               onPress={() => handleMarkerPress(item)}
-            >
-              <View
-                style={[
-                  styles.markerContainer,
-                  { borderColor: RARITY_COLORS[item.itemRarity] },
-                ]}
-              >
-                <Ionicons
-                  name={RARITY_ICON[item.itemRarity] as any}
-                  size={18}
-                  color={RARITY_COLORS[item.itemRarity]}
-                />
-              </View>
-              <View style={[styles.markerArrow, { borderTopColor: RARITY_COLORS[item.itemRarity] }]} />
-            </Marker>
+              pinColor={SHARED_RARITY_COLORS[item.itemRarity]}
+            />
           </React.Fragment>
         ))}
       </MapView>
@@ -276,7 +253,6 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {/* Refresh button */}
       <TouchableOpacity
         style={[styles.refreshButton, { bottom: Platform.OS === 'ios' ? 108 : 80 }]}
         onPress={fetchNearbyItems}
@@ -285,23 +261,22 @@ export default function MapScreen() {
         <Ionicons name="refresh" size={22} color="#1A1A1A" />
       </TouchableOpacity>
 
-      {/* Selected item bottom sheet */}
       {selectedItem && (
         <View style={styles.bottomSheet}>
           <View style={styles.sheetHandle} />
           <View style={styles.sheetContent}>
             <View style={styles.sheetHeader}>
-              <View style={[styles.sheetIcon, { backgroundColor: `${RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
+              <View style={[styles.sheetIcon, { backgroundColor: `${SHARED_RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
                 <Ionicons
                   name={RARITY_ICON[selectedItem.itemRarity] as any}
                   size={28}
-                  color={RARITY_COLORS[selectedItem.itemRarity]}
+                  color={SHARED_RARITY_COLORS[selectedItem.itemRarity]}
                 />
               </View>
               <View style={styles.sheetInfo}>
                 <Text style={styles.sheetTitle}>{selectedItem.itemName}</Text>
-                <View style={[styles.sheetRarityBadge, { backgroundColor: `${RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
-                  <Text style={[styles.sheetRarityText, { color: RARITY_COLORS[selectedItem.itemRarity] }]}>
+                <View style={[styles.sheetRarityBadge, { backgroundColor: `${SHARED_RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
+                  <Text style={[styles.sheetRarityText, { color: SHARED_RARITY_COLORS[selectedItem.itemRarity] }]}>
                     {RARITY_LABEL[selectedItem.itemRarity]}
                   </Text>
                 </View>
@@ -366,31 +341,6 @@ const styles = StyleSheet.create({
   map: {
     width: width,
     height: height,
-  },
-  markerContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  markerArrow: {
-    alignSelf: 'center',
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    marginTop: -1,
   },
   topOverlay: {
     position: 'absolute',

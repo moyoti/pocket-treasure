@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,16 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { getGemBalance, getRechargePackages, createRechargeOrder, mockPaymentCallback } from '../../lib/api';
+import { getGemBalance, getRechargePackages } from '../../lib/api';
+import { initIAP, getProducts, purchaseProduct, finishTransaction } from '../../src/lib/iap';
+import type { Purchase } from 'react-native-iap';
+
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 interface RechargePackage {
   id: string;
@@ -53,19 +58,75 @@ export default function RechargeScreen() {
     }, [])
   );
 
-  const handlePurchase = async (pkg: RechargePackage) => {
+  useEffect(() => {
+    initIAP().then(() => {
+      loadProducts();
+    });
+  }, []);
+
+  const loadProducts = async () => {
     try {
-      setPurchasing(pkg.id);
-      const order = await createRechargeOrder(pkg.id);
-      await mockPaymentCallback(order.orderId);
-      const balanceData = await getGemBalance();
-      setGemBalance(balanceData.balance);
-      Alert.alert('充值成功', `获得 ${pkg.gemsAmount + pkg.bonusGems} 宝石！`);
+      await getProducts();
+    } catch (error) {
+      console.error('Failed to load products:', error);
+    }
+  };
+
+  async function verifyPurchaseWithBackend(purchase: Purchase) {
+    const response = await fetch(`${API_BASE}/recharge/iap/apple/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: `IAP_${purchase.transactionId}`,
+        productId: purchase.productId,
+        transactionId: purchase.transactionId,
+        transactionReceipt: purchase.transactionReceipt,
+        purchaseDate: purchase.transactionDate,
+      }),
+    });
+    return response.json();
+  }
+
+  const handleIAPPurchase = async (productId: string) => {
+    try {
+      // 1. 发起购买
+      const purchase = await purchaseProduct(productId);
+      if (!purchase) return;
+
+      // 2. 调用后端验证
+      const result = await verifyPurchaseWithBackend(purchase);
+
+      // 3. 结束交易
+      await finishTransaction(purchase);
+
+      // 4. 更新UI
+      if (result.success) {
+        const balanceData = await getGemBalance();
+        setGemBalance(balanceData.balance);
+        Alert.alert('充值成功', '购买已完成！');
+      }
     } catch (error) {
       Alert.alert('充值失败', '请稍后重试');
     } finally {
       setPurchasing(null);
     }
+  };
+
+  const handlePurchase = async (pkg: RechargePackage) => {
+    try {
+      setPurchasing(pkg.id);
+      const productId = getProductIdForPackage(pkg);
+      await handleIAPPurchase(productId);
+    } catch (error) {
+      Alert.alert('充值失败', '请稍后重试');
+    }
+  };
+
+  const getProductIdForPackage = (pkg: RechargePackage): string => {
+    if (pkg.gemsAmount <= 100) return Platform.OS === 'ios' ? 'com.treasurehunt.gems.small' : 'gem_pack_small';
+    if (pkg.gemsAmount <= 500) return Platform.OS === 'ios' ? 'com.treasurehunt.gems.medium' : 'gem_pack_medium';
+    if (pkg.gemsAmount <= 1000) return Platform.OS === 'ios' ? 'com.treasurehunt.gems.large' : 'gem_pack_large';
+    return Platform.OS === 'ios' ? 'com.treasurehunt.gems.huge' : 'gem_pack_huge';
   };
 
   if (loading) {

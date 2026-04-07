@@ -46,16 +46,16 @@ jest.mock('expo-location', () => ({
   },
 }));
 
-jest.mock('react-native-amap3d', () => ({
-  MapView: jest.fn().mockReturnValue(null),
-  Marker: jest.fn().mockReturnValue(null),
-  Circle: jest.fn().mockReturnValue(null),
-}));
-jest.mock('react-native-amap3d', () => ({
-  MapView: jest.fn().mockReturnValue(null),
-  Marker: jest.fn().mockReturnValue(null),
-  Circle: jest.fn().mockReturnValue(null),
-}));
+jest.mock('react-native-maps', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: jest.fn().mockReturnValue(React.createElement('MapView')),
+    Marker: jest.fn().mockReturnValue(null),
+    Circle: jest.fn().mockReturnValue(null),
+    PROVIDER_GOOGLE: 'PROVIDER_GOOGLE',
+  };
+});
 
 // Mock expo-router
 jest.mock('expo-router', () => ({
