@@ -429,3 +429,24 @@ export async function cancelMarketListing(listingId: string) {
 export async function getMyListings() {
   return request<any[]>({ url: '/market/my-listings' })
 }
+
+// ==================== 市场统计 API ====================
+export function getPriceHistory(itemId: string, days: number = 30): Promise<any> {
+  return request({
+    url: '/market/price-history',
+    data: { itemId, days }
+  })
+}
+
+export function getRecentSales(limit: number = 20, itemId?: string): Promise<any> {
+  return request({
+    url: '/market/recent-sales',
+    data: { limit, itemId }
+  })
+}
+
+export function getItemMarketStats(itemId: string): Promise<any> {
+  return request({
+    url: `/market/item-stats/${itemId}`
+  })
+}

@@ -799,3 +799,68 @@
   justify-content: center;
   padding: 100rpx 0;
 }
+
+/* ===== Recent Sales ===== */
+.recent-sales-section {
+  padding: 0 30rpx 20rpx;
+}
+
+.recent-sales-scroll {
+  white-space: nowrap;
+  margin-top: 12rpx;
+}
+
+.recent-sale-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  background: white;
+  border: 4rpx solid var(--border-color);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  margin-right: 16rpx;
+  min-width: 220rpx;
+}
+
+.recent-sale-icon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3rpx solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.recent-sale-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+
+.recent-sale-name {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100rpx;
+}
+
+.recent-sale-price {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 22rpx;
+  font-weight: 900;
+  color: #92400E;
+}
+
+.recent-sale-time {
+  font-size: 18rpx;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

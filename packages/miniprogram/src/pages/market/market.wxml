@@ -58,7 +58,34 @@
           <view class="filter-chip {{ rarityFilter === 'epic' ? 'active' : '' }}" data-rarity="epic" bindtap="setRarityFilter" style="border-color: #8B5CF6;">史诗</view>
           <view class="filter-chip {{ rarityFilter === 'legendary' ? 'active' : '' }}" data-rarity="legendary" bindtap="setRarityFilter" style="border-color: #F59E0B;">传说</view>
         </view>
+        <text class="filter-label" style="margin-top: 20rpx;">排序方式:</text>
+        <view class="filter-chips">
+          <view class="filter-chip {{ sortBy === 'price_asc' ? 'active' : '' }}" data-sort="price_asc" bindtap="setSortBy">价格↑</view>
+          <view class="filter-chip {{ sortBy === 'price_desc' ? 'active' : '' }}" data-sort="price_desc" bindtap="setSortBy">价格↓</view>
+          <view class="filter-chip {{ sortBy === 'time_desc' ? 'active' : '' }}" data-sort="time_desc" bindtap="setSortBy">最新</view>
+          <view class="filter-chip {{ sortBy === 'time_asc' ? 'active' : '' }}" data-sort="time_asc" bindtap="setSortBy">最旧</view>
+        </view>
       </view>
+    </view>
+
+    <!-- 最近成交 -->
+    <view class="recent-sales-section" wx:if="{{ recentSales.length > 0 }}">
+      <view class="section-title">最近成交</view>
+      <scroll-view class="recent-sales-scroll" scroll-x="true">
+        <view class="recent-sale-card" wx:for="{{ recentSales }}" wx:key="id">
+          <view class="recent-sale-icon {{ item.rarityBgClass }}">
+            <image class="icon-sm" src="/images/icons/gem.svg" mode="aspectFit" />
+          </view>
+          <view class="recent-sale-info">
+            <text class="recent-sale-name">{{ item.itemName }}</text>
+            <text class="recent-sale-price">
+              <image class="icon-sm" src="/images/icons/coins.svg" mode="aspectFit" />
+              {{ item.priceText }}
+            </text>
+          </view>
+          <text class="recent-sale-time">{{ item.timeAgo }}</text>
+        </view>
+      </scroll-view>
     </view>
 
     <!-- 商品列表 -->

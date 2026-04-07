@@ -1,5 +1,5 @@
 // pages/market/market.ts
-import { getMarketListings, getInventory, getMyListings, createMarketListing, buyMarketListing, cancelMarketListing, getCoinBalance } from '../../utils/api'
+import { getMarketListings, getInventory, getMyListings, createMarketListing, buyMarketListing, cancelMarketListing, getCoinBalance, getRecentSales, getPriceHistory } from '../../utils/api'
 import { showLoading, hideLoading, showToast, checkLogin, RARITY_NAMES, RARITY_COLORS } from '../../utils/util'
 
 const MARKET_FEE_RATE = 0.1
@@ -46,6 +46,18 @@ interface EnrichedInventoryItem extends InventoryItem {
   rarityBgClass: string
 }
 
+interface EnrichedSale {
+  id: string
+  itemName: string
+  rarityName: string
+  rarityColor: string
+  rarityBgClass: string
+  priceText: string
+  price: number
+  timeAgo: string
+  soldAt: string
+}
+
 Page({
   data: {
     listings: [] as EnrichedListing[],
@@ -59,7 +71,10 @@ Page({
     // Search & filter
     searchQuery: '',
     rarityFilter: '',
+    sortBy: 'time_desc',
     showFilters: false,
+    // Recent sales
+    recentSales: [] as EnrichedSale[],
     // Buy modal
     buyModalOpen: false,
     buyListing: null as EnrichedListing | null,
@@ -99,10 +114,11 @@ Page({
     this.setData({ loading: true })
 
     try {
-      const [listingsRes, inventory, balanceRes] = await Promise.all([
+      const [listingsRes, inventory, balanceRes, recentSalesRes] = await Promise.all([
         getMarketListings(),
         checkLogin() ? getInventory() : Promise.resolve([]),
         checkLogin() ? getCoinBalance() : Promise.resolve({ balance: 0 }),
+        getRecentSales(20).catch(() => ({ sales: [] })),
       ])
 
       const rawListings = listingsRes.listings || listingsRes || []
@@ -139,12 +155,27 @@ Page({
         }
       }
 
+      const rawSales = recentSalesRes.sales || recentSalesRes || []
+      const recentSales = rawSales.map((s: any) => {
+        const rarity = (s.item && s.item.rarity) ? s.item.rarity : 'common'
+        return {
+          ...s,
+          rarityName: RARITY_NAMES[rarity] || '普通',
+          rarityColor: RARITY_COLORS[rarity] || '#6B7280',
+          rarityBgClass: 'rarity-bg-' + rarity,
+          itemName: (s.item && s.item.name) ? s.item.name : '未知物品',
+          priceText: s.price ? String(s.price) : '0',
+          timeAgo: this.formatTimeAgo(s.soldAt),
+        }
+      })
+
       this.setData({
         listings,
         filteredListings: listings,
         myItems,
         myListings,
         balance: balanceRes.balance || 0,
+        recentSales,
         loading: false,
       })
     } catch (error) {
@@ -188,15 +219,49 @@ Page({
     this.applyFilters()
   },
 
+  setSortBy(e: any) {
+    const sortBy = e.currentTarget.dataset.sort || 'time_desc'
+    this.setData({ sortBy })
+    this.applyFilters()
+  },
+
   applyFilters() {
-    const { listings, searchQuery, rarityFilter } = this.data
+    const { listings, searchQuery, rarityFilter, sortBy } = this.data
     const query = searchQuery.toLowerCase()
-    const filtered = listings.filter((l: EnrichedListing) => {
+    let filtered = listings.filter((l: EnrichedListing) => {
       const matchesSearch = !query || (l.itemName && l.itemName.toLowerCase().indexOf(query) >= 0)
       const matchesRarity = !rarityFilter || (l.item && l.item.rarity === rarityFilter)
       return matchesSearch && matchesRarity
     })
+    switch (sortBy) {
+      case 'price_asc':
+        filtered.sort((a, b) => (a.price || 0) - (b.price || 0))
+        break
+      case 'price_desc':
+        filtered.sort((a, b) => (b.price || 0) - (a.price || 0))
+        break
+      case 'time_desc':
+        filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        break
+      case 'time_asc':
+        filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
+        break
+    }
     this.setData({ filteredListings: filtered })
+  },
+
+  formatTimeAgo(dateStr: string): string {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+    if (minutes < 1) return '刚刚'
+    if (minutes < 60) return `${minutes}分钟前`
+    if (hours < 24) return `${hours}小时前`
+    return `${days}天前`
   },
 
   // Buy
