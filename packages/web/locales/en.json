@@ -66,7 +66,21 @@
     "owned": "Owned",
     "buySuccess": "Purchase successful!",
     "buyFailed": "Purchase failed",
-    "insufficientCoins": "Insufficient coins"
+    "insufficientCoins": "Insufficient coins",
+    "items": {
+      "wooden_chest": "Wooden Chest",
+      "wooden_chest_desc": "A simple wooden chest containing common treasures",
+      "iron_chest": "Iron Chest",
+      "iron_chest_desc": "A sturdy iron chest with better treasures inside",
+      "golden_chest": "Golden Chest",
+      "golden_chest_desc": "A magnificent golden chest filled with rare treasures",
+      "lucky_key": "Lucky Key",
+      "lucky_key_desc": "A magical key that increases your luck for the next collection",
+      "experience_potion": "Experience Potion",
+      "experience_potion_desc": "A potion that grants 100 experience points",
+      "coin_pouch": "Coin Pouch",
+      "coin_pouch_desc": "A pouch containing 150 coins"
+    }
   },
   "gacha": {
     "title": "Lucky Gacha",
@@ -188,5 +202,67 @@
     "claimReward": "Claim Reward",
     "refresh": "Refresh Tasks",
     "noTasks": "No tasks available"
+  },
+  "items": {
+    "common": {
+      "普通石子": "An ordinary stone, humble but part of any collection.",
+      "小树枝": "A small twig fallen from a tree, simple and unadorned.",
+      "露珠": "Morning dew, pure and transparent.",
+      "落花": "Petals drifting in the wind, carrying a faint fragrance.",
+      "幸运草": "An ordinary clover, but with a hint of luck.",
+      "鹅卵石": "Smooth pebbles, polished by years of water flow.",
+      "松果": "A pinecone fallen from a pine tree, a gift from nature.",
+      "贝壳": "A gift from the sea, carrying the scent of the ocean.",
+      "羽毛": "A feather lost by a bird, light and elegant.",
+      "小蘑菇": "A small mushroom in the forest, cute but not edible.",
+      "枫叶": "Maple leaves falling in autumn, a blaze of red.",
+      "雪花结晶": "A beautiful moment captured before snow melts.",
+      "漂流瓶": "A drift bottle from afar, seems to contain a note inside.",
+      "萤火虫": "A tiny sprite on summer nights, emitting a faint glow.",
+      "蒲公英种子": "Dandelion seeds floating in the wind, make a wish!"
+    },
+    "rare": {
+      "水晶碎片": "Glowing crystal shards, containing mysterious energy.",
+      "月光石": "A stone that glows pale blue under moonlight.",
+      "四叶草": "A legendary symbol of luck, bringing good fortune.",
+      "琥珀": "Solidified time, preserving ancient life within.",
+      "猫眼石": "A gem like a cat's eye, mysterious and elusive.",
+      "蓝宝石碎片": "Precious sapphire shards, sparkling with deep sea light.",
+      "翡翠玉佩": "An ancient jade pendant, radiating warm luster.",
+      "彩虹碎片": "Part of a rainbow, dazzling with seven colors.",
+      "星尘": "Stardust fallen from the sky, sparkling with cosmic light.",
+      "极光之羽": "Feathers colored by the aurora, mysterious and beautiful.",
+      "珊瑚枝": "Branches of sea coral, colorful and vibrant.",
+      "珍珠": "Treasure born of the sea, white and round.",
+      "紫水晶": "Mysterious purple crystal, radiating noble aura.",
+      "龙鳞片": "Scales from a legendary dragon, hard as iron.",
+      "凤凰羽": "Feathers shed by the phoenix, carrying undying flame."
+    },
+    "epic": {
+      "时光沙漏": "A mysterious item said to control the flow of time.",
+      "星辰之心": "The core of a fallen star, containing infinite energy.",
+      "龙之泪": "The tears of a dragon, crystallized into gems.",
+      "永恒之火": "An eternal flame, warm and mysterious.",
+      "月光宝盒": "A mysterious box that can traverse space and time.",
+      "精灵之泪": "Precious tears of elves, possessing healing power.",
+      "彩虹桥碎片": "A fragment of the rainbow bridge connecting heaven and earth.",
+      "独角兽之角": "The horn left by a legendary unicorn, pure and flawless.",
+      "魔法水晶球": "A mysterious crystal ball that can foresee the future.",
+      "天使之翼": "Wings shed by an angel, pure and sacred.",
+      "海神之泪": "The tears of Poseidon, containing the power of the ocean.",
+      "仙女尘": "Magical dust scattered by fairies, can grant small wishes."
+    },
+    "legendary": {
+      "黄金罗盘": "A divine artifact that always points the way, you will never be lost.",
+      "凤凰之心": "The heart left after the phoenix's rebirth, immortal.",
+      "创世之石": "The first stone of creation, containing the power of creation.",
+      "龙之宝藏": "Treasure guarded by a dragon for millennia, invaluable.",
+      "时间水晶": "A crystal that can manipulate time, extremely precious.",
+      "永恒之星": "A star that never falls, illuminating the darkness.",
+      "神龙之珠": "The legendary dragon pearl, possessing magical powers.",
+      "天使之泪": "The tears of an angel, can purify everything.",
+      "命运轮盘": "A mysterious wheel that can change fate.",
+      "创世神之眼": "The eye left by the Creator, can see through everything."
+    }
   }
 }

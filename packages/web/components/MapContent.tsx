@@ -1,54 +1,22 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { COLLECTION_RADIUS_METERS } from '@treasure-hunt/shared';
-import { SpawnedItem, ItemRarity, Item } from '@/types';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import Map, { Marker, Popup } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { COLLECTION_RADIUS_METERS, RARITY_COLORS, RARITY_NAMES } from '@treasure-hunt/shared';
+import { SpawnedItem, ItemRarity } from '@treasure-hunt/shared';
 import { getNearbyItems, collectItem, ApiError } from '@/lib/api';
 import api from '@/lib/api';
-import { TreasureIcon, RARITY_COLORS } from './Icon';
-import { RefreshCw, ClipboardList, MapPin, X, Gem, Map } from 'lucide-react';
+import type { Item } from '@/types';
+import { TreasureIcon } from './Icon';
+import { RefreshCw, ClipboardList, MapPin, X, Gem, Map as MapIcon } from 'lucide-react';
 
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-};
-
-const RARITY_TREASURE_NAMES: Record<ItemRarity, string> = {
-  common: '神秘宝箱',
-  rare: '闪耀宝箱',
-  epic: '璀璨宝箱',
-  legendary: '传说宝箱',
-};
-
-// Z-index offsets for layer ordering (higher = on top)
-// User marker should always be on top, treasures sorted by rarity
-const RARITY_Z_INDEX: Record<ItemRarity, number> = {
-  common: 100,
-  rare: 200,
-  epic: 300,
-  legendary: 400,
-};
-
-const USER_Z_INDEX = 1000; // User marker always on top
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
 
 interface MapContentProps {
   location: [number, number];
   onItemsChange?: (items: SpawnedItem[]) => void;
-}
-
-interface SpawnedItemResponse {
-  id: string;
-  latitude: number;
-  longitude: number;
-  itemRarity: ItemRarity;
-  poiName?: string;
-  expiresAt: string;
-  createdAt: string;
 }
 
 interface CollectedItem {
@@ -58,57 +26,59 @@ interface CollectedItem {
   description: string;
 }
 
-// Map center updater
-function MapCenterUpdater({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
-  return null;
+// Custom Circle component using HTML overlay
+function CircleOverlay({
+  latitude,
+  longitude,
+  radius,
+  color,
+}: {
+  latitude: number;
+  longitude: number;
+  radius: number;
+  color: string;
+}) {
+  const size = radius * 2;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        backgroundColor: color,
+        opacity: 0.15,
+        border: `2px solid ${color}`,
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+      }}
+    />
+  );
 }
 
 export default function MapContent({ location, onItemsChange }: MapContentProps) {
-  const [items, setItems] = useState<SpawnedItemResponse[]>([]);
-  const [selectedItem, setSelectedItem] = useState<SpawnedItemResponse | null>(null);
+  const [items, setItems] = useState<SpawnedItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<SpawnedItem | null>(null);
   const [collectedItem, setCollectedItem] = useState<CollectedItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showItemPool, setShowItemPool] = useState(false);
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [isClient, setIsClient] = useState(false);
-
-  // Set client flag and fix leaflet icons
-  useEffect(() => {
-    setIsClient(true);
-
-    // Fix Leaflet default icon
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    });
-  }, []);
-
-  // Create user icon with highest z-index
-  const userIcon = L.divIcon({
-    className: 'custom-user-marker',
-    html: `<div style="width:32px;height:32px;background:#3b82f6;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:${USER_Z_INDEX};"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+  const [viewState, setViewState] = useState({
+    longitude: location[1],
+    latitude: location[0],
+    zoom: 15,
   });
+  const mapRef = useRef<any>(null);
 
-  // Create item icon based on rarity with z-index for layer ordering
-  const createItemIcon = (rarity: ItemRarity) => {
-    return L.divIcon({
-      className: 'custom-item-marker',
-      html: `<div style="width:40px;height:40px;background:${RARITY_COLORS[rarity]};border:3px solid #333;border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.4);z-index:${RARITY_Z_INDEX[rarity]};"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>`,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
-    });
+  const RARITY_TREASURE_NAMES: Record<ItemRarity, string> = {
+    common: '神秘宝箱',
+    rare: '闪耀宝箱',
+    epic: '璀璨宝箱',
+    legendary: '传说宝箱',
   };
 
-  // Fetch all items
   const fetchAllItems = useCallback(async () => {
     try {
       const response = await api.get('/items');
@@ -122,7 +92,6 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
     fetchAllItems();
   }, [fetchAllItems]);
 
-  // Fetch nearby items
   const fetchItems = useCallback(async (lat: number, lng: number) => {
     try {
       const nearbyItems = await getNearbyItems(lat, lng);
@@ -142,8 +111,17 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
   }, [onItemsChange]);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
     if (isClient) {
       fetchItems(location[0], location[1]);
+      setViewState({
+        longitude: location[1],
+        latitude: location[0],
+        zoom: 15,
+      });
     }
   }, [location, fetchItems, isClient]);
 
@@ -168,6 +146,15 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
     }
     setSelectedItem(null);
     setCollectedItem(null);
+  };
+
+  const flyToLocation = (lat: number, lng: number) => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [lng, lat],
+        duration: 1000,
+      });
+    }
   };
 
   if (!isClient || loading) {
@@ -207,62 +194,92 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
 
       <div className="flex-1 relative m-2">
         <div className="w-full h-full rounded-2xl border-4 border-gray-800 overflow-hidden">
-          <MapContainer
-            center={location}
-            zoom={15}
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={true}
+          <Map
+            ref={mapRef}
+            {...viewState}
+            onMove={(evt) => setViewState(evt.viewState)}
+            style={{ width: '100%', height: '100%' }}
+            mapStyle={MAP_STYLE}
+            mapboxAccessToken={MAPBOX_TOKEN}
+            attributionControl={false}
           >
-            <TileLayer
-              attribution='&copy; OpenStreetMap'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapCenterUpdater center={location} />
-
-            <Marker position={location} icon={userIcon} zIndexOffset={USER_Z_INDEX}>
-              <Popup>你的位置</Popup>
+            {/* User location marker */}
+            <Marker
+              longitude={location[1]}
+              latitude={location[0]}
+              anchor="center"
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6',
+                  border: '3px solid #ffffff',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                }}
+              />
             </Marker>
 
-            {/* Sort items by rarity: common first (lowest z-index), legendary last (highest among treasures) */}
+            {/* Item markers with circles */}
             {[...items].sort((a, b) => {
               const order = { common: 0, rare: 1, epic: 2, legendary: 3 };
               return order[a.itemRarity as ItemRarity] - order[b.itemRarity as ItemRarity];
             }).map((item) => {
               const rarity = item.itemRarity as ItemRarity;
               const color = RARITY_COLORS[rarity] || '#9ca3af';
-              const zIndex = RARITY_Z_INDEX[rarity];
               return (
-                <React.Fragment key={item.id}>
-                  <Circle
-                    center={[item.latitude, item.longitude]}
-                    radius={COLLECTION_RADIUS_METERS}
-                    pathOptions={{
-                      color: color,
-                      fillColor: color,
-                      fillOpacity: 0.15,
-                      weight: 2,
+                <Marker
+                  key={`marker-${item.id}`}
+                  longitude={item.longitude}
+                  latitude={item.latitude}
+                  anchor="center"
+                  onClick={() => {
+                    setSelectedItem(item);
+                    flyToLocation(item.latitude, item.longitude);
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      backgroundColor: color,
+                      border: '3px solid #333333',
+                      cursor: 'pointer',
                     }}
                   />
-                  <Marker
-                    position={[item.latitude, item.longitude]}
-                    icon={createItemIcon(rarity)}
-                    zIndexOffset={zIndex}
-                    eventHandlers={{
-                      click: () => setSelectedItem(item),
-                    }}
-                  >
-                    <Popup>
-                      <div className="text-center">
-                        <b>{RARITY_TREASURE_NAMES[rarity]}</b><br />
-                        <span style={{ color }}>{RARITY_NAMES[rarity]}</span>
-                      </div>
-                    </Popup>
-                  </Marker>
-                </React.Fragment>
+                </Marker>
               );
             })}
-          </MapContainer>
+
+            {/* Popup for selected item */}
+            {selectedItem && (
+              <Popup
+                longitude={selectedItem.longitude}
+                latitude={selectedItem.latitude}
+                anchor="bottom"
+                onClose={() => setSelectedItem(null)}
+                closeButton={false}
+                className="mapbox-popup"
+              >
+                <div className="text-center p-2 min-w-[120px]">
+                  <b className="text-sm">{RARITY_TREASURE_NAMES[selectedItem.itemRarity as ItemRarity]}</b>
+                  <br />
+                  <span 
+                    className="text-xs font-bold"
+                    style={{ color: RARITY_COLORS[selectedItem.itemRarity as ItemRarity] }}
+                  >
+                    {RARITY_NAMES[selectedItem.itemRarity as ItemRarity]}
+                  </span>
+                </div>
+              </Popup>
+            )}
+          </Map>
         </div>
+
+        {/* Collection radius circles overlay - rendered via Mapbox CircleLayer */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl" />
 
         <button
           onClick={() => fetchItems(location[0], location[1])}
@@ -294,64 +311,62 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
         </div>
       </div>
 
-      {/* Collection popup */}
-      {selectedItem && (
+      {selectedItem && !collectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
           <div className="cartoon-card max-w-md w-full p-6">
-            {!collectedItem ? (
-              <>
-                <div className="text-center">
-                  <div
-                    className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-800"
-                    style={{ backgroundColor: (RARITY_COLORS[selectedItem.itemRarity as ItemRarity] || '#9ca3af') + '30' }}
-                  >
-                    <TreasureIcon size={48} rarity={selectedItem.itemRarity as ItemRarity} />
-                  </div>
-                  <h2 className="text-2xl font-black text-gray-800 mb-2">
-                    {RARITY_TREASURE_NAMES[selectedItem.itemRarity as ItemRarity]}
-                  </h2>
-                  <p className="font-bold mb-2" style={{ color: RARITY_COLORS[selectedItem.itemRarity as ItemRarity] || '#9ca3af' }}>
-                    {RARITY_NAMES[selectedItem.itemRarity as ItemRarity]}
-                  </p>
-                  <p className="text-gray-500 text-sm mb-4">里面藏着什么宝物呢？</p>
-                </div>
-                <div className="mt-6 flex gap-3">
-                  <button onClick={handleCollect} className="cartoon-btn flex-1">🔓 打开宝箱</button>
-                  <button onClick={handleCloseModal} className="cartoon-btn flex-1">离开</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="text-center">
-                  <div
-                    className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-800"
-                    style={{ backgroundColor: (RARITY_COLORS[collectedItem.rarity as ItemRarity] || '#9ca3af') + '20' }}
-                  >
-                    <TreasureIcon size={48} rarity={collectedItem.rarity as ItemRarity} />
-                  </div>
-                  <p className="text-gray-500 mb-2">🎉 恭喜获得！</p>
-                  <h2 className="text-2xl font-black text-gray-800 mb-2">{collectedItem.name}</h2>
-                  <p className="font-bold mb-2" style={{ color: RARITY_COLORS[collectedItem.rarity as ItemRarity] || '#9ca3af' }}>
-                    {RARITY_NAMES[collectedItem.rarity as ItemRarity]}
-                  </p>
-                  <p className="text-gray-600 text-sm mb-4">{collectedItem.description}</p>
-                </div>
-                <div className="mt-6">
-                  <button onClick={handleCloseModal} className="cartoon-btn w-full">✨ 太棒了！</button>
-                </div>
-              </>
-            )}
+            <div className="text-center">
+              <div
+                className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-800"
+                style={{ backgroundColor: (RARITY_COLORS[selectedItem.itemRarity as ItemRarity] || '#9ca3af') + '30' }}
+              >
+                <TreasureIcon size={48} rarity={selectedItem.itemRarity as ItemRarity} />
+              </div>
+              <h2 className="text-2xl font-black text-gray-800 mb-2">
+                {RARITY_TREASURE_NAMES[selectedItem.itemRarity as ItemRarity]}
+              </h2>
+              <p className="font-bold mb-2" style={{ color: RARITY_COLORS[selectedItem.itemRarity as ItemRarity] || '#9ca3af' }}>
+                {RARITY_NAMES[selectedItem.itemRarity as ItemRarity]}
+              </p>
+              <p className="text-gray-500 text-sm mb-4">里面藏着什么宝物呢？</p>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button onClick={handleCollect} className="cartoon-btn flex-1">🔓 打开宝箱</button>
+              <button onClick={handleCloseModal} className="cartoon-btn flex-1">离开</button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Item Pool Modal */}
+      {collectedItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
+          <div className="cartoon-card max-w-md w-full p-6">
+            <div className="text-center">
+              <div
+                className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-gray-800"
+                style={{ backgroundColor: (RARITY_COLORS[collectedItem.rarity as ItemRarity] || '#9ca3af') + '20' }}
+              >
+                <TreasureIcon size={48} rarity={collectedItem.rarity as ItemRarity} />
+              </div>
+              <p className="text-gray-500 mb-2">🎉 恭喜获得！</p>
+              <h2 className="text-2xl font-black text-gray-800 mb-2">{collectedItem.name}</h2>
+              <p className="font-bold mb-2" style={{ color: RARITY_COLORS[collectedItem.rarity as ItemRarity] || '#9ca3af' }}>
+                {RARITY_NAMES[collectedItem.rarity as ItemRarity]}
+              </p>
+              <p className="text-gray-600 text-sm mb-4">{collectedItem.description}</p>
+            </div>
+            <div className="mt-6">
+              <button onClick={handleCloseModal} className="cartoon-btn w-full">✨ 太棒了！</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showItemPool && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
           <div className="cartoon-card max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-                <Map size="24" /> 可能发现的宝藏
+                <MapIcon size="24" /> 可能发现的宝藏
               </h2>
               <button onClick={() => setShowItemPool(false)} className="p-1 hover:bg-gray-200 rounded-full">
                 <X size="24" />
@@ -379,7 +394,7 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
                             <Gem size="16" style={{ color: RARITY_COLORS[rarity] }} /> {item.name}
                           </span>
                           <span className="text-xs text-gray-500">
-                            刷新率: {(item.spawnWeight * 10).toFixed(0)}%
+                            刷新率：{(item.spawnWeight * 10).toFixed(0)}%
                           </span>
                         </div>
                         <p className="text-xs text-gray-600 mt-1">{item.description}</p>
