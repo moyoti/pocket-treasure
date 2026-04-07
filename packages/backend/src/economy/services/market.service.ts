@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Between, LessThan } from 'typeorm';
 import { MarketListing, ListingStatus } from '../entities/market-listing.entity';
 import { CreateListingDto, MarketQueryDto, BuyListingDto } from '../dto/market-list.dto';
+import { MarketTransactionService } from './market-transaction.service';
 import { InventoryItem } from '../../inventory/entities/inventory-item.entity';
 import { Item, ItemRarity } from '../../item/entities/item.entity';
 import { User } from '../../user/entities/user.entity';
@@ -37,6 +38,7 @@ export class MarketService {
     private itemRepository: Repository<Item>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private marketTransactionService: MarketTransactionService,
   ) {}
 
   async getListings(query: MarketQueryDto): Promise<{ listings: MarketListing[]; total: number }> {
@@ -58,7 +60,7 @@ export class MarketService {
     }
 
     // Validate sortBy to prevent SQL injection
-    const validSortFields = ['price', 'createdAt', 'totalPrice'];
+    const validSortFields = ['price', 'createdAt', 'totalPrice', 'quantity'];
     const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
     const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
@@ -179,6 +181,7 @@ export class MarketService {
         sellerReceives,
         status: ListingStatus.ACTIVE,
         expiresAt,
+        totalQuantitySold: 0,
       });
 
       const savedListing = await manager.save(listing);
@@ -295,7 +298,11 @@ export class MarketService {
         listing.sellerReceives = listing.totalPrice - listing.fee;
       }
 
+      listing.totalQuantitySold += quantityToBuy;
       await manager.save(listing);
+
+      // Record the transaction
+      await this.marketTransactionService.recordTransaction(listing, userId, quantityToBuy, listing.price);
 
       this.logger.log(
         `User ${userId} bought ${quantityToBuy}x ${listing.itemName} from user ${listing.sellerId} for ${totalCost} coins`,

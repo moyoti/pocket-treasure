@@ -42,6 +42,7 @@ export class MarketListing {
   inventoryItemId: string;
 
   @Column()
+  @Index()
   itemId: string;
 
   @ManyToOne(() => Item)
@@ -92,4 +93,10 @@ export class MarketListing {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ default: 0 })
+  totalQuantitySold: number;
+
+  @Column({ default: 0 })
+  viewCount: number;
 }

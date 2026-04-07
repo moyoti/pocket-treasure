@@ -12,13 +12,18 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MarketService } from './services/market.service';
+import { MarketTransactionService } from './services/market-transaction.service';
 import { CreateListingDto, MarketQueryDto, BuyListingDto } from './dto/market-list.dto';
+import { PriceHistoryQueryDto, RecentSalesQueryDto, MarketStatsQueryDto } from './dto/market-transaction.dto';
 import { ItemRarity } from '../item/entities/item.entity';
 
 @Controller('market')
 @UseGuards(JwtAuthGuard)
 export class MarketController {
-  constructor(private readonly marketService: MarketService) {}
+  constructor(
+    private readonly marketService: MarketService,
+    private readonly marketTransactionService: MarketTransactionService,
+  ) {}
 
   /**
    * GET /api/market/listings
@@ -63,6 +68,33 @@ export class MarketController {
       throw new BadRequestException('Invalid rarity. Valid values: common, rare, epic, legendary');
     }
     return this.marketService.getPriceRange(rarity as ItemRarity);
+  }
+
+  /**
+   * GET /api/market/history/price/:itemId
+   * Get price history for an item
+   */
+  @Get('history/price/:itemId')
+  async getPriceHistory(@Param('itemId') itemId: string, @Query() query: PriceHistoryQueryDto) {
+    return this.marketTransactionService.getPriceHistory(itemId, query.days);
+  }
+
+  /**
+   * GET /api/market/history/recent
+   * Get recent market transactions
+   */
+  @Get('history/recent')
+  async getRecentSales(@Query() query: RecentSalesQueryDto) {
+    return this.marketTransactionService.getRecentSales(query.limit, query.itemId);
+  }
+
+  /**
+   * GET /api/market/history/:itemId/stats
+   * Get market statistics for a specific item
+   */
+  @Get('history/:itemId/stats')
+  async getItemMarketStats(@Param('itemId') itemId: string) {
+    return this.marketTransactionService.getItemStats(itemId);
   }
 
   /**
