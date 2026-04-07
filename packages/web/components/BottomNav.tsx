@@ -26,6 +26,7 @@ export default function BottomNav() {
     { href: '/inventory', labelKey: 'nav.inventory', icon: Package },
     { href: '/shop', labelKey: 'nav.shop', icon: Store },
     { href: '/map', labelKey: 'nav.map', icon: Map, isCenter: true },
+    { href: '/chest-open', labelKey: 'nav.chestOpen', icon: Dices },
     { href: '/gacha', labelKey: 'nav.gacha', icon: Dices },
     { href: '/profile', labelKey: 'nav.profile', icon: User },
   ];
