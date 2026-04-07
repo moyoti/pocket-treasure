@@ -12,10 +12,12 @@ import { getNearbyItems, collectItem } from '@/api/items';
 // Mock dependencies
 jest.mock('expo-location');
 jest.mock('@/api/items');
-jest.mock('react-native-amap3d', () => ({
-  MapView: 'MapView',
+jest.mock('react-native-maps', () => ({
+  __esModule: true,
+  default: 'MapView',
   Marker: 'Marker',
   Circle: 'Circle',
+  PROVIDER_GOOGLE: 'PROVIDER_GOOGLE',
 }));
 
 const mockLocation = {
@@ -88,7 +90,7 @@ describe('MapScreen', () => {
 
     it('should show loading indicator while fetching location', () => {
       const { getByText } = render(<MapScreen />);
-      expect(getByText('正在获取你的位置...')).toBeTruthy();
+      expect(getByText('Finding your location...')).toBeTruthy();
     });
   });
 
@@ -112,7 +114,7 @@ describe('MapScreen', () => {
       const { getByText } = render(<MapScreen />);
 
       await waitFor(() => {
-        expect(getByText(/附近有 \d+ 个宝藏/)).toBeTruthy();
+        expect(getByText('3 treasures nearby')).toBeTruthy();
       });
     });
 
@@ -122,7 +124,7 @@ describe('MapScreen', () => {
       const { getByText } = render(<MapScreen />);
 
       await waitFor(() => {
-        expect(getByText('附近有 0 个宝藏')).toBeTruthy();
+        expect(getByText('0 treasure nearby')).toBeTruthy();
       });
     });
   });
@@ -230,7 +232,7 @@ describe('MapScreen', () => {
 
       await waitFor(() => {
         const markers = UNSAFE_queryAllByType('Marker');
-        expect(markers[0].props.position).toEqual({
+        expect(markers[0].props.coordinate).toEqual({
           latitude: mockItems[0].latitude,
           longitude: mockItems[0].longitude,
         });
@@ -293,23 +295,24 @@ describe('MapScreen', () => {
     it('should have refresh button', async () => {
       (getNearbyItems as jest.Mock).mockResolvedValue(mockItems);
 
-      const { getByText } = render(<MapScreen />);
+      const { UNSAFE_getByProps } = render(<MapScreen />);
 
       await waitFor(() => {
-        expect(getByText('刷新')).toBeTruthy();
+        const refreshButton = UNSAFE_getByProps({ name: 'refresh' });
+        expect(refreshButton).toBeTruthy();
       });
     });
 
     it('should refetch items when refresh button is pressed', async () => {
       (getNearbyItems as jest.Mock).mockResolvedValue(mockItems);
 
-      const { getByText } = render(<MapScreen />);
+      const { UNSAFE_getByProps } = render(<MapScreen />);
 
       await waitFor(() => {
         expect(getNearbyItems).toHaveBeenCalledTimes(1);
       });
 
-      const refreshButton = getByText('刷新');
+      const refreshButton = UNSAFE_getByProps({ name: 'refresh' });
       fireEvent.press(refreshButton);
 
       await waitFor(() => {

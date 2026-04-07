@@ -70,16 +70,6 @@ const DEFAULT_SHOP_ITEMS: Partial<ShopItem>[] = [
     isAvailable: true,
     purchaseLimit: 0,
   },
-  {
-    name: 'Coin Pouch',
-    description: 'A pouch containing 150 coins',
-    category: ShopItemCategory.SPECIAL,
-    price: 0, // Free daily reward
-    rewards: { coins: 150 },
-    isAvailable: true,
-    purchaseLimit: 1,
-    metadata: { dailyReset: true },
-  },
 ];
 
 @Injectable()
