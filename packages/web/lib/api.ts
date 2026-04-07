@@ -461,8 +461,25 @@ export async function getMarketListings(params?: {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: 'price_asc' | 'price_desc' | 'date_asc' | 'date_desc';
+  sortOrder?: 'asc' | 'desc';
 }) {
-  const response = await api.get('/market/listings', { params });
+  const apiParams: any = { 
+    rarity: params?.rarity,
+    minPrice: params?.minPrice,
+    maxPrice: params?.maxPrice,
+    search: params?.search,
+    page: params?.page,
+    limit: params?.limit,
+  };
+  
+  if (params?.sortBy) {
+    const [sortField, sortDir] = params.sortBy.split('_');
+    apiParams.sortBy = sortField === 'price' ? 'price' : 'createdAt';
+    apiParams.sortOrder = sortDir === 'asc' ? 'ASC' : 'DESC';
+  }
+  
+  const response = await api.get('/market/listings', { params: apiParams });
   return response.data.listings || [];
 }
 
@@ -483,5 +500,26 @@ export async function buyMarketListing(listingId: string) {
 
 export async function cancelMarketListing(listingId: string) {
   const response = await api.post(`/market/cancel/${listingId}`);
+  return response.data;
+}
+
+// ==================== Market History API ====================
+
+export async function getPriceHistory(itemId: string, days: number = 30) {
+  const response = await api.get(`/market/history/price/${itemId}`, {
+    params: { days },
+  });
+  return response.data;
+}
+
+export async function getRecentSales(limit: number = 20, itemId?: string) {
+  const response = await api.get('/market/history/recent', {
+    params: { limit, ...(itemId && { itemId }) },
+  });
+  return response.data;
+}
+
+export async function getItemMarketStats(itemId: string) {
+  const response = await api.get(`/market/history/${itemId}/stats`);
   return response.data;
 }

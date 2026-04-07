@@ -477,3 +477,108 @@ export interface RechargeCallbackDto {
   transactionId?: string;
   status: 'completed' | 'failed';
 }
+
+// ============ In-App Purchase Types ============
+
+// 支付渠道枚举
+export enum PaymentChannel {
+  WECHAT = 'wechat',
+  GOOGLE_PLAY = 'google_play',
+  APPLE_IAP = 'apple_iap',
+}
+
+// IAP 产品类型
+export enum IAPProductType {
+  CONSUMABLE = 'consumable',
+  NON_CONSUMABLE = 'non_consumable',
+  AUTO_RENEWABLE_SUBSCRIPTION = 'auto_renewable_subscription',
+}
+
+// 订阅状态
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  EXPIRED = 'expired',
+  CANCELLED = 'cancelled',
+  GRACE_PERIOD = 'grace_period',
+  REVOKED = 'revoked',
+}
+
+// IAP 购买结果 (移动端 -> 服务端)
+export interface IAPPurchaseResult {
+  orderId: string;
+  productId: string;
+  transactionId: string;
+  purchaseToken?: string;           // Google Play
+  originalTransactionId?: string;   // Apple
+  transactionReceipt?: string;      // Apple receipt (base64)
+  purchaseDate: string;
+  expirationDate?: string;
+  autoRenewing?: boolean;
+  environment?: 'PRODUCTION' | 'SANDBOX';
+}
+
+// Google Play 购买验证结果
+export interface GooglePlayPurchase {
+  purchaseState: 'PURCHASED' | 'REFUNDED' | 'CANCELLED';
+  consumptionState: 'CONSUMED' | 'NOT_CONSUMED';
+  orderId: string;
+  purchaseTime: string;
+  purchaseToken: string;
+  acknowledged: boolean;
+}
+
+// Apple 购买验证结果
+export interface ApplePurchaseResult {
+  receipt: AppleReceipt;
+  status: number;
+}
+
+export interface AppleReceipt {
+  receipt_type: string;
+  app_id: string;
+  bundle_id: string;
+  application_version: string;
+  receipt_creation_date: string;
+  receipt_creation_date_ms: string;
+  in_app: AppleInAppPurchase[];
+}
+
+export interface AppleInAppPurchase {
+  quantity: number;
+  product_id: string;
+  transaction_id: string;
+  original_transaction_id: string;
+  purchase_date: string;
+  purchase_date_ms: string;
+  expiration_date?: string;
+  expiration_date_ms?: string;
+  auto_renewing: boolean;
+  is_refund?: boolean;
+}
+
+// 订阅信息
+export interface SubscriptionInfo {
+  productId: string;
+  status: SubscriptionStatus;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  autoRenewing: boolean;
+  isTrial: boolean;
+}
+
+// 订阅权益配置
+export interface SubscriptionBenefit {
+  dailyBonusGems: number;        // 每日奖励宝石数
+  exclusiveItems: string[];      // 专属物品ID列表
+  gachaDiscountPercent: number;  // gacha 折扣 %
+  maxGachaPerDay: number;        // 每日最大gacha次数
+}
+
+// 订阅等级配置
+export interface SubscriptionTier {
+  id: string;
+  name: string;
+  productId: string;             // Store 产品ID
+  benefits: SubscriptionBenefit;
+  price: number;                 // 价格(分)
+}
