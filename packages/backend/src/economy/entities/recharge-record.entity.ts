@@ -52,6 +52,27 @@ export class RechargeRecord {
   @Column({ nullable: true })
   completedAt: Date;
 
+  @Column({ nullable: true })
+  purchaseToken?: string;
+
+  @Column({ nullable: true })
+  originalTransactionId?: string;
+
+  @Column({ nullable: true })
+  productId?: string;
+
+  @Column({ nullable: true })
+  expirationDate?: Date;
+
+  @Column({ default: false })
+  isSubscription?: boolean;
+
+  @Column({ nullable: true })
+  autoRenewing?: boolean;
+
+  @Column({ nullable: true })
+  environment?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 }

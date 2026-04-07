@@ -11,6 +11,7 @@ import { CoinTransaction } from './entities/coin-transaction.entity';
 import { GemTransaction } from './entities/gem-transaction.entity';
 import { RechargePackage } from './entities/recharge-package.entity';
 import { RechargeRecord } from './entities/recharge-record.entity';
+import { MarketTransaction } from './entities/market-transaction.entity';
 import { InventoryItem } from '../inventory/entities/inventory-item.entity';
 import { Item } from '../item/entities/item.entity';
 import { User } from '../user/entities/user.entity';
@@ -21,6 +22,11 @@ import { MarketService } from './services/market.service';
 import { ShopService } from './services/shop.service';
 import { GemService } from './services/gem.service';
 import { RechargeService } from './services/recharge.service';
+import { MarketTransactionService } from './services/market-transaction.service';
+import { AppleIAPService } from './services/apple-iap.service';
+import { GooglePlayIAPService } from './services/google-play-iap.service';
+import { SubscriptionService } from './services/subscription.service';
+import { RefundService } from './services/refund.service';
 import { ChestController } from './chest.controller';
 import { GachaController } from './gacha.controller';
 import { MarketController } from './market.controller';
@@ -45,6 +51,7 @@ import { ItemModule } from '../item/item.module';
       GemTransaction,
       RechargePackage,
       RechargeRecord,
+      MarketTransaction,
       InventoryItem,
       Item,
       User,
@@ -53,7 +60,7 @@ import { ItemModule } from '../item/item.module';
     ItemModule,
   ],
   controllers: [ChestController, GachaController, MarketController, ShopController, EconomyController, GemsController, RechargeController],
-  providers: [CoinService, ChestService, GachaService, MarketService, ShopService, GemService, RechargeService],
-  exports: [CoinService, ChestService, GachaService, MarketService, ShopService, GemService, RechargeService],
+  providers: [CoinService, ChestService, GachaService, MarketService, ShopService, GemService, RechargeService, MarketTransactionService, AppleIAPService, GooglePlayIAPService, SubscriptionService, RefundService],
+  exports: [CoinService, ChestService, GachaService, MarketService, ShopService, GemService, RechargeService, MarketTransactionService, AppleIAPService, GooglePlayIAPService, SubscriptionService, RefundService],
 })
 export class EconomyModule {}

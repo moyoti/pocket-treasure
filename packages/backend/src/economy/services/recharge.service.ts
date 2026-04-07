@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { RechargePackage } from '../entities/recharge-package.entity';
 import { RechargeRecord } from '../entities/recharge-record.entity';
 import { GemService } from './gem.service';
-import { GemTransactionSource } from '../../../../shared/src/types';
+import { GemTransactionSource, PaymentChannel } from '@treasure-hunt/shared';
 import { User } from '../../user/entities/user.entity';
 
 type RechargeStatus = 'pending' | 'completed' | 'failed' | 'refunded';
@@ -60,7 +60,7 @@ export class RechargeService implements OnModuleInit {
     return pkg;
   }
 
-  async createOrder(userId: string, packageId: string): Promise<{ orderId: string; amount: number; status: string; isFirstRecharge: boolean }> {
+  async createOrder(userId: string, packageId: string, paymentChannel: PaymentChannel = PaymentChannel.WECHAT): Promise<{ orderId: string; amount: number; status: string; isFirstRecharge: boolean }> {
     const pkg = await this.getPackage(packageId);
 
     // Check if this is the user's first recharge
@@ -73,7 +73,8 @@ export class RechargeService implements OnModuleInit {
     const bonusGems = isFirstRecharge ? pkg.gemsAmount : 0;
     const totalGems = pkg.gemsAmount + bonusGems;
 
-    const orderId = `RECHARGE_${uuidv4()}`;
+    const orderPrefix = this.getOrderPrefix(paymentChannel);
+    const orderId = `${orderPrefix}${uuidv4()}`;
 
     const record = this.rechargeRecordRepository.create({
       userId,
@@ -82,7 +83,7 @@ export class RechargeService implements OnModuleInit {
       amount: pkg.price,
       gemsAwarded: totalGems,
       status: 'pending' as RechargeStatus,
-      paymentChannel: 'wechat',
+      paymentChannel,
     });
 
     await this.rechargeRecordRepository.save(record);
@@ -95,7 +96,20 @@ export class RechargeService implements OnModuleInit {
     };
   }
 
-  async completeOrder(orderNo: string, transactionId: string): Promise<void> {
+  private getOrderPrefix(channel: PaymentChannel): string {
+    switch (channel) {
+      case PaymentChannel.WECHAT:
+        return 'RECHARGE_';
+      case PaymentChannel.GOOGLE_PLAY:
+        return 'GP_ORDER_';
+      case PaymentChannel.APPLE_IAP:
+        return 'IAP_ORDER_';
+      default:
+        return 'RECHARGE_';
+    }
+  }
+
+  async completeOrder(orderNo: string, transactionId: string, paymentChannel?: PaymentChannel): Promise<void> {
     return await this.dataSource.transaction(async (manager) => {
       const record = await manager.findOne(RechargeRecord, {
         where: { orderId: orderNo },
@@ -107,6 +121,11 @@ export class RechargeService implements OnModuleInit {
 
       if (record.status !== 'pending') {
         throw new BadRequestException('Order is not pending');
+      }
+
+      const channel = paymentChannel || record.paymentChannel;
+      if (channel) {
+        this.verifyChannelCallback(record, channel, transactionId);
       }
 
       await this.gemService.addGems(
@@ -122,6 +141,17 @@ export class RechargeService implements OnModuleInit {
       record.completedAt = new Date();
       await manager.save(record);
     });
+  }
+
+  private verifyChannelCallback(record: RechargeRecord, channel: string, transactionId: string): void {
+    switch (channel) {
+      case PaymentChannel.WECHAT:
+        break;
+      case PaymentChannel.GOOGLE_PLAY:
+        break;
+      case PaymentChannel.APPLE_IAP:
+        break;
+    }
   }
 
   async failOrder(orderNo: string): Promise<void> {
