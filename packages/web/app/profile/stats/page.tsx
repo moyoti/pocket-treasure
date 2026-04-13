@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { motion } from 'framer-motion';
@@ -32,14 +33,8 @@ const RARITY_COLORS: Record<string, { bg: string; text: string; border: string }
   legendary: { bg: 'bg-yellow-100', text: 'text-yellow-600', border: 'border-yellow-300' },
 };
 
-const RARITY_NAMES: Record<string, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-};
-
 export default function StatsPage() {
+  const { t } = useLocale();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -109,7 +104,7 @@ export default function StatsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2"><BarChart2 className="w-6 h-6 text-indigo-500" />统计</h1>
+          <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2"><BarChart2 className="w-6 h-6 text-indigo-500" />{t('profile.stats.title')}</h1>
           <div className="w-6"></div>
         </div>
       </div>
@@ -121,15 +116,15 @@ export default function StatsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="cartoon-card p-6 mb-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-green-500" />收集总览</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-green-500" />{t('profile.stats.collectionOverview')}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
               <p className="text-4xl font-black text-amber-600">{stats?.collection.totalItems || 0}</p>
-              <p className="text-sm text-gray-600 mt-1">总收集数</p>
+              <p className="text-sm text-gray-600 mt-1">{t('profile.stats.totalCollections')}</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-xl border-2 border-green-200">
               <p className="text-4xl font-black text-green-500">{stats?.collection.uniqueItems || 0}</p>
-              <p className="text-sm text-gray-600 mt-1">物品种类</p>
+              <p className="text-sm text-gray-600 mt-1">{t('profile.stats.uniqueItems')}</p>
             </div>
           </div>
         </motion.div>
@@ -141,14 +136,14 @@ export default function StatsPage() {
           transition={{ delay: 0.1 }}
           className="cartoon-card p-6 mb-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Gem className="w-5 h-5 text-purple-500" />稀有度分布</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Gem className="w-5 h-5 text-purple-500" />{t('profile.stats.rarityDistribution')}</h2>
           <div className="space-y-3">
             {Object.entries(totalByRarity).map(([rarity, count], index) => {
               const colors = RARITY_COLORS[rarity] || RARITY_COLORS.common;
               const percentage = totalItems > 0 ? Math.round(((count as number) / totalItems) * 100) : 0;
               return (
                 <div key={rarity} className="flex items-center gap-3">
-                  <span className="w-16 text-sm font-medium text-gray-600">{RARITY_NAMES[rarity]}</span>
+                  <span className="w-16 text-sm font-medium text-gray-600">{t(`inventory.rarity.${rarity}`)}</span>
                   <div className="flex-1 bg-gray-100 rounded-full h-6 border-2 border-gray-300 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
@@ -162,7 +157,7 @@ export default function StatsPage() {
               );
             })}
             {Object.keys(totalByRarity).length === 0 && (
-              <p className="text-gray-400 text-center py-4">还没有收集到任何物品，快去探索吧！</p>
+              <p className="text-gray-400 text-center py-4">{t('profile.stats.noItemsCollected')}</p>
             )}
           </div>
         </motion.div>
@@ -174,10 +169,10 @@ export default function StatsPage() {
           transition={{ delay: 0.2 }}
           className="cartoon-card p-6 mb-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-500" />成就进度</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-500" />{t('profile.stats.achievementProgress')}</h2>
           <div className="bg-gray-100 rounded-xl p-4 border-2 border-gray-300">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">已完成成就</span>
+              <span className="text-gray-600">{t('profile.stats.completedAchievements')}</span>
               <span className="font-bold text-gray-800">
                 {stats?.achievements.completed} / {stats?.achievements.total}
               </span>
@@ -192,8 +187,8 @@ export default function StatsPage() {
             </div>
             <p className="text-sm text-gray-500 mt-2 text-center">
               {stats?.achievements.total === 0
-                ? '暂无成就数据'
-                : `已完成 ${Math.round(((stats?.achievements.completed || 0) / (stats?.achievements.total || 1)) * 100)}% 的成就`}
+                ? t('profile.stats.noAchievementData')
+                : t('profile.stats.completedPercent', { percent: Math.round(((stats?.achievements.completed || 0) / (stats?.achievements.total || 1)) * 100) })}
             </p>
           </div>
         </motion.div>
@@ -205,17 +200,17 @@ export default function StatsPage() {
           transition={{ delay: 0.3 }}
           className="cartoon-card p-6"
         >
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-blue-500" />探险历程</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-blue-500" />{t('profile.stats.adventureJourney')}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
               <p className="text-4xl font-black text-blue-500">{daysSinceJoin}</p>
-              <p className="text-sm text-gray-600 mt-1">加入天数</p>
+              <p className="text-sm text-gray-600 mt-1">{t('profile.stats.daysJoined')}</p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
               <p className="text-4xl font-black text-purple-500">
                 {daysSinceJoin > 0 ? Math.round((stats?.collection.totalItems || 0) / daysSinceJoin * 10) / 10 : 0}
               </p>
-              <p className="text-sm text-gray-600 mt-1">日均收集</p>
+              <p className="text-sm text-gray-600 mt-1">{t('profile.stats.dailyAverage')}</p>
             </div>
           </div>
         </motion.div>

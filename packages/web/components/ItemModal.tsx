@@ -3,13 +3,7 @@
 import { SpawnedItem, ItemRarity } from '@/types';
 import { TreasureIcon, RARITY_COLORS } from './Icon';
 import { MapPin, Sparkles } from 'lucide-react';
-
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-};
+import { useLocale } from '@/contexts/LocaleContext';
 
 const RARITY_GLOW_CLASS: Record<ItemRarity, string> = {
   common: 'rarity-glow-common',
@@ -25,8 +19,15 @@ interface ItemModalProps {
 }
 
 export default function ItemModal({ item, onClose, onCollect }: ItemModalProps) {
+  const { t } = useLocale();
   const rarity = item.itemRarity as ItemRarity;
   const isHighRarity = rarity === 'epic' || rarity === 'legendary';
+  const rarityNames: Record<ItemRarity, string> = {
+    common: t('inventory.rarity.common'),
+    rare: t('inventory.rarity.rare'),
+    epic: t('inventory.rarity.epic'),
+    legendary: t('inventory.rarity.legendary'),
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -36,7 +37,7 @@ export default function ItemModal({ item, onClose, onCollect }: ItemModalProps) 
             <div className="flex items-center justify-center gap-1 mb-2">
               <Sparkles size={16} style={{ color: RARITY_COLORS[rarity] }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: RARITY_COLORS[rarity] }}>
-                {RARITY_NAMES[rarity]}发现!
+                {rarityNames[rarity]}{t('inventory.discovered')}
               </span>
               <Sparkles size={16} style={{ color: RARITY_COLORS[rarity] }} />
             </div>
@@ -52,7 +53,7 @@ export default function ItemModal({ item, onClose, onCollect }: ItemModalProps) 
             className="font-bold flex items-center justify-center gap-1"
             style={{ color: RARITY_COLORS[rarity] }}
           >
-            {RARITY_NAMES[rarity]}
+            {rarityNames[rarity]}
           </p>
           {item.poiName && (
             <p className="text-gray-500 mt-2 flex items-center justify-center gap-1 text-sm">
@@ -66,13 +67,13 @@ export default function ItemModal({ item, onClose, onCollect }: ItemModalProps) 
             onClick={onCollect}
             className="cartoon-btn flex-1 collect-button"
           >
-            收集
+            {t('map.collect')}
           </button>
           <button
             onClick={onClose}
             className="flex-1 py-3 rounded-xl border-3 border-gray-800 font-bold hover:bg-gray-100 transition"
           >
-            关闭
+            {t('common.close')}
           </button>
         </div>
       </div>

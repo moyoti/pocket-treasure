@@ -3,12 +3,14 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/components/AuthProvider';
+import { MobileLocaleProvider } from '@/components/MobileLocaleProvider';
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
+        <MobileLocaleProvider>
+          <AuthProvider>
           <StatusBar style="dark" />
           <Stack
             screenOptions={{
@@ -69,6 +71,7 @@ export default function RootLayout() {
             />
           </Stack>
         </AuthProvider>
+        </MobileLocaleProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

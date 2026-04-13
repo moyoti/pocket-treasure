@@ -5,6 +5,7 @@ import { SpinningItem } from '@/types/chest';
 import { RARITY_COLORS } from '@treasure-hunt/shared';
 import { WheelItem } from './WheelItem';
 import { easeOutStandard, easeOutLegendary } from '@/lib/easing';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface SpinningWheelProps {
   items: SpinningItem[];
@@ -22,6 +23,7 @@ export function SpinningWheel({
   isLegendary,
   chestName,
 }: SpinningWheelProps) {
+  const { t } = useLocale();
   const offsetY = useMemo(() => {
     if (items.length === 0) return 0;
 
@@ -49,7 +51,7 @@ export function SpinningWheel({
           🎁 开启 {chestName}
         </h2>
         <p className="text-gray-400 text-sm">
-          {isLegendary ? '传说品质即将揭晓...' : '即将揭晓...'}
+          {isLegendary ? t('chestOpen.revealingLegendary') : t('chestOpen.revealing')}
         </p>
       </div>
 

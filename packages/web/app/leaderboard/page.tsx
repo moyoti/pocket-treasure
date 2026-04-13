@@ -15,14 +15,16 @@ interface LeaderboardEntry {
   collectionCount: number;
 }
 
-const RANK_STYLES: Record<number, { bg: string; text: string; border: string; label: string }> = {
-  1: { bg: 'bg-gradient-to-br from-yellow-300 to-yellow-500', text: 'text-yellow-700', border: 'border-yellow-400', label: '金' },
-  2: { bg: 'bg-gradient-to-br from-gray-200 to-gray-400', text: 'text-gray-600', border: 'border-gray-400', label: '银' },
-  3: { bg: 'bg-gradient-to-br from-orange-300 to-orange-500', text: 'text-orange-700', border: 'border-orange-400', label: '铜' },
-};
+const RANK_STYLES = (t: (key: string) => string): Record<number, { bg: string; text: string; border: string; label: string }> => ({
+  1: { bg: 'bg-gradient-to-br from-yellow-300 to-yellow-500', text: 'text-yellow-700', border: 'border-yellow-400', label: t('leaderboard.gold') },
+  2: { bg: 'bg-gradient-to-br from-gray-200 to-gray-400', text: 'text-gray-600', border: 'border-gray-400', label: t('leaderboard.silver') },
+  3: { bg: 'bg-gradient-to-br from-orange-300 to-orange-500', text: 'text-orange-700', border: 'border-orange-400', label: t('leaderboard.bronze') },
+});
 
 function RankBadge({ rank }: { rank: number }) {
-  const style = RANK_STYLES[rank];
+  const { t } = useLocale();
+  const styles = RANK_STYLES(t);
+  const style = styles[rank];
   if (style) {
     return (
       <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${style.bg} border-2 ${style.border} shadow-md`}>

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { 
   getMarketListings, 
   getMyListings, 
@@ -31,6 +32,7 @@ import { CoinBalance as CoinBalanceComponent } from '@/components/CoinBalance';
 const MARKET_FEE_RATE = 0.1;
 
 export default function MarketScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'browse' | 'my'>('browse');
   const [listings, setListings] = useState<MarketListing[]>([]);
@@ -85,7 +87,7 @@ export default function MarketScreen() {
       setError('');
     } catch (err: any) {
       console.error('Failed to fetch market data:', err);
-      setError(err.message || '加载市场数据失败');
+      setError(err.message || t('market.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -131,10 +133,10 @@ export default function MarketScreen() {
       setBuyModal({ isOpen: false, listing: null, loading: false });
       setSuccessModal({
         isOpen: true,
-        message: `成功购买 ${buyModal.listing.item.name}！`,
+        message: t('market.purchaseSuccess', { item: buyModal.listing.item.name }),
       });
     } catch (err: any) {
-      Alert.alert('购买失败', err.message || '购买时发生错误');
+      Alert.alert(t('market.buyFailed'), err.message || t('market.buyError'));
       setBuyModal((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -155,29 +157,29 @@ export default function MarketScreen() {
       setSellModal({ isOpen: false, inventoryItem: null, quantity: 1, price: 100, loading: false });
       setSuccessModal({
         isOpen: true,
-        message: `成功上架 ${sellModal.inventoryItem.item.name}！`,
+        message: t('market.listSuccessDetail', { item: sellModal.inventoryItem.item.name }),
       });
     } catch (err: any) {
-      Alert.alert('上架失败', err.message || '上架时发生错误');
+      Alert.alert(t('market.listFailed'), err.message || t('market.listError'));
       setSellModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleCancelListing = async (listingId: string) => {
-    Alert.alert('确认取消', '确定要取消这个上架吗？', [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(t('market.confirmCancel'), t('market.cancelThisListing'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: '确定',
+        text: t('common.confirm'),
         onPress: async () => {
           try {
             await cancelMarketListing(listingId);
             setMyListings((prev) => prev.filter((l) => l.id !== listingId));
             setSuccessModal({
               isOpen: true,
-              message: '上架已取消！',
+              message: t('market.listingCanceled'),
             });
           } catch (err: any) {
-            Alert.alert('取消失败', err.message || '取消上架时发生错误');
+            Alert.alert(t('market.cancelFailed'), err.message || t('market.cancelError'));
           }
         },
       },
@@ -204,7 +206,7 @@ export default function MarketScreen() {
         ]}
         onPress={() => {
           if (!canAfford) {
-            Alert.alert('金币不足', '您需要更多金币才能购买此物品');
+            Alert.alert(t('market.insufficientCoins'), t('market.needMoreCoins'));
             return;
           }
           setBuyModal({ isOpen: true, listing, loading: false });
@@ -254,7 +256,7 @@ export default function MarketScreen() {
           disabled={!canAfford}
         >
           <Text style={styles.buyButtonText}>
-            {!canAfford ? '金币不足' : '购买'}
+            {!canAfford ? t('market.insufficientCoinsShort') : t('market.buy')}
           </Text>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -292,7 +294,7 @@ export default function MarketScreen() {
           style={styles.cancelButtonSmall}
           onPress={() => handleCancelListing(listing.id)}
         >
-          <Text style={styles.cancelButtonTextSmall}>取消</Text>
+              <Text style={styles.cancelButtonTextSmall}>{t('common.cancel')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -303,7 +305,7 @@ export default function MarketScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>加载市场中...</Text>
+            <Text style={styles.loadingText}>{t('market.loadingMarket')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -315,7 +317,7 @@ export default function MarketScreen() {
         <View style={styles.headerTop}>
           <View style={styles.titleRow}>
             <Ionicons name="storefront" size={28} color="#D4A017" />
-            <Text style={styles.title}>交易市场</Text>
+            <Text style={styles.title}>{t('market.title')}</Text>
           </View>
           {balance && <CoinBalanceComponent balance={balance.balance} />}
         </View>
@@ -331,7 +333,7 @@ export default function MarketScreen() {
               color={activeTab === 'browse' ? '#1A1A1A' : '#666'} 
             />
             <Text style={[styles.tabText, activeTab === 'browse' && styles.tabTextActive]}>
-              浏览
+              {t('market.browse')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -344,7 +346,7 @@ export default function MarketScreen() {
               color={activeTab === 'my' ? '#1A1A1A' : '#666'} 
             />
             <Text style={[styles.tabText, activeTab === 'my' && styles.tabTextActive]}>
-              我的上架
+              {t('market.myListingsTab')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -366,7 +368,7 @@ export default function MarketScreen() {
               <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="搜索物品..."
+                placeholder={t('market.searchPlaceholder')}
                 placeholderTextColor="#999"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -383,9 +385,9 @@ export default function MarketScreen() {
               style={[styles.filterPill, !rarityFilter && styles.filterPillActive]}
               onPress={() => setRarityFilter(null)}
             >
-              <Text style={[styles.filterText, !rarityFilter && styles.filterTextActive]}>
-                全部
-              </Text>
+                  <Text style={[styles.filterText, !rarityFilter && styles.filterTextActive]}>
+                    {t('market.all')}
+                  </Text>
             </TouchableOpacity>
             {rarities.map((rarity) => (
               <TouchableOpacity
@@ -422,8 +424,8 @@ export default function MarketScreen() {
                 <View style={styles.emptyIconCircle}>
                   <Ionicons name="cube-outline" size={48} color="#CCC" />
                 </View>
-                <Text style={styles.emptyText}>未找到物品</Text>
-                <Text style={styles.emptySubtext}>请调整搜索条件或筛选</Text>
+                <Text style={styles.emptyText}>{t('market.noItemsFound')}</Text>
+                <Text style={styles.emptySubtext}>{t('market.adjustSearchOrFilter')}</Text>
               </View>
             }
           />
@@ -437,17 +439,17 @@ export default function MarketScreen() {
             onPress={() => setSellModal({ isOpen: true, inventoryItem: null, quantity: 1, price: 100, loading: false })}
           >
             <Ionicons name="add-circle" size={24} color="#FFF" />
-            <Text style={styles.createListingButtonText}>创建上架</Text>
+              <Text style={styles.createListingButtonText}>{t('market.createListing')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.sectionTitle}>我的上架列表</Text>
+          <Text style={styles.sectionTitle}>{t('market.myListings')}</Text>
           {myListings.length === 0 ? (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconCircle}>
                 <Ionicons name="cube-outline" size={48} color="#CCC" />
               </View>
-              <Text style={styles.emptyText}>暂无上架物品</Text>
-              <Text style={styles.emptySubtext}>从背包中选择物品上架出售</Text>
+              <Text style={styles.emptyText}>{t('market.myListingsEmpty')}</Text>
+              <Text style={styles.emptySubtext}>{t('market.listItemsFromInventory')}</Text>
             </View>
           ) : (
             <FlatList
@@ -469,7 +471,7 @@ export default function MarketScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>确认购买</Text>
+              <Text style={styles.modalTitle}>{t('market.confirmPurchase')}</Text>
               <TouchableOpacity
                 onPress={() => setBuyModal({ isOpen: false, listing: null, loading: false })}
               >
@@ -497,13 +499,13 @@ export default function MarketScreen() {
                     <Text style={styles.itemPreviewCategory}>
                       {RARITY_NAMES[buyModal.listing.item.rarity as ItemRarity]}
                     </Text>
-                    <Text style={styles.itemPreviewSeller}>卖家：{buyModal.listing.seller.username}</Text>
+                    <Text style={styles.itemPreviewSeller}>{t('market.seller')}: {buyModal.listing.seller.username}</Text>
                   </View>
                 </View>
 
                 <View style={styles.totalSection}>
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>价格:</Text>
+                    <Text style={styles.totalLabel}>{t('market.price')}:</Text>
                     <View style={styles.totalPrice}>
                       <Ionicons name="logo-usd" size={20} color="#D4A017" />
                       <Text style={styles.totalValue}>
@@ -512,7 +514,7 @@ export default function MarketScreen() {
                     </View>
                   </View>
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>数量:</Text>
+                    <Text style={styles.totalLabel}>{t('market.quantity')}:</Text>
                     <Text style={styles.totalValueSmall}>x{buyModal.listing.quantity}</Text>
                   </View>
                 </View>
@@ -522,7 +524,7 @@ export default function MarketScreen() {
                     style={styles.cancelButton}
                     onPress={() => setBuyModal({ isOpen: false, listing: null, loading: false })}
                   >
-                    <Text style={styles.cancelButtonText}>取消</Text>
+                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
@@ -537,7 +539,7 @@ export default function MarketScreen() {
                     {buyModal.loading ? (
                       <ActivityIndicator color="#FFF" />
                     ) : (
-                      <Text style={styles.confirmButtonText}>购买</Text>
+                      <Text style={styles.confirmButtonText}>{t('market.buy')}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -556,7 +558,7 @@ export default function MarketScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>创建上架</Text>
+              <Text style={styles.modalTitle}>{t('market.createListing')}</Text>
               <TouchableOpacity
                 onPress={() => setSellModal({ isOpen: false, inventoryItem: null, quantity: 1, price: 100, loading: false })}
               >
@@ -564,7 +566,7 @@ export default function MarketScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalSectionTitle}>选择物品</Text>
+              <Text style={styles.modalSectionTitle}>{t('market.selectItem')}</Text>
             <FlatList
               data={myInventory.filter((item) => item.quantity > 0)}
               keyExtractor={(item) => item.id}
@@ -592,7 +594,7 @@ export default function MarketScreen() {
                   </View>
                   <View style={styles.inventoryItemInfo}>
                     <Text style={styles.inventoryItemName}>{invItem.item.name}</Text>
-                    <Text style={styles.inventoryItemQty}>拥有：{invItem.quantity}</Text>
+                    <Text style={styles.inventoryItemQty}>{t('market.owned')}: {invItem.quantity}</Text>
                   </View>
                   {sellModal.inventoryItem?.id === invItem.id && (
                     <Ionicons name="checkmark-circle" size={20} color="#16A34A" />
@@ -601,7 +603,7 @@ export default function MarketScreen() {
               )}
               ListEmptyComponent={
                 <View style={styles.emptyInventory}>
-                  <Text style={styles.emptyInventoryText}>背包中没有可出售的物品</Text>
+                  <Text style={styles.emptyInventoryText}>{t('market.noSellableItems')}</Text>
                 </View>
               }
             />
@@ -609,7 +611,7 @@ export default function MarketScreen() {
             {sellModal.inventoryItem && (
               <>
                 <View style={styles.modalSection}>
-                  <Text style={styles.modalSectionTitle}>数量</Text>
+                  <Text style={styles.modalSectionTitle}>{t('market.quantity')}</Text>
                   <QuantitySelector
                     value={sellModal.quantity}
                     onValueChange={(value) => setSellModal((prev) => ({ ...prev, quantity: value }))}
@@ -619,7 +621,7 @@ export default function MarketScreen() {
                 </View>
 
                 <View style={styles.modalSection}>
-                  <Text style={styles.modalSectionTitle}>单价</Text>
+                  <Text style={styles.modalSectionTitle}>{t('market.unitPrice')}</Text>
                   <View style={styles.priceInputContainer}>
                     <Ionicons name="logo-usd" size={20} color="#D4A017" />
                     <TextInput
@@ -627,7 +629,7 @@ export default function MarketScreen() {
                       value={sellModal.price.toString()}
                       onChangeText={(text) => setSellModal((prev) => ({ ...prev, price: parseInt(text) || 0 }))}
                       keyboardType="numeric"
-                      placeholder="输入价格"
+                      placeholder={t('market.enterPrice')}
                       placeholderTextColor="#999"
                     />
                   </View>
@@ -635,21 +637,21 @@ export default function MarketScreen() {
 
                 <View style={styles.feeSection}>
                   <View style={styles.feeRow}>
-                    <Text style={styles.feeLabel}>总价:</Text>
+                    <Text style={styles.feeLabel}>{t('market.totalPrice')}:</Text>
                     <Text style={styles.feeValue}>
-                      {(sellModal.price * sellModal.quantity).toLocaleString()} 金币
+                      {(sellModal.price * sellModal.quantity).toLocaleString()} {t('market.coins')}
                     </Text>
                   </View>
                   <View style={styles.feeRow}>
-                    <Text style={styles.feeLabelSmall}>手续费 ({MARKET_FEE_RATE * 100}%):</Text>
+                    <Text style={styles.feeLabelSmall}>{t('market.fee', { rate: MARKET_FEE_RATE * 100 })}:</Text>
                     <Text style={styles.feeValueSmall}>
-                      -{Math.floor(sellModal.price * sellModal.quantity * MARKET_FEE_RATE)} 金币
+                      -{Math.floor(sellModal.price * sellModal.quantity * MARKET_FEE_RATE)} {t('market.coins')}
                     </Text>
                   </View>
                   <View style={[styles.feeRow, styles.feeRowHighlight]}>
-                    <Text style={styles.feeLabelHighlight}>您将获得:</Text>
+                    <Text style={styles.feeLabelHighlight}>{t('market.youWillReceive')}:</Text>
                     <Text style={styles.feeValueHighlight}>
-                      {Math.floor(sellModal.price * sellModal.quantity * (1 - MARKET_FEE_RATE))} 金币
+                      {Math.floor(sellModal.price * sellModal.quantity * (1 - MARKET_FEE_RATE))} {t('market.coins')}
                     </Text>
                   </View>
                 </View>
@@ -659,7 +661,7 @@ export default function MarketScreen() {
                     style={styles.cancelButton}
                     onPress={() => setSellModal({ isOpen: false, inventoryItem: null, quantity: 1, price: 100, loading: false })}
                   >
-                    <Text style={styles.cancelButtonText}>取消</Text>
+                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
@@ -674,7 +676,7 @@ export default function MarketScreen() {
                     {sellModal.loading ? (
                       <ActivityIndicator color="#FFF" />
                     ) : (
-                      <Text style={styles.confirmButtonText}>上架</Text>
+                      <Text style={styles.confirmButtonText}>{t('market.listForSale')}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -695,13 +697,13 @@ export default function MarketScreen() {
             <View style={styles.successIcon}>
               <Ionicons name="checkmark-circle" size={64} color="#16A34A" />
             </View>
-            <Text style={styles.successTitle}>成功！</Text>
+            <Text style={styles.successTitle}>{t('market.success')}</Text>
             <Text style={styles.successMessage}>{successModal.message}</Text>
             <TouchableOpacity
               style={styles.successButton}
               onPress={() => setSuccessModal({ isOpen: false, message: '' })}
             >
-              <Text style={styles.successButtonText}>确定</Text>
+              <Text style={styles.successButtonText}>{t('common.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>

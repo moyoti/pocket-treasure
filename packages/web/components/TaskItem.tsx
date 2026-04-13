@@ -2,6 +2,7 @@
 
 import { DailyTask, TaskStatus } from '@/types';
 import { Check, Gift, Coins, Star, Loader2, LogIn, Gem, MapPin, Sparkles, LucideIcon } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface TaskItemProps {
   task: DailyTask;
@@ -9,11 +10,11 @@ interface TaskItemProps {
   isClaiming?: boolean;
 }
 
-const TASK_TYPE_NAMES: Record<string, string> = {
-  login: '每日登录',
-  collect: '收集宝藏',
-  visit_poi: '访问地点',
-  collect_rarity: '稀有收藏',
+const TASK_TYPE_KEYS: Record<string, string> = {
+  login: 'tasks.dailyLogin',
+  collect: 'tasks.collectTreasures',
+  visit_poi: 'tasks.visitPoi',
+  collect_rarity: 'tasks.collectRarity',
 };
 
 const TASK_TYPE_ICONS: Record<string, LucideIcon> = {
@@ -24,29 +25,32 @@ const TASK_TYPE_ICONS: Record<string, LucideIcon> = {
 };
 
 export default function TaskItem({ task, onClaim, isClaiming = false }: TaskItemProps) {
+  const { t } = useLocale();
   const progressPercent = Math.min((task.currentProgress / task.targetProgress) * 100, 100);
   const isCompleted = task.status === 'completed';
   const isClaimed = task.status === 'claimed';
   const isInProgress = task.status === 'in_progress';
+  const taskTypeKey = TASK_TYPE_KEYS[task.taskType];
+  const taskTypeName = taskTypeKey ? t(taskTypeKey) : task.taskType;
 
   const getStatusBadge = () => {
     if (isClaimed) {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border-2 border-green-300">
-          <Check size={12} /> 已领取
+          <Check size={12} /> {t('tasks.claimed')}
         </span>
       );
     }
     if (isCompleted) {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border-2 border-yellow-300 animate-pulse">
-          <Gift size={12} /> 可领取
+          <Gift size={12} /> {t('tasks.claimable')}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border-2 border-blue-300">
-        进行中
+        {t('tasks.inProgress')}
       </span>
     );
   };
@@ -78,11 +82,11 @@ export default function TaskItem({ task, onClaim, isClaiming = false }: TaskItem
             </div>
             <div>
               <h3 className="font-bold text-gray-800">
-                {TASK_TYPE_NAMES[task.taskType] || task.taskType}
+                {taskTypeName}
               </h3>
               {task.rarityRequirement && (
                 <span className="text-xs text-purple-600 font-medium">
-                  需要: {task.rarityRequirement}品质
+                  {t('tasks.rarityRequired')}: {task.rarityRequirement}{t('inventory.rarity.quality')}
                 </span>
               )}
             </div>
@@ -94,7 +98,7 @@ export default function TaskItem({ task, onClaim, isClaiming = false }: TaskItem
       {/* Progress Bar */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600 font-medium">进度</span>
+          <span className="text-sm text-gray-600 font-medium">{t('tasks.progress')}</span>
           <span className="text-sm font-bold text-gray-800">
             {task.currentProgress} / {task.targetProgress}
           </span>
@@ -135,7 +139,7 @@ export default function TaskItem({ task, onClaim, isClaiming = false }: TaskItem
                 <Loader2 size={16} className="animate-spin" />
               ) : (
                 <>
-                  <Gift size={16} className="mr-1" /> 领取
+                  <Gift size={16} className="mr-1" /> {t('tasks.claim')}
                 </>
               )}
             </button>

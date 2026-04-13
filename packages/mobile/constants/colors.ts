@@ -1,4 +1,5 @@
 import { ItemRarity } from '@/types';
+import i18n from '../lib/i18n';
 
 export const RARITY_COLORS: Record<ItemRarity, string> = {
   common: '#8D99AE',
@@ -15,10 +16,10 @@ export const RARITY_BG: Record<ItemRarity, string> = {
 };
 
 export const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
+  common: i18n.t('inventory.rarity.common'),
+  rare: i18n.t('inventory.rarity.rare'),
+  epic: i18n.t('inventory.rarity.epic'),
+  legendary: i18n.t('inventory.rarity.legendary'),
 };
 
 export const RARITY_ICONS: Record<ItemRarity, string> = {

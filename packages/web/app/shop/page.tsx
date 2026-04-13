@@ -9,12 +9,7 @@ import { ShopItem, ItemRarity, CoinBalance } from '@/types';
 import { TreasureIcon, RARITY_COLORS } from '@/components/Icon';
 import { Package, Coins, ShoppingCart, X, Check, Loader2 } from 'lucide-react';
 
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-};
+
 
 export default function ShopPage() {
   const [items, setItems] = useState<ShopItem[]>([]);
@@ -69,7 +64,7 @@ export default function ShopPage() {
       setBalance(balanceData);
     } catch (err) {
       console.error('Failed to fetch shop data:', err);
-      setError('加载商店数据失败');
+      setError(t('shop.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -108,10 +103,10 @@ export default function ShopPage() {
       setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false });
       setSuccessModal({
         isOpen: true,
-        message: `成功购买 ${purchaseModal.quantity}个 ${purchaseModal.item.name}！`,
+        message: t('shop.purchaseSuccess', { count: purchaseModal.quantity, name: purchaseModal.item.name }),
       });
     } catch (err: any) {
-      setError(err.message || '购买失败');
+      setError(err.message || t('shop.buyFailed'));
       setPurchaseModal((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -135,7 +130,7 @@ export default function ShopPage() {
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
               <ShoppingCart className="w-7 h-7 text-amber-600" />
-              NPC商店
+              {t('shop.npcShop')}
             </h1>
           </div>
         </div>
@@ -167,7 +162,7 @@ export default function ShopPage() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
             <ShoppingCart className="w-7 h-7 text-amber-600" />
-            NPC商店
+            {t('shop.npcShop')}
           </h1>
           <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-orange-100 border-3 border-yellow-400 rounded-full px-4 py-2">
             <Coins className="w-5 h-5 text-yellow-600" />
@@ -195,8 +190,8 @@ export default function ShopPage() {
             <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-300">
               <Package size={48} className="text-gray-400" />
             </div>
-            <p className="text-xl font-bold text-gray-600">商店暂无商品</p>
-            <p className="text-gray-500 mt-2">请稍后再来看看！</p>
+            <p className="text-xl font-bold text-gray-600">{t('shop.shopEmpty')}</p>
+            <p className="text-gray-500 mt-2">{t('shop.comeBackLater')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -237,7 +232,7 @@ export default function ShopPage() {
                     <span className="font-black text-yellow-600">{shopItem.price}</span>
                   </div>
                   <span className="text-sm text-gray-500">
-                    {shopItem.purchaseLimit > 0 ? `限购: ${shopItem.purchaseLimit}` : '无限购'}
+                    {shopItem.purchaseLimit > 0 ? t('shop.purchaseLimit', { count: shopItem.purchaseLimit }) : t('shop.noLimit')}
                   </span>
                 </div>
 
@@ -246,7 +241,7 @@ export default function ShopPage() {
                   disabled={!shopItem.isAvailable || (balance?.balance ?? 0) < shopItem.price}
                   className="cartoon-btn mt-3 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {!shopItem.isAvailable ? '已售罄' : (balance?.balance ?? 0) < shopItem.price ? '金币不足' : '购买'}
+                  {!shopItem.isAvailable ? t('shop.soldOut') : (balance?.balance ?? 0) < shopItem.price ? t('shop.coinsInsufficient') : t('shop.buy')}
                 </button>
               </div>
             )})}
@@ -259,7 +254,7 @@ export default function ShopPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="cartoon-card p-6 max-w-sm w-full animate-bounce-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black text-gray-800">确认购买</h2>
+              <h2 className="text-xl font-black text-gray-800">{t('shop.confirmPurchase')}</h2>
               <button
                 onClick={() => setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false })}
                 className="text-gray-500 hover:text-gray-700"
@@ -305,7 +300,7 @@ export default function ShopPage() {
 
             <div className="bg-yellow-50 rounded-xl p-4 mb-4 border-2 border-yellow-200">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-gray-600">总计:</span>
+                <span className="font-bold text-gray-600">{t('shop.total')}</span>
                 <div className="flex items-center gap-1">
                   <Coins className="w-5 h-5 text-amber-600" />
                   <span className="text-xl font-black text-yellow-600">
@@ -314,7 +309,7 @@ export default function ShopPage() {
                 </div>
               </div>
               {balance && balance.balance < purchaseModal.item.price * purchaseModal.quantity && (
-                <p className="text-red-500 text-sm font-bold mt-2">金币不足！</p>
+                <p className="text-red-500 text-sm font-bold mt-2">{t('shop.coinsShort')}</p>
               )}
             </div>
 
@@ -323,7 +318,7 @@ export default function ShopPage() {
                 onClick={() => setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false })}
                 className="flex-1 py-3 rounded-xl border-3 border-gray-800 font-bold hover:bg-gray-100"
               >
-                取消
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handlePurchase}
@@ -335,7 +330,7 @@ export default function ShopPage() {
                 ) : (
                   <>
                     <Check className="w-5 h-5" />
-                    确认
+                    {t('common.confirm')}
                   </>
                 )}
               </button>
@@ -351,13 +346,13 @@ export default function ShopPage() {
             <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-500">
               <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-black text-gray-800 mb-2">购买成功！</h2>
+            <h2 className="text-xl font-black text-gray-800 mb-2">{t('shop.purchaseSuccessful')}</h2>
             <p className="text-gray-600 mb-4">{successModal.message}</p>
             <button
               onClick={() => setSuccessModal({ isOpen: false, message: '' })}
               className="cartoon-btn w-full"
             >
-              确定
+              {t('common.confirm')}
             </button>
           </div>
         </div>

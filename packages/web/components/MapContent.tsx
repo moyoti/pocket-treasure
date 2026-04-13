@@ -10,6 +10,7 @@ import api from '@/lib/api';
 import type { Item } from '@/types';
 import { TreasureIcon } from './Icon';
 import { RefreshCw, ClipboardList, MapPin, X, Gem, Map as MapIcon } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 const MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
@@ -57,6 +58,7 @@ function CircleOverlay({
 }
 
 export default function MapContent({ location, onItemsChange }: MapContentProps) {
+  const { t } = useLocale();
   const [items, setItems] = useState<SpawnedItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<SpawnedItem | null>(null);
   const [collectedItem, setCollectedItem] = useState<CollectedItem | null>(null);
@@ -73,10 +75,10 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
   const mapRef = useRef<any>(null);
 
   const RARITY_TREASURE_NAMES: Record<ItemRarity, string> = {
-    common: '神秘宝箱',
-    rare: '闪耀宝箱',
-    epic: '璀璨宝箱',
-    legendary: '传说宝箱',
+    common: t('map.mysteryChest'),
+    rare: t('map.shiningChest'),
+    epic: t('map.radiantChest'),
+    legendary: t('map.legendaryChest'),
   };
 
   const fetchAllItems = useCallback(async () => {
@@ -101,9 +103,9 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
     } catch (err) {
       console.error('Failed to fetch items:', err);
       if (err instanceof ApiError) {
-        setError(err.message || '无法加载附近宝藏');
+        setError(err.message || t('map.loadFailed'));
       } else {
-        setError('无法加载附近宝藏');
+        setError(t('map.loadFailed'));
       }
     } finally {
       setLoading(false);
@@ -132,11 +134,11 @@ export default function MapContent({ location, onItemsChange }: MapContentProps)
       if (result.success) {
         setCollectedItem(result.item);
       } else {
-        alert(`距离太远，还需要 ${Math.round(result.distance)} 米`);
+        alert(t('map.tooFar', { distance: Math.round(result.distance) }));
       }
     } catch (err) {
       console.error('Collect error:', err);
-      alert('收集失败');
+      alert(t('map.collectFailed'));
     }
   };
 

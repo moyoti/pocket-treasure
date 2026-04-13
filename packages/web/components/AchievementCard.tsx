@@ -2,6 +2,7 @@
 
 import { AchievementProgress, AchievementStatus } from '@/types';
 import { Check, Gift, Coins, Star, Award, Loader2 } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface AchievementCardProps {
   achievement: AchievementProgress;
@@ -9,12 +10,12 @@ interface AchievementCardProps {
   isClaiming?: boolean;
 }
 
-const ACHIEVEMENT_TYPE_NAMES: Record<string, string> = {
-  collection: '收集成就',
-  rarity: '稀有成就',
-  distance: '探索成就',
-  streak: '连续登录',
-  special: '特殊成就',
+const ACHIEVEMENT_TYPE_KEYS: Record<string, string> = {
+  collection: 'achievements.collection',
+  rarity: 'achievements.rarity',
+  distance: 'achievements.distance',
+  streak: 'achievements.streak',
+  special: 'achievements.special',
 };
 
 const TIER_COLORS: Record<number, string> = {
@@ -36,7 +37,10 @@ export default function AchievementCard({
   onClaim,
   isClaiming = false,
 }: AchievementCardProps) {
+  const { t } = useLocale();
   const { achievement: ach, progress, requirement, status, canClaim } = achievement;
+  const achievementTypeKey = ACHIEVEMENT_TYPE_KEYS[ach.type];
+  const achievementTypeName = achievementTypeKey ? t(achievementTypeKey) : ach.type;
   const progressPercent = Math.min((progress / requirement) * 100, 100);
   const isCompleted = status === 'completed' || progress >= requirement;
   const isClaimed = status === 'claimed';
@@ -82,7 +86,7 @@ export default function AchievementCard({
             </div>
             <div>
               <h3 className="font-bold text-white text-lg">{ach.name}</h3>
-              <p className="text-white/80 text-xs">{ACHIEVEMENT_TYPE_NAMES[ach.type]}</p>
+              <p className="text-white/80 text-xs">{achievementTypeName}</p>
             </div>
           </div>
           {getStatusBadge()}
@@ -97,7 +101,7 @@ export default function AchievementCard({
       {/* Progress */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-500 font-medium">进度</span>
+          <span className="text-xs text-gray-500 font-medium">{t('achievements.progress')}</span>
           <span className="text-xs font-bold text-gray-700">
             {progress} / {requirement}
           </span>
@@ -144,7 +148,7 @@ export default function AchievementCard({
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
                   <>
-                    <Gift size={12} className="mr-1" /> 领取
+                    <Gift size={12} className="mr-1" /> {t('achievements.claim')}
                   </>
                 )}
               </button>

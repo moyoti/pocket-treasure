@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import {
   getMarketListings,
   getMyListings,
@@ -33,13 +34,6 @@ import {
   History,
 } from 'lucide-react';
 
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-};
-
 const RARITY_BG_COLORS: Record<ItemRarity, string> = {
   common: '#E5E7EB',
   rare: '#DBEAFE',
@@ -69,6 +63,7 @@ interface RecentSaleItem {
 }
 
 export default function MarketPage() {
+  const { t } = useLocale();
   const [listings, setListings] = useState<MarketListing[]>([]);
   const [myListings, setMyListings] = useState<MarketListing[]>([]);
   const [balance, setBalance] = useState<CoinBalance | null>(null);
@@ -155,7 +150,7 @@ export default function MarketPage() {
       setBalance(balanceData);
     } catch (err) {
       console.error('Failed to fetch market data:', err);
-      setError('加载市场数据失败');
+      setError(t('market.loadMarketFailed'));
     } finally {
       setLoading(false);
     }
@@ -254,10 +249,10 @@ export default function MarketPage() {
       setPurchaseModal({ isOpen: false, listing: null, loading: false });
       setSuccessModal({
         isOpen: true,
-        message: `成功购买 ${purchaseModal.listing.item.name}！`,
+        message: t('market.purchaseSuccess', { item: purchaseModal.listing.item.name }),
       });
     } catch (err: any) {
-      setError(err.message || '购买失败');
+      setError(err.message || t('market.purchaseFailed'));
       setPurchaseModal((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -279,26 +274,26 @@ export default function MarketPage() {
       setSellModal({ isOpen: false, inventoryItem: null, quantity: 1, price: 100, loading: false });
       setSuccessModal({
         isOpen: true,
-        message: `成功上架 ${sellModal.inventoryItem.item.name}！`,
+        message: t('market.listSuccess', { item: sellModal.inventoryItem.item.name }),
       });
     } catch (err: any) {
-      setError(err.message || '上架失败');
+      setError(err.message || t('market.listFailed'));
       setSellModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleCancelListing = async (listingId: string) => {
-    if (!confirm('确定要取消这个上架吗？')) return;
+    if (!confirm(t('market.cancelThisListing'))) return;
 
     try {
       await cancelMarketListing(listingId);
       setMyListings((prev) => prev.filter((l) => l.id !== listingId));
       setSuccessModal({
         isOpen: true,
-        message: '上架已取消！',
+        message: t('market.listingCanceled'),
       });
     } catch (err: any) {
-      setError(err.message || '取消上架失败');
+      setError(err.message || t('market.cancelFailed'));
     }
   };
 
@@ -321,7 +316,7 @@ export default function MarketPage() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
             <Store className="w-7 h-7 text-blue-500" />
-            交易市场
+            {t('market.title')}
           </h1>
           <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-orange-100 border-3 border-yellow-400 rounded-full px-4 py-2">
             <Coins className="w-5 h-5 text-yellow-600" />
@@ -340,7 +335,7 @@ export default function MarketPage() {
             }`}
           >
             <TrendingUp className="w-4 h-4 inline mr-2" />
-            浏览
+            {t('market.browse')}
           </button>
           <button
             onClick={() => setActiveTab('sales')}
@@ -351,7 +346,7 @@ export default function MarketPage() {
             }`}
           >
             <History className="w-4 h-4 inline mr-2" />
-            最近成交
+            {t('market.recentSales')}
           </button>
           <button
             onClick={() => setActiveTab('my')}
@@ -362,7 +357,7 @@ export default function MarketPage() {
             }`}
           >
             <User className="w-4 h-4 inline mr-2" />
-            我的上架
+            {t('market.myListingsTab')}
           </button>
         </div>
       </div>
@@ -388,7 +383,7 @@ export default function MarketPage() {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="搜索物品..."
+                  placeholder={t('market.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 rounded-xl border-3 border-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400"
@@ -408,10 +403,10 @@ export default function MarketPage() {
                 className="py-3 px-4 rounded-xl border-3 border-gray-800 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer"
                 style={{ appearance: 'none', backgroundImage: 'none', paddingRight: '2.5rem' }}
               >
-                <option value="date_desc">最新上架</option>
-                <option value="date_asc">最早上架</option>
-                <option value="price_asc">价格从低到高</option>
-                <option value="price_desc">价格从高到低</option>
+                <option value="date_desc">{t('market.sortNewest')}</option>
+                <option value="date_asc">{t('market.sortOldest')}</option>
+                <option value="price_asc">{t('market.sortPriceLow')}</option>
+                <option value="price_desc">{t('market.sortPriceHigh')}</option>
               </select>
               <div className="relative">
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
@@ -421,7 +416,7 @@ export default function MarketPage() {
             {/* Filter options */}
             {showFilters && (
               <div className="mt-4 p-4 bg-white rounded-xl border-3 border-gray-800">
-                <p className="font-bold text-gray-700 mb-2">按稀有度筛选:</p>
+                <p className="font-bold text-gray-700 mb-2">{t('market.filterByRarity')}</p>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setRarityFilter('')}
@@ -429,7 +424,7 @@ export default function MarketPage() {
                       rarityFilter === '' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600'
                     }`}
                   >
-                    全部
+                    {t('market.all')}
                   </button>
                   {(['common', 'rare', 'epic', 'legendary'] as ItemRarity[]).map((rarity) => (
                     <button
@@ -445,7 +440,7 @@ export default function MarketPage() {
                         borderColor: RARITY_COLORS[rarity],
                       }}
                     >
-                      {RARITY_NAMES[rarity]}
+                      {t(`inventory.rarity.${rarity}`)}
                     </button>
                   ))}
                 </div>
@@ -460,8 +455,8 @@ export default function MarketPage() {
                 <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-300">
                   <Package size={48} className="text-gray-400" />
                 </div>
-                <p className="text-xl font-bold text-gray-600">未找到物品</p>
-                <p className="text-gray-500 mt-2">请调整搜索条件或筛选</p>
+                <p className="text-xl font-bold text-gray-600">{t('market.noItemsFound')}</p>
+                <p className="text-gray-500 mt-2">{t('market.adjustSearchOrFilter')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -487,7 +482,7 @@ export default function MarketPage() {
                               fetchPriceHistory(listing.itemId, listing.item.name);
                             }}
                             className="text-blue-500 hover:text-blue-700 transition flex-shrink-0"
-                            title="查看价格历史"
+                            title={t('market.viewPriceHistory')}
                           >
                             <TrendingUp className="w-4 h-4" />
                           </button>
@@ -496,7 +491,7 @@ export default function MarketPage() {
                           className="text-sm font-bold"
                           style={{ color: RARITY_COLORS[listing.item.rarity as ItemRarity] }}
                         >
-                          {RARITY_NAMES[listing.item.rarity as ItemRarity]}
+                          {t(`inventory.rarity.${listing.item.rarity}`)}
                         </p>
                       </div>
                     </div>
@@ -519,7 +514,7 @@ export default function MarketPage() {
                       disabled={balance !== null && balance.balance < listing.price}
                       className="cartoon-btn mt-3 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {balance !== null && balance.balance < listing.price ? '金币不足' : '购买'}
+                      {balance !== null && balance.balance < listing.price ? t('market.insufficientCoins') : t('market.buy')}
                     </button>
                   </div>
                 ))}
@@ -533,21 +528,21 @@ export default function MarketPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-center gap-2 mb-6">
             <History className="w-6 h-6 text-blue-500" />
-            <h2 className="text-xl font-black text-gray-800">最近成交记录</h2>
+            <h2 className="text-xl font-black text-gray-800">{t('market.recentSalesTitle')}</h2>
           </div>
           
           {loadingSales ? (
             <div className="text-center py-16">
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-gray-400 animate-spin" />
-              <p className="text-gray-500 font-bold">加载成交记录...</p>
+              <p className="text-gray-500 font-bold">{t('market.loadingSales')}</p>
             </div>
           ) : recentSales.length === 0 ? (
             <div className="text-center py-16 cartoon-card">
               <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-300">
                 <Clock size={48} className="text-gray-400" />
               </div>
-              <p className="text-xl font-bold text-gray-600">暂无成交记录</p>
-              <p className="text-gray-500 mt-2">市场成交后会在这里显示</p>
+              <p className="text-xl font-bold text-gray-600">{t('market.noSalesYet')}</p>
+              <p className="text-gray-500 mt-2">{t('market.salesWillAppearHere')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -566,7 +561,7 @@ export default function MarketPage() {
                     </div>
                     <div>
                       <p className="font-black text-gray-800">{sale.itemName}</p>
-                      <p className="text-sm text-gray-500">数量：x{sale.quantity}</p>
+                      <p className="text-sm text-gray-500">{t('market.soldQuantity', { quantity: sale.quantity })}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -575,7 +570,7 @@ export default function MarketPage() {
                         <Coins className="w-4 h-4 text-yellow-500" />
                         <span className="font-black text-yellow-600">{sale.unitPrice.toLocaleString()}</span>
                       </div>
-                      <p className="text-xs text-gray-400">单价</p>
+                      <p className="text-xs text-gray-400">{t('market.unitPrice')}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-gray-600">
@@ -586,7 +581,7 @@ export default function MarketPage() {
                           minute: '2-digit',
                         })}
                       </p>
-                      <p className="text-xs text-gray-400">成交时间</p>
+                      <p className="text-xs text-gray-400">{t('market.saleTime')}</p>
                     </div>
                   </div>
                 </div>
@@ -600,7 +595,7 @@ export default function MarketPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           {/* Create listing button */}
           <div className="mb-6">
-            <h2 className="text-lg font-black text-gray-800 mb-4">出售物品</h2>
+            <h2 className="text-lg font-black text-gray-800 mb-4">{t('market.sellItems')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {inventory.filter((item) => item.quantity > 0).map((item) => (
                 <div
@@ -622,7 +617,7 @@ export default function MarketPage() {
                     className="cartoon-btn cartoon-btn-sm"
                   >
                     <Tag className="w-4 h-4 mr-1" />
-                    出售
+                    {t('market.sell')}
                   </button>
                 </div>
               ))}
@@ -631,14 +626,14 @@ export default function MarketPage() {
 
           {/* My listings */}
           <div>
-            <h2 className="text-lg font-black text-gray-800 mb-4">我的上架列表</h2>
+            <h2 className="text-lg font-black text-gray-800 mb-4">{t('market.myListings')}</h2>
             {myListings.length === 0 ? (
               <div className="text-center py-12 cartoon-card">
                 <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-300">
                   <Package size={40} className="text-gray-400" />
                 </div>
-                <p className="text-xl text-gray-600 font-bold">暂无上架物品</p>
-                <p className="text-gray-500 mt-2">从背包中选择物品上架出售</p>
+                <p className="text-xl text-gray-600 font-bold">{t('market.myListingsEmpty')}</p>
+                <p className="text-gray-500 mt-2">{t('market.listItemsFromInventory')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -665,7 +660,7 @@ export default function MarketPage() {
                       onClick={() => handleCancelListing(listing.id)}
                       className="px-4 py-2 rounded-xl border-3 border-red-400 text-red-600 font-bold hover:bg-red-50 transition"
                     >
-                      取消
+                      {t('market.cancel')}
                     </button>
                   </div>
                 ))}
@@ -680,7 +675,7 @@ export default function MarketPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="cartoon-card p-6 max-w-sm w-full animate-bounce-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black text-gray-800">确认购买</h2>
+              <h2 className="text-xl font-black text-gray-800">{t('market.confirmPurchase')}</h2>
               <button
                 onClick={() => setPurchaseModal({ isOpen: false, listing: null, loading: false })}
                 className="text-gray-500 hover:text-gray-700"
@@ -698,13 +693,13 @@ export default function MarketPage() {
               </div>
               <div>
                 <p className="font-black text-gray-800">{purchaseModal.listing.item.name}</p>
-                <p className="text-sm text-gray-500">卖家: {purchaseModal.listing.seller.username}</p>
+                <p className="text-sm text-gray-500">{t('market.seller')}: {purchaseModal.listing.seller.username}</p>
               </div>
             </div>
 
             <div className="bg-yellow-50 rounded-xl p-4 mb-4 border-2 border-yellow-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-gray-600">价格:</span>
+                <span className="font-bold text-gray-600">{t('market.price')}:</span>
                 <div className="flex items-center gap-1">
                   <Coins className="w-5 h-5 text-yellow-500" />
                   <span className="text-xl font-black text-yellow-600">
@@ -713,7 +708,7 @@ export default function MarketPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>数量:</span>
+                <span>{t('market.quantity')}:</span>
                 <span>x{purchaseModal.listing.quantity}</span>
               </div>
             </div>
@@ -723,7 +718,7 @@ export default function MarketPage() {
                 onClick={() => setPurchaseModal({ isOpen: false, listing: null, loading: false })}
                 className="flex-1 py-3 rounded-xl border-3 border-gray-800 font-bold hover:bg-gray-100"
               >
-                取消
+                {t('market.cancel')}
               </button>
               <button
                 onClick={handleBuy}
@@ -735,7 +730,7 @@ export default function MarketPage() {
                 ) : (
                   <>
                     <Check className="w-5 h-5" />
-                    购买
+                    {t('market.buy')}
                   </>
                 )}
               </button>
@@ -749,7 +744,7 @@ export default function MarketPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="cartoon-card p-6 max-w-sm w-full animate-bounce-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black text-gray-800">创建上架</h2>
+              <h2 className="text-xl font-black text-gray-800">{t('market.createListing')}</h2>
               <button
                 onClick={() => setSellModal({ isOpen: false, inventoryItem: null, quantity: 1, price: 100, loading: false })}
                 className="text-gray-500 hover:text-gray-700"
@@ -767,13 +762,13 @@ export default function MarketPage() {
               </div>
               <div>
                 <p className="font-black text-gray-800">{sellModal.inventoryItem.item.name}</p>
-                <p className="text-sm text-gray-500">拥有: {sellModal.inventoryItem.quantity}</p>
+                <p className="text-sm text-gray-500">{t('market.quantity')}: {sellModal.inventoryItem.quantity}</p>
               </div>
             </div>
 
             {/* Quantity selector */}
             <div className="mb-4">
-              <label className="font-bold text-gray-700 block mb-2">数量</label>
+              <label className="font-bold text-gray-700 block mb-2">{t('market.quantity')}</label>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setSellModal((prev) => ({ ...prev, quantity: Math.max(1, prev.quantity - 1) }))}
@@ -796,7 +791,7 @@ export default function MarketPage() {
 
             {/* Price input */}
             <div className="mb-4">
-              <label className="font-bold text-gray-700 block mb-2">单价</label>
+              <label className="font-bold text-gray-700 block mb-2">{t('market.unitPrice')}</label>
               <div className="flex items-center gap-2">
                 <Coins className="w-5 h-5 text-yellow-500" />
                 <input
@@ -812,21 +807,21 @@ export default function MarketPage() {
             {/* Fee info */}
             <div className="bg-blue-50 rounded-xl p-4 mb-4 border-2 border-blue-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-gray-600">总价:</span>
+                <span className="font-bold text-gray-600">{t('market.totalPrice')}</span>
                 <span className="font-black text-blue-600">
-                  {(sellModal.price * sellModal.quantity).toLocaleString()} 金币
+                  {(sellModal.price * sellModal.quantity).toLocaleString()} {t('market.price')}
                 </span>
               </div>
               <div className="flex items-center justify-between mb-2 text-sm">
-                <span className="text-gray-500">手续费 ({MARKET_FEE_RATE * 100}%):</span>
+                <span className="text-gray-500">{t('market.fee', { rate: MARKET_FEE_RATE * 100 })}</span>
                 <span className="text-red-500 font-bold">
-                  -{Math.floor(sellModal.price * sellModal.quantity * MARKET_FEE_RATE)} 金币
+                  -{Math.floor(sellModal.price * sellModal.quantity * MARKET_FEE_RATE)} {t('market.price')}
                 </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-blue-300">
-                <span className="font-bold text-gray-600">您将获得:</span>
+                <span className="font-bold text-gray-600">{t('market.youWillReceive')}</span>
                 <span className="font-black text-green-600">
-                  {Math.floor(sellModal.price * sellModal.quantity * (1 - MARKET_FEE_RATE))} 金币
+                  {Math.floor(sellModal.price * sellModal.quantity * (1 - MARKET_FEE_RATE))} {t('market.price')}
                 </span>
               </div>
             </div>
@@ -836,7 +831,7 @@ export default function MarketPage() {
                 onClick={() => setSellModal({ isOpen: false, inventoryItem: null, quantity: 1, price: 100, loading: false })}
                 className="flex-1 py-3 rounded-xl border-3 border-gray-800 font-bold hover:bg-gray-100"
               >
-                取消
+                {t('market.cancel')}
               </button>
               <button
                 onClick={handleCreateListing}
@@ -848,7 +843,7 @@ export default function MarketPage() {
                 ) : (
                   <>
                     <Tag className="w-5 h-5" />
-                    上架
+                    {t('market.listForSale')}
                   </>
                 )}
               </button>
@@ -864,7 +859,7 @@ export default function MarketPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
                 <TrendingUp className="w-6 h-6 text-blue-500" />
-                {priceHistoryModal.item.name} - 价格历史
+                {priceHistoryModal.item.name} - {t('market.priceHistory')}
               </h2>
               <button
                 onClick={() => setPriceHistoryModal({ ...priceHistoryModal, isOpen: false })}
@@ -884,7 +879,7 @@ export default function MarketPage() {
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                7 天
+                {t('market.last7Days')}
               </button>
               <button
                 onClick={() => setPriceHistoryModal(prev => ({ ...prev, selectedDays: 30 }))}
@@ -894,7 +889,7 @@ export default function MarketPage() {
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                30 天
+                {t('market.last30Days')}
               </button>
             </div>
 
@@ -902,7 +897,7 @@ export default function MarketPage() {
             {priceHistoryModal.loading ? (
               <div className="text-center py-12">
                 <Loader2 className="w-12 h-12 mx-auto mb-4 text-gray-400 animate-spin" />
-                <p className="text-gray-500 font-bold">加载价格历史...</p>
+                <p className="text-gray-500 font-bold">{t('market.loadingPriceHistory')}</p>
               </div>
             ) : (
               <>
@@ -946,15 +941,15 @@ export default function MarketPage() {
                     return (
                       <>
                         <div className="bg-gray-50 rounded-xl p-3 border-2 border-gray-200 text-center">
-                          <p className="text-xs text-gray-500 mb-1">当前均价</p>
+                          <p className="text-xs text-gray-500 mb-1">{t('market.currentAvgPrice')}</p>
                           <p className="font-black text-gray-800">{latest.avgPrice.toLocaleString()}</p>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-3 border-2 border-gray-200 text-center">
-                          <p className="text-xs text-gray-500 mb-1">最低价</p>
+                          <p className="text-xs text-gray-500 mb-1">{t('market.lowestPrice')}</p>
                           <p className="font-black text-green-600">{Math.min(...history.map(h => h.minPrice)).toLocaleString()}</p>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-3 border-2 border-gray-200 text-center">
-                          <p className="text-xs text-gray-500 mb-1">最高价</p>
+                          <p className="text-xs text-gray-500 mb-1">{t('market.highestPrice')}</p>
                           <p className="font-black text-red-600">{Math.max(...history.map(h => h.maxPrice)).toLocaleString()}</p>
                         </div>
                       </>
@@ -980,11 +975,11 @@ export default function MarketPage() {
                       <div className="flex items-center justify-center gap-2">
                         <TrendingUp className={`w-5 h-5 ${priceChange >= 0 ? 'text-red-500' : 'text-green-500 transform rotate-180'}`} />
                         <span className={`font-black text-lg ${priceChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {priceChange >= 0 ? '上涨' : '下跌'} {Math.abs(priceChangePercent).toFixed(1)}%
+                          {priceChange >= 0 ? t('market.priceChangeUp') : t('market.priceChangeDown')} {Math.abs(priceChangePercent).toFixed(1)}%
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        较{priceHistoryModal.selectedDays}天前{priceChange >= 0 ? '上涨' : '下跌'}{Math.abs(priceChange).toLocaleString()}金币
+                        {t('market.comparedToDaysAgo', { days: priceHistoryModal.selectedDays })}{priceChange >= 0 ? t('market.priceChangeUp') : t('market.priceChangeDown')}{Math.abs(priceChange).toLocaleString()}{t('market.price')}
                       </p>
                     </div>
                   );
@@ -1002,13 +997,13 @@ export default function MarketPage() {
             <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-500">
               <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-black text-gray-800 mb-2">成功！</h2>
+            <h2 className="text-xl font-black text-gray-800 mb-2">{t('market.success')}</h2>
             <p className="text-gray-600 mb-4">{successModal.message}</p>
             <button
               onClick={() => setSuccessModal({ isOpen: false, message: '' })}
               className="cartoon-btn w-full"
             >
-              确定
+              {t('common.confirm')}
             </button>
           </div>
         </div>

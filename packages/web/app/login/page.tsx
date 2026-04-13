@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { login } from '@/lib/api';
 import {
   Map,
@@ -27,13 +28,14 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, setUser } = useAuth();
+  const { t } = useLocale();
 
   useEffect(() => {
     if (!authLoading && user) {
       router.push('/map');
     }
     if (searchParams.get('registered') === 'true') {
-      setSuccess('注册成功！请登录');
+      setSuccess(t('auth.registerSuccessPleaseLogin'));
     }
   }, [user, authLoading, router, searchParams]);
 
@@ -59,7 +61,7 @@ function LoginForm() {
       setUser(user);
       router.push('/map');
     } catch (err: any) {
-      setError(err.message || '登录失败，请检查邮箱和密码');
+      setError(err.message || t('auth.loginFailedCheckCredentials'));
     } finally {
       setLoading(false);
     }
@@ -68,7 +70,6 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #FFF8E7 0%, #FFE4B5 100%)' }}>
       <div className="w-full max-w-md animate-bounce-in">
-        {/* Logo和标题 */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4 animate-float">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg border-4 border-gray-800">
@@ -78,11 +79,10 @@ function LoginForm() {
               <Gem size={24} className="text-gray-800" />
             </div>
           </div>
-          <h1 className="cartoon-title text-4xl md:text-5xl mb-2">寻宝记</h1>
-          <p className="text-lg text-gray-600 font-semibold">探索世界，收集宝藏</p>
+          <h1 className="cartoon-title text-4xl md:text-5xl mb-2">{t('app.name')}</h1>
+          <p className="text-lg text-gray-600 font-semibold">{t('auth.exploreWorldCollectTreasures')}</p>
         </div>
 
-        {/* 登录卡片 */}
         <div className="cartoon-card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
@@ -99,7 +99,7 @@ function LoginForm() {
 
             <div>
               <label htmlFor="email" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <Mail size={16} /> 邮箱
+                <Mail size={16} /> {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -114,7 +114,7 @@ function LoginForm() {
 
             <div>
               <label htmlFor="password" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <Lock size={16} /> 密码
+                <Lock size={16} /> {t('auth.password')}
               </label>
               <input
                 type="password"
@@ -134,24 +134,22 @@ function LoginForm() {
             >
               {loading ? (
                 <>
-                  <Loader2 size={20} className="animate-spin" /> 登录中...
+                  <Loader2 size={20} className="animate-spin" /> {t('auth.loggingIn')}
                 </>
               ) : (
                 <>
-                  <Rocket size={20} /> 开始探险
+                  <Rocket size={20} /> {t('auth.startAdventure')}
                 </>
               )}
             </button>
           </form>
 
-          {/* 分隔线 */}
           <div className="mt-6 flex items-center">
             <div className="flex-1 border-t-2 border-gray-200"></div>
-            <span className="px-4 text-gray-400 font-bold text-sm">或</span>
+            <span className="px-4 text-gray-400 font-bold text-sm">{t('common.or')}</span>
             <div className="flex-1 border-t-2 border-gray-200"></div>
           </div>
 
-          {/* 社交登录 */}
           <div className="mt-6 space-y-3">
             <button
               type="button"
@@ -159,8 +157,8 @@ function LoginForm() {
               disabled
             >
               <Chrome size={20} />
-              <span>Google 登录</span>
-              <span className="text-xs opacity-60">(即将开放)</span>
+              <span>{t('auth.googleLogin')}</span>
+              <span className="text-xs opacity-60">({t('auth.comingSoon')})</span>
             </button>
             <button
               type="button"
@@ -169,17 +167,16 @@ function LoginForm() {
               disabled
             >
               <Apple size={20} />
-              <span>Apple 登录</span>
-              <span className="text-xs opacity-60">(即将开放)</span>
+              <span>{t('auth.appleLogin')}</span>
+              <span className="text-xs opacity-60">({t('auth.comingSoon')})</span>
             </button>
           </div>
         </div>
 
-        {/* 注册链接 */}
         <p className="mt-6 text-center text-gray-600 font-semibold">
-          还没有账号？{' '}
+          {t('auth.noAccount')}{' '}
           <Link href="/register" className="text-yellow-600 hover:text-yellow-700 font-bold underline decoration-2 underline-offset-2">
-            立即注册
+            {t('auth.registerNow')}
           </Link>
         </p>
       </div>

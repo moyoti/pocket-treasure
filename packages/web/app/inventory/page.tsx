@@ -3,17 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { getInventory, getInventoryStats, sellItemToNPC, getCoinBalance } from '@/lib/api';
 import { InventoryItem, ItemRarity, CoinBalance } from '@/types';
 import { TreasureIcon, RARITY_COLORS } from '@/components/Icon';
 import { Package, MapPin, Coins, X, Check, Loader2, ShoppingCart, Tag } from 'lucide-react';
-
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-  legendary: '传说',
-};
 
 // NPC buy prices by rarity
 const NPC_PRICES: Record<ItemRarity, number> = {
@@ -24,6 +18,7 @@ const NPC_PRICES: Record<ItemRarity, number> = {
 };
 
 export default function InventoryPage() {
+  const { t } = useLocale();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [balance, setBalance] = useState<CoinBalance | null>(null);
@@ -72,7 +67,7 @@ export default function InventoryPage() {
       setBalance(balanceData);
     } catch (err) {
       console.error('Failed to fetch inventory:', err);
-      setError('加载背包失败');
+      setError(t('inventory.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -124,11 +119,11 @@ export default function InventoryPage() {
       setSellModal({ isOpen: false, item: null, quantity: 1, loading: false });
       setSuccessModal({
         isOpen: true,
-        message: `成功出售 ${sellModal.quantity}个 ${sellModal.item.item.name}！`,
+        message: t('inventory.sellSuccess', { count: sellModal.quantity, name: sellModal.item.item.name }),
         coinsEarned: result.totalPrice || 0,
       });
     } catch (err: any) {
-      setError(err.message || '出售失败');
+      setError(err.message || t('inventory.sellFailed'));
       setSellModal((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -144,7 +139,7 @@ export default function InventoryPage() {
       return sum;
     }, 0);
 
-    if (!confirm(`确定以 ${totalCoins} 金币出售 ${selectedItems.size} 个物品？`)) return;
+    if (!confirm(t('inventory.confirmBatchSell', { count: selectedItems.size, coins: totalCoins }))) return;
 
     // Sell each selected item
     try {
@@ -165,11 +160,11 @@ export default function InventoryPage() {
 
       setSuccessModal({
         isOpen: true,
-        message: `成功出售 ${selectedItems.size} 个物品！`,
+        message: t('inventory.sellSuccess', { count: selectedItems.size, name: '' }),
         coinsEarned: totalCoins,
       });
     } catch (err: any) {
-      setError(err.message || '出售失败');
+      setError(err.message || t('inventory.sellFailed'));
     }
   };
 
@@ -211,7 +206,7 @@ export default function InventoryPage() {
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">
               <Package className="w-6 h-6 text-amber-600" />
-              我的收藏
+              {t('inventory.title')}
             </h1>
           </div>
         </div>
@@ -242,7 +237,7 @@ export default function InventoryPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-black text-gray-800 flex items-center gap-2">
             <Package className="w-6 h-6 text-amber-600" />
-            我的收藏
+            {t('inventory.title')}
           </h1>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-orange-100 border-3 border-yellow-400 rounded-full px-4 py-2">
@@ -271,18 +266,18 @@ export default function InventoryPage() {
             <div className="flex justify-center gap-6 md:gap-12 overflow-x-auto">
               <div className="text-center flex-shrink-0">
                 <p className="text-2xl md:text-3xl font-black text-gray-800">{stats.totalItems}</p>
-                <p className="text-xs md:text-sm text-gray-500 font-bold">总数</p>
+                <p className="text-xs md:text-sm text-gray-500 font-bold">{t('inventory.total')}</p>
               </div>
               <div className="text-center flex-shrink-0">
                 <p className="text-2xl md:text-3xl font-black text-gray-800">{stats.uniqueItems}</p>
-                <p className="text-xs md:text-sm text-gray-500 font-bold">种类</p>
+                <p className="text-xs md:text-sm text-gray-500 font-bold">{t('inventory.types')}</p>
               </div>
               {Object.entries(stats.byRarity).map(([rarity, count]) => (
                 <div key={rarity} className="text-center flex-shrink-0">
                   <p className="text-2xl md:text-3xl font-black" style={{ color: RARITY_COLORS[rarity as ItemRarity] }}>
                     {count as number}
                   </p>
-                  <p className="text-xs md:text-sm text-gray-500 font-bold">{RARITY_NAMES[rarity as ItemRarity]}</p>
+                  <p className="text-xs md:text-sm text-gray-500 font-bold">{t(`inventory.rarity.${rarity}`)}</p>
                 </div>
               ))}
             </div>
@@ -307,9 +302,9 @@ export default function InventoryPage() {
         <div className="sticky top-[72px] z-30 bg-purple-500 text-white px-4 py-3 shadow-lg">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div>
-              <span className="font-bold">{selectedItems.size} 个已选</span>
+              <span className="font-bold">{t('inventory.selectedCount', { count: selectedItems.size })}</span>
               <span className="ml-4 font-black text-yellow-300">
-                = {selectedTotalValue.toLocaleString()} 金币
+                = {selectedTotalValue.toLocaleString()} {t('market.price')}
               </span>
             </div>
             <div className="flex gap-2">
@@ -317,14 +312,14 @@ export default function InventoryPage() {
                 onClick={() => setSelectedItems(new Set(items.map((i) => i.id)))}
                 className="px-4 py-2 rounded-xl bg-white/20 font-bold hover:bg-white/30 transition"
               >
-                全选
+                {t('inventory.selectAll')}
               </button>
               <button
                 onClick={handleBatchSell}
                 disabled={selectedItems.size === 0}
                 className="px-4 py-2 rounded-xl bg-yellow-400 text-gray-800 font-bold hover:bg-yellow-300 transition disabled:opacity-50"
               >
-                全部出售
+                {t('inventory.sellAll')}
               </button>
             </div>
           </div>
@@ -338,8 +333,8 @@ export default function InventoryPage() {
             <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-300">
               <Package size={48} className="text-gray-400" />
             </div>
-            <p className="text-xl font-bold text-gray-600">还没有收集物品</p>
-            <p className="text-gray-500 mt-2">去地图探索寻找宝藏吧！</p>
+            <p className="text-xl font-bold text-gray-600">{t('inventory.noCollectionYet')}</p>
+            <p className="text-gray-500 mt-2">{t('inventory.goExplore')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -379,7 +374,7 @@ export default function InventoryPage() {
                       className="text-sm font-bold"
                       style={{ color: RARITY_COLORS[item.item.rarity as ItemRarity] }}
                     >
-                      {RARITY_NAMES[item.item.rarity as ItemRarity]}
+                      {t(`inventory.rarity.${item.item.rarity}`)}
                     </p>
                     {item.poiName && (
                       <p className="text-xs text-gray-500 mt-1 truncate flex items-center gap-1">
@@ -400,7 +395,7 @@ export default function InventoryPage() {
                     <div className="flex items-center gap-1">
                       <Coins className="w-4 h-4 text-amber-600" />
                       <span className="font-bold text-yellow-600">
-                        {NPC_PRICES[item.item.rarity as ItemRarity]} 金币
+                        {NPC_PRICES[item.item.rarity as ItemRarity]} {t('market.price')}
                       </span>
                     </div>
                     <button
@@ -411,7 +406,7 @@ export default function InventoryPage() {
                       className="cartoon-btn cartoon-btn-sm"
                     >
                       <ShoppingCart className="w-4 h-4 mr-1" />
-                      出售
+                      {t('inventory.sell')}
                     </button>
                   </div>
                 )}
@@ -426,7 +421,7 @@ export default function InventoryPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="cartoon-card p-6 max-w-sm w-full animate-bounce-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black text-gray-800">出售给NPC</h2>
+              <h2 className="text-xl font-black text-gray-800">{t('inventory.sellToNPC')}</h2>
               <button
                 onClick={() => setSellModal({ isOpen: false, item: null, quantity: 1, loading: false })}
                 className="text-gray-500 hover:text-gray-700"
@@ -448,15 +443,15 @@ export default function InventoryPage() {
                   className="text-sm font-bold"
                   style={{ color: RARITY_COLORS[sellModal.item.item.rarity as ItemRarity] }}
                 >
-                  {RARITY_NAMES[sellModal.item.item.rarity as ItemRarity]}
+                  {t(`inventory.rarity.${sellModal.item.item.rarity}`)}
                 </p>
-                <p className="text-sm text-gray-500">拥有: {sellModal.item.quantity}</p>
+                <p className="text-sm text-gray-500">{t('market.quantity')}: {sellModal.item.quantity}</p>
               </div>
             </div>
 
             {/* Quantity selector */}
             <div className="mb-4">
-              <label className="font-bold text-gray-700 block mb-2">数量</label>
+              <label className="font-bold text-gray-700 block mb-2">{t('market.quantity')}</label>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setSellModal((prev) => ({ ...prev, quantity: Math.max(1, prev.quantity - 1) }))}
@@ -479,7 +474,7 @@ export default function InventoryPage() {
 
             <div className="bg-yellow-50 rounded-xl p-4 mb-4 border-2 border-yellow-200">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-gray-600">您将获得:</span>
+                <span className="font-bold text-gray-600">{t('inventory.youWillReceive')}</span>
                 <div className="flex items-center gap-1">
                   <Coins className="w-5 h-5 text-amber-600" />
                   <span className="text-xl font-black text-yellow-600">
@@ -494,7 +489,7 @@ export default function InventoryPage() {
                 onClick={() => setSellModal({ isOpen: false, item: null, quantity: 1, loading: false })}
                 className="flex-1 py-3 rounded-xl border-3 border-gray-800 font-bold hover:bg-gray-100"
               >
-                取消
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSell}
@@ -506,7 +501,7 @@ export default function InventoryPage() {
                 ) : (
                   <>
                     <Check className="w-5 h-5" />
-                    出售
+                    {t('inventory.sell')}
                   </>
                 )}
               </button>
@@ -522,16 +517,16 @@ export default function InventoryPage() {
             <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-500">
               <Coins className="w-8 h-8 text-amber-600" />
             </div>
-            <h2 className="text-xl font-black text-gray-800 mb-2">已出售！</h2>
+            <h2 className="text-xl font-black text-gray-800 mb-2">{t('inventory.sold')}</h2>
             <p className="text-gray-600 mb-2">{successModal.message}</p>
             <p className="text-2xl font-black text-yellow-600 mb-4">
-              +{successModal.coinsEarned} 金币
+              +{successModal.coinsEarned} {t('market.price')}
             </p>
             <button
               onClick={() => setSuccessModal({ isOpen: false, message: '', coinsEarned: 0 })}
               className="cartoon-btn w-full"
             >
-              确定
+              {t('common.confirm')}
             </button>
           </div>
         </div>

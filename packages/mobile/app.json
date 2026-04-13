@@ -17,9 +17,10 @@
       "bundleIdentifier": "com.treasurehunt.app",
       "buildNumber": "1.0.0",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "我们需要您的位置来显示附近的宝藏",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "我们需要您的位置来检测附近的宝藏",
-        "NSLocationAlwaysUsageDescription": "我们需要您的位置来检测附近的宝藏",
+        "CFBundleDisplayName": "Treasure Hunt",
+        "NSLocationWhenInUseUsageDescription": "Allow Treasure Hunt to use your location to show nearby treasures.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow Treasure Hunt to use your location to detect nearby treasures.",
+        "NSLocationAlwaysUsageDescription": "Allow Treasure Hunt to use your location to detect nearby treasures.",
         "UIUserInterfaceStyle": "Light"
       }
     },
@@ -45,7 +46,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow Treasure Hunt to use your location to detect nearby treasures."
         }
       ]
     ],

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { register } from '@/lib/api';
 import {
   Map,
@@ -24,6 +25,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLocale();
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -48,12 +50,12 @@ export default function RegisterPage() {
     setError('');
 
     if (!username.trim()) {
-      setError('请输入用户名');
+      setError(t('auth.username') + ' ' + t('common.error'));
       return;
     }
 
     if (password.length < 6) {
-      setError('密码至少需要6位');
+      setError(t('auth.passwordMinLength'));
       return;
     }
 
@@ -63,7 +65,7 @@ export default function RegisterPage() {
       await register(email, password, username);
       router.push('/login?registered=true');
     } catch (err: any) {
-      setError(err.message || '注册失败，请稍后重试');
+      setError(err.message || t('auth.registerFailedTryAgain'));
     } finally {
       setLoading(false);
     }
@@ -82,8 +84,8 @@ export default function RegisterPage() {
               <Gem size={24} className="text-gray-800" />
             </div>
           </div>
-          <h1 className="cartoon-title text-4xl md:text-5xl mb-2">创建账号</h1>
-          <p className="text-lg text-gray-600 font-semibold">开始你的寻宝之旅</p>
+          <h1 className="cartoon-title text-4xl md:text-5xl mb-2">{t('auth.createAccount')}</h1>
+          <p className="text-lg text-gray-600 font-semibold">{t('auth.startYourAdventure')}</p>
         </div>
 
         {/* Register card */}
@@ -97,7 +99,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="username" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <User size={16} /> 用户名
+                <User size={16} /> {t('auth.username')}
               </label>
               <input
                 type="text"
@@ -105,14 +107,14 @@ export default function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="cartoon-input w-full"
-                placeholder="探险家"
+                placeholder={t('common.defaultUsername')}
                 required
               />
             </div>
 
             <div>
               <label htmlFor="email" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <Mail size={16} /> 邮箱
+                <Mail size={16} /> {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -127,7 +129,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="password" className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
-                <Lock size={16} /> 密码 (至少6位)
+                <Lock size={16} /> {t('auth.passwordAtLeast6Chars')}
               </label>
               <input
                 type="password"
@@ -155,7 +157,7 @@ export default function RegisterPage() {
                   <p className={`text-xs mt-1 font-medium ${
                     password.length < 6 ? 'text-red-500' : password.length < 8 ? 'text-yellow-600' : 'text-green-600'
                   }`}>
-                    {password.length < 6 ? '密码太短' : password.length < 8 ? '密码强度一般' : '密码强度良好'}
+                    {password.length < 6 ? t('auth.passwordTooShort') : password.length < 8 ? t('auth.passwordStrengthFair') : t('auth.passwordStrengthGood')}
                   </p>
                 </div>
               )}
@@ -168,11 +170,11 @@ export default function RegisterPage() {
             >
               {loading ? (
                 <>
-                  <Loader2 size={20} className="animate-spin" /> 注册中...
+                  <Loader2 size={20} className="animate-spin" /> {t('auth.registering')}
                 </>
               ) : (
                 <>
-                  <Rocket size={20} /> 开始探险
+                  <Rocket size={20} /> {t('auth.startAdventure')}
                 </>
               )}
             </button>
@@ -181,9 +183,9 @@ export default function RegisterPage() {
 
         {/* Login link */}
         <p className="mt-6 text-center text-gray-600 font-semibold">
-          已有账号？{' '}
+          {t('auth.hasAccount')}{' '}
           <Link href="/login" className="text-yellow-600 hover:text-yellow-700 font-bold underline decoration-2 underline-offset-2">
-            立即登录
+            {t('auth.loginNow')}
           </Link>
         </p>
       </div>

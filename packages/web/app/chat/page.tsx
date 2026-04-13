@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { getConversations, getMessages, sendMessage, markMessagesAsRead, getFriends } from '@/lib/api';
 import ChatMessage from '@/components/ChatMessage';
 import { Conversation, Message, Friend } from '@/types';
@@ -19,6 +20,7 @@ function ChatContent() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -54,7 +56,7 @@ function ChatContent() {
       setFriends(friendsData);
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      setError('加载失败，请稍后重试');
+      setError(t('chat.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ function ChatContent() {
       });
     } catch (err) {
       console.error('Failed to send message:', err);
-      alert('发送失败');
+      alert(t('chat.sendFailed'));
       setNewMessage(content); // Restore message on failure
     } finally {
       setSending(false);
@@ -167,7 +169,7 @@ function ChatContent() {
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     if (date.toDateString() === yesterday.toDateString()) {
-      return '昨天';
+      return t('chat.yesterday');
     }
 
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
@@ -226,8 +228,8 @@ function ChatContent() {
               <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 border-2 border-gray-200">
                 <MessageCircle size={32} className="text-gray-400" />
               </div>
-              <p className="text-gray-600 font-bold">暂无消息</p>
-              <p className="text-gray-500 text-sm mt-1">发送一条消息开始对话！</p>
+              <p className="text-gray-600 font-bold">{t('chat.noMessages')}</p>
+              <p className="text-gray-500 text-sm mt-1">{t('chat.sendMessageToStart')}</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -254,7 +256,7 @@ function ChatContent() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="输入消息..."
+              placeholder={t('chat.placeholder')}
               className="cartoon-input flex-1"
               disabled={sending}
             />
@@ -281,7 +283,7 @@ function ChatContent() {
       {/* Header */}
       <div className="bg-white border-b-4 border-gray-800 px-4 py-4 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2"><MessageCircle className="w-6 h-6 text-teal-500" />聊天</h1>
+          <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2"><MessageCircle className="w-6 h-6 text-teal-500" />{t('chat.title')}</h1>
         </div>
       </div>
 
@@ -292,7 +294,7 @@ function ChatContent() {
             <div className="bg-red-100 border-3 border-red-400 text-red-700 px-4 py-3 rounded-xl font-bold text-center">
               {error}
               <button onClick={fetchData} className="ml-2 underline hover:text-red-900">
-                重试
+                {t('common.retry')}
               </button>
             </div>
           </div>
@@ -301,7 +303,7 @@ function ChatContent() {
         {/* Friends with chat option */}
         {friends.length > 0 && (
           <div className="px-4 py-3 border-b-2 border-gray-200 bg-white">
-            <p className="text-xs font-bold text-gray-500 mb-2">开始聊天</p>
+            <p className="text-xs font-bold text-gray-500 mb-2">{t('chat.startChat')}</p>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {friends.slice(0, 10).map((friend) => (
                 <button
@@ -343,12 +345,12 @@ function ChatContent() {
               <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-200">
                 <MessageCircle size={40} className="text-gray-400" />
               </div>
-              <p className="text-xl text-gray-600 font-bold">暂无对话</p>
-              <p className="text-gray-500 mt-2">点击上方好友开始聊天！</p>
+              <p className="text-xl text-gray-600 font-bold">{t('chat.noConversations')}</p>
+              <p className="text-gray-500 mt-2">{t('chat.clickAboveToStartChat')}</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-500 mb-2">最近聊天</p>
+              <p className="text-xs font-bold text-gray-500 mb-2">{t('chat.recentChats')}</p>
               {conversations.map((conv) => (
                 <button
                   key={conv.userId}

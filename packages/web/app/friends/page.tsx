@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import {
   getFriends,
   getFriendRequests,
@@ -33,6 +34,7 @@ import {
 type Tab = 'friends' | 'requests' | 'trades';
 
 export default function FriendsPage() {
+  const { t } = useLocale();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -62,7 +64,7 @@ export default function FriendsPage() {
       setTrades(tradesData.filter((t: Trade) => t.status === 'pending'));
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      setError('加载失败，请稍后重试');
+      setError(t('friends.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -105,7 +107,7 @@ export default function FriendsPage() {
       );
     } catch (err) {
       console.error('Failed to send request:', err);
-      alert('发送好友申请失败');
+      alert(t('friends.sendRequestFailed'));
     }
   };
 
@@ -116,7 +118,7 @@ export default function FriendsPage() {
       fetchData(); // Refresh friends list
     } catch (err) {
       console.error('Failed to accept request:', err);
-      alert('接受好友申请失败');
+      alert(t('friends.acceptRequestFailed'));
     }
   };
 
@@ -126,19 +128,19 @@ export default function FriendsPage() {
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
     } catch (err) {
       console.error('Failed to reject request:', err);
-      alert('拒绝好友申请失败');
+      alert(t('friends.rejectRequestFailed'));
     }
   };
 
   const handleRemoveFriend = async (friend: Friend) => {
-    if (!confirm(`确定要删除好友 ${friend.username} 吗？`)) return;
+    if (!confirm(t('friends.confirmRemove', { username: friend.username }))) return;
 
     try {
       await removeFriend(friend.id);
       setFriends((prev) => prev.filter((f) => f.id !== friend.id));
     } catch (err) {
       console.error('Failed to remove friend:', err);
-      alert('删除好友失败');
+      alert(t('friends.removeFailed'));
     }
   };
 
@@ -148,7 +150,7 @@ export default function FriendsPage() {
 
   const handleTrade = (friend: Friend) => {
     // TODO: Navigate to trade creation page
-    alert('交易功能即将上线');
+    alert(t('friends.tradeComingSoon'));
   };
 
   const handleAcceptTrade = async (tradeId: string) => {
@@ -157,7 +159,7 @@ export default function FriendsPage() {
       setTrades((prev) => prev.filter((t) => t.id !== tradeId));
     } catch (err) {
       console.error('Failed to accept trade:', err);
-      alert('接受交易失败');
+      alert(t('friends.acceptTradeFailed'));
     }
   };
 
@@ -167,7 +169,7 @@ export default function FriendsPage() {
       setTrades((prev) => prev.filter((t) => t.id !== tradeId));
     } catch (err) {
       console.error('Failed to reject trade:', err);
-      alert('拒绝交易失败');
+      alert(t('friends.rejectTradeFailed'));
     }
   };
 
@@ -205,7 +207,7 @@ export default function FriendsPage() {
         <div className="max-w-2xl mx-auto">
           <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
             <Users className="w-7 h-7 text-blue-500" />
-            好友
+            {t('friends.title')}
           </h1>
         </div>
       </div>
@@ -220,7 +222,7 @@ export default function FriendsPage() {
             }`}
           >
             <Users size={18} className="inline mr-1" />
-            好友
+            {t('friends.friendsTab')}
             {friends.length > 0 && (
               <span className="ml-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs">
                 {friends.length}
@@ -237,7 +239,7 @@ export default function FriendsPage() {
             }`}
           >
             <Clock size={18} className="inline mr-1" />
-            申请
+            {t('friends.requestsTab')}
             {requests.length > 0 && (
               <span className="ml-1 px-2 py-0.5 bg-red-500 text-white rounded-full text-xs">
                 {requests.length}
@@ -254,7 +256,7 @@ export default function FriendsPage() {
             }`}
           >
             <Gift size={18} className="inline mr-1" />
-            交易
+            {t('friends.tradesTab')}
             {trades.length > 0 && (
               <span className="ml-1 px-2 py-0.5 bg-orange-500 text-white rounded-full text-xs">
                 {trades.length}
@@ -273,7 +275,7 @@ export default function FriendsPage() {
           <div className="bg-red-100 border-3 border-red-400 text-red-700 px-4 py-3 rounded-xl font-bold flex items-center justify-between mb-4">
             <span>{error}</span>
             <button onClick={fetchData} className="ml-2 underline hover:text-red-900">
-              重试
+              {t('friends.retry')}
             </button>
           </div>
         )}
@@ -288,7 +290,7 @@ export default function FriendsPage() {
                 className="w-full cartoon-btn flex items-center justify-center gap-2"
               >
                 <UserPlus size={20} />
-                添加好友
+                {t('friends.addFriendButton')}
               </button>
 
               {showSearch && (
@@ -298,7 +300,7 @@ export default function FriendsPage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="搜索用户名或邮箱..."
+                      placeholder={t('friends.searchPlaceholderEmail')}
                       className="cartoon-input flex-1"
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     />
@@ -331,15 +333,15 @@ export default function FriendsPage() {
                             </div>
                           </div>
                           {result.isFriend ? (
-                            <span className="text-sm text-green-600 font-medium">已是好友</span>
+                            <span className="text-sm text-green-600 font-medium">{t('friends.alreadyFriends')}</span>
                           ) : result.hasPendingRequest ? (
-                            <span className="text-sm text-gray-500">已发送申请</span>
+                            <span className="text-sm text-gray-500">{t('friends.requestSent')}</span>
                           ) : (
                             <button
                               onClick={() => handleSendRequest(result.id)}
                               className="cartoon-btn cartoon-btn-sm"
                             >
-                              添加
+                              {t('friends.add')}
                             </button>
                           )}
                         </div>
@@ -355,7 +357,7 @@ export default function FriendsPage() {
               <div className="mb-4">
                 <h2 className="text-sm font-bold text-gray-500 mb-2 flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  在线 - {onlineFriends.length}
+                  {t('friends.onlineCount', { count: onlineFriends.length })}
                 </h2>
                 <div className="space-y-2">
                   {onlineFriends.map((friend) => (
@@ -376,7 +378,7 @@ export default function FriendsPage() {
               <div>
                 <h2 className="text-sm font-bold text-gray-500 mb-2 flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gray-400" />
-                  离线 - {offlineFriends.length}
+                  {t('friends.offlineCount', { count: offlineFriends.length })}
                 </h2>
                 <div className="space-y-2">
                   {offlineFriends.map((friend) => (
@@ -398,8 +400,8 @@ export default function FriendsPage() {
                 <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-200">
                   <Users size={40} className="text-gray-400" />
                 </div>
-                <p className="text-xl text-gray-600 font-bold">暂无好友</p>
-                <p className="text-gray-500 mt-2">搜索并添加好友一起游戏吧！</p>
+                <p className="text-xl text-gray-600 font-bold">{t('friends.noFriendsYet')}</p>
+                <p className="text-gray-500 mt-2">{t('friends.searchForFriends')}</p>
               </div>
             )}
           </>
@@ -413,8 +415,8 @@ export default function FriendsPage() {
                 <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-200">
                   <Clock size={40} className="text-gray-400" />
                 </div>
-                <p className="text-xl text-gray-600 font-bold">暂无好友申请</p>
-                <p className="text-gray-500 mt-2">新的好友申请会显示在这里</p>
+                <p className="text-xl text-gray-600 font-bold">{t('friends.noFriendRequests')}</p>
+                <p className="text-gray-500 mt-2">{t('friends.newRequestsAppearHere')}</p>
               </div>
             ) : (
               requests.map((request) => (
@@ -458,8 +460,8 @@ export default function FriendsPage() {
                 <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center border-4 border-gray-200">
                   <Gift size={40} className="text-gray-400" />
                 </div>
-                <p className="text-xl text-gray-600 font-bold">暂无交易请求</p>
-                <p className="text-gray-500 mt-2">交易请求会显示在这里</p>
+                <p className="text-xl text-gray-600 font-bold">{t('friends.noTradeRequests')}</p>
+                <p className="text-gray-500 mt-2">{t('friends.tradeRequestsAppearHere')}</p>
               </div>
             ) : (
               trades.map((trade) => (
@@ -494,7 +496,7 @@ export default function FriendsPage() {
                     <div className="mt-4 pt-4 border-t-2 border-gray-200">
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                          <p className="text-xs font-bold text-gray-500 mb-2">对方提供:</p>
+                          <p className="text-xs font-bold text-gray-500 mb-2">{t('friends.theyOffer')}</p>
                           <div className="space-y-1">
                             {trade.initiatorItems.map((item, idx) => (
                               <div
@@ -507,7 +509,7 @@ export default function FriendsPage() {
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-gray-500 mb-2">对方想要:</p>
+                          <p className="text-xs font-bold text-gray-500 mb-2">{t('friends.theyWant')}</p>
                           <div className="space-y-1">
                             {trade.receiverItems.map((item, idx) => (
                               <div
@@ -526,14 +528,14 @@ export default function FriendsPage() {
                           className="flex-1 cartoon-btn cartoon-btn-secondary"
                         >
                           <Check size={18} className="inline mr-1" />
-                          接受
+                          {t('friends.accept')}
                         </button>
                         <button
                           onClick={() => handleRejectTrade(trade.id)}
                           className="flex-1 cartoon-btn cartoon-btn-accent"
                         >
                           <X size={18} className="inline mr-1" />
-                          拒绝
+                          {t('friends.reject')}
                         </button>
                       </div>
                     </div>

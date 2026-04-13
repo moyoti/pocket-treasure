@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { X, RefreshCw } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Error({
   error,
@@ -10,6 +11,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLocale();
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -20,14 +22,14 @@ export default function Error({
         <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 border-4 border-red-300">
           <X size={40} className="text-red-500" />
         </div>
-        <h2 className="text-2xl font-black text-gray-800 mb-2">出错了</h2>
-        <p className="text-gray-600 mb-6">{error.message || '发生了未知错误'}</p>
+        <h2 className="text-2xl font-black text-gray-800 mb-2">{t('common.errorOccurred')}</h2>
+        <p className="text-gray-600 mb-6">{error.message || t('common.unknownError')}</p>
         <button
           onClick={() => reset()}
           className="cartoon-btn flex items-center justify-center gap-2 w-full"
         >
           <RefreshCw size={20} />
-          重试
+          {t('common.retry')}
         </button>
       </div>
     </div>

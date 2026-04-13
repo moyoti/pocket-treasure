@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import { getMessages, sendMessage, markMessagesAsRead } from '@/lib/api';
 import { Message } from '@/types';
 import { Send, ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
@@ -11,6 +12,7 @@ export default function ChatPage() {
   const params = useParams<{ userId: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLocale();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, sentMessage]);
     } catch (err) {
       console.error('Failed to send message:', err);
-      alert('发送失败');
+      alert(t('chat.sendFailed'));
       setNewMessage(content);
     } finally {
       setSending(false);
@@ -120,7 +122,7 @@ export default function ChatPage() {
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 border-2 border-gray-200">
               <MessageCircle size={32} className="text-gray-400" />
             </div>
-            <p className="text-gray-600 font-bold">还没有消息，开始聊天吧！</p>
+            <p className="text-gray-600 font-bold">{t('chat.noMessages')}</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -162,7 +164,7 @@ export default function ChatPage() {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="输入消息..."
+            placeholder={t('chat.placeholder')}
             className="flex-1 rounded-full border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#D4A017] transition-colors"
             disabled={sending}
           />

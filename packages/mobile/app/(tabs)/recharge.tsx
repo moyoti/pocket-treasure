@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { getGemBalance, getRechargePackages } from '../../lib/api';
 import { initIAP, getProducts, purchaseProduct, finishTransaction } from '../../src/lib/iap';
 import type { Purchase } from 'react-native-iap';
@@ -30,6 +31,7 @@ interface RechargePackage {
 }
 
 export default function RechargeScreen() {
+  const { t } = useTranslation();
   const [packages, setPackages] = useState<RechargePackage[]>([]);
   const [gemBalance, setGemBalance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -103,10 +105,10 @@ export default function RechargeScreen() {
       if (result.success) {
         const balanceData = await getGemBalance();
         setGemBalance(balanceData.balance);
-        Alert.alert('充值成功', '购买已完成！');
+        Alert.alert(t('recharge.rechargeSuccess'), t('recharge.purchaseComplete'));
       }
     } catch (error) {
-      Alert.alert('充值失败', '请稍后重试');
+      Alert.alert(t('recharge.rechargeFailed'), t('recharge.tryAgainLater'));
     } finally {
       setPurchasing(null);
     }
@@ -118,7 +120,7 @@ export default function RechargeScreen() {
       const productId = getProductIdForPackage(pkg);
       await handleIAPPurchase(productId);
     } catch (error) {
-      Alert.alert('充值失败', '请稍后重试');
+      Alert.alert(t('recharge.rechargeFailed'), t('recharge.tryAgainLater'));
     }
   };
 
@@ -143,7 +145,7 @@ export default function RechargeScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>充值中心</Text>
+        <Text style={styles.title}>{t('recharge.title')}</Text>
         <View style={styles.balancePill}>
           <Ionicons name="diamond" size={18} color="#E91E63" />
           <Text style={styles.balanceText}>{gemBalance}</Text>
@@ -171,19 +173,19 @@ export default function RechargeScreen() {
             >
               {pkg.isFirstRechargeBonus && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>首充双倍</Text>
+                  <Text style={styles.badgeText}>{t('recharge.firstChargeBonus')}</Text>
                 </View>
               )}
               <Ionicons name="diamond" size={32} color="#E91E63" />
               <Text style={styles.gemsAmount}>{pkg.gemsAmount + pkg.bonusGems}</Text>
-              <Text style={styles.gemsLabel}>宝石</Text>
+              <Text style={styles.gemsLabel}>{t('recharge.gems')}</Text>
               <View style={styles.priceTag}>
                 <Text style={styles.priceText}>¥{pkg.price}</Text>
               </View>
               {purchasing === pkg.id ? (
                 <ActivityIndicator size="small" color="#FFF" />
               ) : (
-                <Text style={styles.buyButton}>购买</Text>
+                <Text style={styles.buyButton}>{t('recharge.buy')}</Text>
               )}
             </TouchableOpacity>
           ))}

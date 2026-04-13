@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>寻宝记</string>
+    <string>Treasure Hunt</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -46,14 +46,13 @@
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to use your location.</string>
+    <string>Allow Treasure Hunt to use your location to detect nearby treasures.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>我们需要您的位置来检测附近的宝藏</string>
+    <string>Allow Treasure Hunt to use your location to detect nearby treasures.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>我们需要您的位置来显示附近的宝藏</string>
+    <string>Allow Treasure Hunt to use your location to show nearby treasures.</string>
     <key>NSUserActivityTypes</key>
     <array>
-      <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
     <key>UIBackgroundModes</key>

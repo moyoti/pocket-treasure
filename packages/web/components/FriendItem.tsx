@@ -3,6 +3,7 @@
 import React from 'react';
 import { User, MessageCircle, Gift, MoreVertical, Clock } from 'lucide-react';
 import { Friend } from '@/types';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface FriendItemProps {
   friend: Friend;
@@ -12,6 +13,7 @@ interface FriendItemProps {
 }
 
 export default function FriendItem({ friend, onMessage, onTrade, onRemove }: FriendItemProps) {
+  const { t } = useLocale();
   const [showMenu, setShowMenu] = React.useState(false);
 
   const formatLastSeen = (dateStr?: string) => {
@@ -23,10 +25,10 @@ export default function FriendItem({ friend, onMessage, onTrade, onRemove }: Fri
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return '刚刚';
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    if (diffHours < 24) return `${diffHours}小时前`;
-    if (diffDays < 7) return `${diffDays}天前`;
+    if (diffMins < 1) return t('friends.justNow');
+    if (diffMins < 60) return t('friends.minutesAgo', { minutes: diffMins });
+    if (diffHours < 24) return t('friends.hoursAgo', { hours: diffHours });
+    if (diffDays < 7) return t('friends.daysAgo', { days: diffDays });
     return date.toLocaleDateString('zh-CN');
   };
 
@@ -61,7 +63,7 @@ export default function FriendItem({ friend, onMessage, onTrade, onRemove }: Fri
           <h3 className="font-bold text-gray-800 truncate">{friend.username}</h3>
           <p className="text-sm text-gray-500 flex items-center gap-1">
             {friend.isOnline ? (
-              <span className="text-green-500 font-medium">在线</span>
+              <span className="text-green-500 font-medium">{t('friends.online')}</span>
             ) : (
               <>
                 <Clock size={12} />
@@ -76,14 +78,14 @@ export default function FriendItem({ friend, onMessage, onTrade, onRemove }: Fri
           <button
             onClick={() => onMessage?.(friend)}
             className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-            title="发消息"
+            title={t('friends.sendMessage')}
           >
             <MessageCircle size={20} />
           </button>
           <button
             onClick={() => onTrade?.(friend)}
             className="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-colors"
-            title="发起交易"
+            title={t('friends.initiateTrade')}
           >
             <Gift size={20} />
           </button>
@@ -108,7 +110,7 @@ export default function FriendItem({ friend, onMessage, onTrade, onRemove }: Fri
                     }}
                     className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 text-sm font-medium"
                   >
-                    删除好友
+                    {t('friends.removeFriend')}
                   </button>
                 </div>
               </>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ChestOpenResult } from '@/types/chest';
 import { RARITY_COLORS, RARITY_NAMES } from '@treasure-hunt/shared';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface RevealModalProps {
   result: ChestOpenResult;
@@ -11,6 +12,7 @@ interface RevealModalProps {
 }
 
 export function RevealModal({ result, isLegendary, onClose }: RevealModalProps) {
+  const { t } = useLocale();
   const [showFlash, setShowFlash] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const reward = result.rewards[0];
@@ -60,7 +62,7 @@ export function RevealModal({ result, isLegendary, onClose }: RevealModalProps) 
               textShadow: isLegendary ? `0 0 20px ${rarityColor}` : 'none',
             }}
           >
-            {isLegendary ? '⭐ 传说品质! ⭐' : '恭喜获得'}
+            {t('chestOpen.legendaryReward')}
           </h2>
           <p className="text-gray-400">{RARITY_NAMES[reward.rarity]}</p>
         </div>

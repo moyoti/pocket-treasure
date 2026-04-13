@@ -3,11 +3,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useLocale } from '@/contexts/LocaleContext';
 import Link from 'next/link';
 import { ChevronLeft, Heart, Star, Github, Mail, Globe, Map, Smartphone, Code, Wrench } from 'lucide-react';
 
 export default function AboutPage() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
 
   useEffect(() => {
@@ -69,15 +71,15 @@ export default function AboutPage() {
           <h2 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2"><Wrench className="w-5 h-5 text-gray-600" />技术栈</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { name: 'Web 前端', tech: 'Next.js 14' },
-              { name: '移动端', tech: 'React Native + Expo' },
-              { name: '后端', tech: 'NestJS' },
-              { name: '数据库', tech: 'PostgreSQL + PostGIS' },
-              { name: '地图服务', tech: '高德地图' },
-              { name: '认证', tech: 'JWT + OAuth' }
+              { labelKey: 'about.webFrontend', tech: 'Next.js 14' },
+              { labelKey: 'about.mobile', tech: 'React Native + Expo' },
+              { labelKey: 'about.backend', tech: 'NestJS' },
+              { labelKey: 'about.database', tech: 'PostgreSQL + PostGIS' },
+              { labelKey: 'about.mapService', tech: '高德地图' },
+              { labelKey: 'about.auth', tech: 'JWT + OAuth' }
             ].map((item, index) => (
               <div key={index} className="bg-gray-50 rounded-xl p-3 border-2 border-gray-200">
-                <p className="text-xs text-gray-500">{item.name}</p>
+                <p className="text-xs text-gray-500">{t(item.labelKey)}</p>
                 <p className="font-bold text-gray-800">{item.tech}</p>
               </div>
             ))}

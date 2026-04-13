@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface PriceDataPoint {
   date: string;
@@ -35,6 +36,7 @@ export default function MarketPriceChart({
   width = 400,
   height = 200,
 }: MarketPriceChartProps) {
+  const { t } = useLocale();
   const { minPrice, maxPrice, points, areaPath, linePath, trend } = useMemo(() => {
     if (!data || data.length === 0) {
       return {
@@ -222,7 +224,7 @@ export default function MarketPriceChart({
               fontSize={11}
               fontFamily="'Nunito', 'Segoe UI', sans-serif"
             >
-              {formatDate(data[0].date)}
+              {formatDate(data[0].date, t)}
             </text>
             <text
               x={width - CHART_PADDING.right}
@@ -232,7 +234,7 @@ export default function MarketPriceChart({
               fontSize={11}
               fontFamily="'Nunito', 'Segoe UI', sans-serif"
             >
-              {formatDate(data[data.length - 1].date)}
+              {formatDate(data[data.length - 1].date, t)}
             </text>
           </>
         )}
@@ -269,15 +271,15 @@ export default function MarketPriceChart({
   );
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, t: (key: string) => string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return '今天';
+    return t('market.today');
   } else if (diffDays === 1) {
-    return '昨天';
+    return t('market.yesterday');
   } else if (diffDays < 7) {
     return `${diffDays}天前`;
   } else {
