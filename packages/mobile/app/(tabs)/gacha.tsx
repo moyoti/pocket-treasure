@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { getGachaPools, pullGacha, getCoinBalance, getGemBalance } from '@/lib/api';
-import { GachaPool, GachaPullResponse, ItemRarity } from '@/types';
+import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useP2P } from '@/src/p2p/P2PContext';
+import { ItemRarity, GachaPoolDefinition } from '@/src/p2p/types';
 
 const RARITY_COLORS: Record<ItemRarity, string> = {
   common: '#8D99AE',
@@ -28,35 +29,34 @@ const RARITY_BG: Record<ItemRarity, string> = {
   legendary: '#FFFBEB',
 };
 
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
-};
+interface GachaResult {
+  itemId: string;
+  rarity: ItemRarity;
+  isPity: boolean;
+}
 
 export default function GachaScreen() {
-  const router = useRouter();
-  const [pools, setPools] = useState<GachaPool[]>([]);
+  const { t } = useTranslation();
+  const {
+    profile,
+    gachaPools,
+    pullGacha,
+    gachaPities,
+    isInitialized,
+  } = useP2P();
+
   const [selectedPoolIndex, setSelectedPoolIndex] = useState(0);
-  const [selectedCurrency, setSelectedCurrency] = useState<'coins' | 'gems'>('coins');
-  const [coinBalance, setCoinBalance] = useState(0);
-  const [gemBalance, setGemBalance] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [pulling, setPulling] = useState(false);
-  const [lastResult, setLastResult] = useState<GachaPullResponse | null>(null);
+  const [lastResult, setLastResult] = useState<{ items: GachaResult[]; coinsSpent: number } | null>(null);
 
-  const selectedPool = pools[selectedPoolIndex];
+  const selectedPool = gachaPools[selectedPoolIndex];
+  const coinBalance = profile?.coins || 0;
 
-  const isPremiumPool = (pool: GachaPool): boolean => {
-    const hasPremiumItems = pool.items.some(
-      (item) => item.rarity === 'legendary' || item.rarity === 'epic'
-    );
-    const highPrice = pool.singlePrice > 5000;
-    return hasPremiumItems || highPrice;
+  const getRarityName = (rarity: ItemRarity): string => {
+    return t(`rarity.${rarity}`);
   };
 
-  const getPoolRates = (pool: GachaPool): Record<ItemRarity, number> => {
+  const getPoolRates = (pool: GachaPoolDefinition): Record<ItemRarity, number> => {
     const totalWeight = pool.items.reduce((sum, item) => sum + item.weight, 0);
     const rates: Record<ItemRarity, number> = {
       common: 0,
@@ -72,127 +72,68 @@ export default function GachaScreen() {
     return rates;
   };
 
-  const getGemPrice = (coinPrice: number): number => {
-    return Math.ceil(coinPrice / 10);
-  };
-
-  const getDisplayGemPrice = (pool: GachaPool, pullType: 'single' | 'ten'): number => {
-    if (pool.isPremium) {
-      return pullType === 'single' ? pool.gemPrice : pool.tenGemPrice;
-    }
-    return pullType === 'single' ? getGemPrice(pool.singlePrice) : getGemPrice(pool.tenPrice);
-  };
-
-  const fetchData = useCallback(async () => {
-    try {
-      const [poolsData, coinData, gemData] = await Promise.all([
-        getGachaPools(),
-        getCoinBalance(),
-        getGemBalance(),
-      ]);
-      setPools(poolsData.pools || []);
-      setCoinBalance(coinData.balance || 0);
-      setGemBalance(gemData.balance || 0);
-    } catch (error) {
-      console.error('Failed to fetch gacha data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [fetchData])
-  );
-
   const handlePull = async (pullType: 'single' | 'ten') => {
     if (!selectedPool) return;
 
-    const coinPrice = pullType === 'single' ? selectedPool.singlePrice : selectedPool.tenPrice;
-    // For premium pools, use backend-provided gemPrice/tenGemPrice
-    // For standard pools, calculate gem price based on coin price
-    const gemPrice = selectedPool.isPremium
-      ? (pullType === 'single' ? selectedPool.gemPrice : selectedPool.tenGemPrice)
-      : getGemPrice(coinPrice);
+    const price = pullType === 'single' ? selectedPool.singlePrice : selectedPool.tenPrice;
 
-    if (selectedCurrency === 'coins') {
-      if (coinBalance < coinPrice) {
-        Alert.alert('Insufficient Balance', 'You don\'t have enough coins for this pull.');
-        return;
-      }
-    } else {
-      if (gemBalance < gemPrice) {
-        Alert.alert(
-          'Insufficient Gems',
-          'You don\'t have enough gems for this pull.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Get Gems', onPress: () => router.push('/recharge' as any) },
-          ]
-        );
-        return;
-      }
+    if (coinBalance < price) {
+      Alert.alert(t('common.error'), t('gacha.insufficientCoins'));
+      return;
     }
 
     setPulling(true);
     try {
-      const result = await pullGacha({
-        poolId: selectedPool.id,
-        pullType,
-        currency: selectedCurrency,
-      });
-      setLastResult(result);
-      const [coinData, gemData] = await Promise.all([getCoinBalance(), getGemBalance()]);
-      setCoinBalance(coinData.balance || 0);
-      setGemBalance(gemData.balance || 0);
+      const result = await pullGacha(selectedPool.id, pullType);
+      if (result.success) {
+        setLastResult({ items: result.items, coinsSpent: result.coinsSpent });
+      } else {
+        Alert.alert(t('gacha.pullFailed'), result.error || t('gacha.pullError'));
+      }
     } catch (error: any) {
-      Alert.alert('Pull Failed', error.message || 'Failed to perform gacha pull');
+      Alert.alert(t('gacha.pullFailed'), error.message || t('gacha.pullError'));
     } finally {
       setPulling(false);
     }
   };
 
-  if (loading) {
+  const pityCount = selectedPool ? gachaPities[selectedPool.id]?.pityCount || 0 : 0;
+
+  if (!isInitialized) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>Loading gacha...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   const poolRates = selectedPool ? getPoolRates(selectedPool) : null;
-  const poolIsPremium = selectedPool ? isPremiumPool(selectedPool) : false;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Gacha</Text>
+          <Text style={styles.title}>{t('gacha.title')}</Text>
           <View style={styles.currencyContainer}>
             <View style={styles.currencyBadge}>
               <Ionicons name="cash-outline" size={16} color="#D4A017" />
               <Text style={styles.currencyText}>{coinBalance.toLocaleString()}</Text>
             </View>
-            <View style={styles.currencyBadge}>
-              <Ionicons name="diamond-outline" size={16} color="#9B59B6" />
-              <Text style={styles.currencyText}>{gemBalance.toLocaleString()}</Text>
-            </View>
           </View>
         </View>
       </View>
 
-      {pools.length > 1 && (
+      {gachaPools.length > 1 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.poolTabsContainer}
           contentContainerStyle={styles.poolTabsContent}
         >
-          {pools.map((pool, index) => (
+          {gachaPools.map((pool, index) => (
             <TouchableOpacity
               key={pool.id}
               style={[
@@ -210,7 +151,7 @@ export default function GachaScreen() {
                   selectedPoolIndex === index && styles.poolTabTextActive,
                 ]}
               >
-                {pool.name}
+                {pool.nameZh || pool.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -220,48 +161,20 @@ export default function GachaScreen() {
       {selectedPool && (
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           <View style={styles.poolCard}>
-            <Text style={styles.poolName}>{selectedPool.name}</Text>
+            <Text style={styles.poolName}>{selectedPool.nameZh || selectedPool.name}</Text>
             <Text style={styles.poolDescription}>{selectedPool.description}</Text>
+            {pityCount > 0 && (
+              <View style={styles.pityRow}>
+                <Text style={styles.pityText}>
+                  {t('gacha.pityProgress')}: {pityCount}/{selectedPool.pityThreshold}
+                </Text>
+              </View>
+            )}
           </View>
-
-          {poolIsPremium && (
-            <View style={styles.currencySelector}>
-              <TouchableOpacity
-                style={[
-                  styles.currencyTab,
-                  selectedCurrency === 'coins' && styles.currencyTabActive,
-                ]}
-                onPress={() => setSelectedCurrency('coins')}
-              >
-                <Ionicons name="cash-outline" size={18} color={selectedCurrency === 'coins' ? '#D4A017' : '#AAA'} />
-                <Text style={[
-                  styles.currencyTabText,
-                  selectedCurrency === 'coins' && styles.currencyTabTextActive,
-                ]}>
-                  {selectedPool.singlePrice} Coins
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.currencyTab,
-                  selectedCurrency === 'gems' && styles.currencyTabActive,
-                ]}
-                onPress={() => setSelectedCurrency('gems')}
-              >
-                <Ionicons name="diamond-outline" size={18} color={selectedCurrency === 'gems' ? '#9B59B6' : '#AAA'} />
-                <Text style={[
-                  styles.currencyTabText,
-                  selectedCurrency === 'gems' && styles.currencyTabTextActive,
-                ]}>
-                  {getDisplayGemPrice(selectedPool, 'single')} Gems
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
           {poolRates && (
             <View style={styles.ratesCard}>
-              <Text style={styles.ratesTitle}>Drop Rates</Text>
+              <Text style={styles.ratesTitle}>{t('gacha.dropRates')}</Text>
               <View style={styles.ratesGrid}>
                 {(['legendary', 'epic', 'rare', 'common'] as ItemRarity[]).map((rarity) => (
                   <View key={rarity} style={styles.rateItem}>
@@ -271,11 +184,11 @@ export default function GachaScreen() {
                         { backgroundColor: RARITY_BG[rarity] },
                       ]}
                     >
-                      <Text style={[styles.rateEmoji]}>
+                      <Text style={styles.rateEmoji}>
                         {rarity === 'legendary' ? '👑' : rarity === 'epic' ? '⭐' : rarity === 'rare' ? '💎' : '📦'}
                       </Text>
                     </View>
-                    <Text style={styles.rateLabel}>{RARITY_NAMES[rarity]}</Text>
+                    <Text style={styles.rateLabel}>{getRarityName(rarity)}</Text>
                     <Text style={[styles.rateValue, { color: RARITY_COLORS[rarity] }]}>
                       {poolRates[rarity]}%
                     </Text>
@@ -299,23 +212,12 @@ export default function GachaScreen() {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Text style={styles.pullButtonTitle}>Single Pull</Text>
+                  <Text style={styles.pullButtonTitle}>{t('gacha.singlePull')}</Text>
                   <View style={styles.pullButtonPrice}>
-                    {poolIsPremium && selectedCurrency === 'gems' ? (
-                      <>
-                        <Ionicons name="diamond-outline" size={14} color="#E0B0FF" />
-                        <Text style={styles.pullButtonPriceText}>
-                          {getDisplayGemPrice(selectedPool, 'single')}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Ionicons name="cash-outline" size={14} color="#FFE0A0" />
-                        <Text style={styles.pullButtonPriceText}>
-                          {selectedPool.singlePrice}
-                        </Text>
-                      </>
-                    )}
+                    <Ionicons name="cash-outline" size={14} color="#FFE0A0" />
+                    <Text style={styles.pullButtonPriceText}>
+                      {selectedPool.singlePrice}
+                    </Text>
                   </View>
                 </>
               )}
@@ -334,23 +236,12 @@ export default function GachaScreen() {
                 <ActivityIndicator color="#FFF" />
               ) : (
                 <>
-                  <Text style={styles.pullButtonTitle}>10x Pull</Text>
+                  <Text style={styles.pullButtonTitle}>{t('gacha.tenPull')}</Text>
                   <View style={styles.pullButtonPrice}>
-                    {poolIsPremium && selectedCurrency === 'gems' ? (
-                      <>
-                        <Ionicons name="diamond-outline" size={14} color="#E0B0FF" />
-                        <Text style={styles.pullButtonPriceText}>
-                          {getDisplayGemPrice(selectedPool, 'ten')}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Ionicons name="cash-outline" size={14} color="#FFE0A0" />
-                        <Text style={styles.pullButtonPriceText}>
-                          {selectedPool.tenPrice}
-                        </Text>
-                      </>
-                    )}
+                    <Ionicons name="cash-outline" size={14} color="#FFE0A0" />
+                    <Text style={styles.pullButtonPriceText}>
+                      {selectedPool.tenPrice}
+                    </Text>
                   </View>
                 </>
               )}
@@ -359,9 +250,9 @@ export default function GachaScreen() {
 
           {lastResult && (
             <View style={styles.resultCard}>
-              <Text style={styles.resultTitle}>Latest Pull Results</Text>
+              <Text style={styles.resultTitle}>{t('gacha.results')}</Text>
               <View style={styles.resultItems}>
-                {lastResult.results.map((result, index) => (
+                {lastResult.items.map((result, index) => (
                   <View
                     key={index}
                     style={[
@@ -375,9 +266,8 @@ export default function GachaScreen() {
                       </Text>
                     </View>
                     <View style={styles.resultItemInfo}>
-                      <Text style={styles.resultItemName}>{result.item.name}</Text>
                       <Text style={[styles.resultItemRarity, { color: RARITY_COLORS[result.rarity] }]}>
-                        {RARITY_NAMES[result.rarity]} {result.isPity && '⭐ PITY!'}
+                        {getRarityName(result.rarity)} {result.isPity && `⭐ ${t('gacha.pityTriggered')}`}
                       </Text>
                     </View>
                   </View>
@@ -388,13 +278,13 @@ export default function GachaScreen() {
         </ScrollView>
       )}
 
-      {pools.length === 0 && (
+      {gachaPools.length === 0 && (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
             <Ionicons name="gift-outline" size={48} color="#CCC" />
           </View>
-          <Text style={styles.emptyText}>No gacha pools available</Text>
-          <Text style={styles.emptySubtext}>Check back later for new content!</Text>
+          <Text style={styles.emptyText}>{t('gacha.noPool')}</Text>
+          <Text style={styles.emptySubtext}>{t('common.retry')}</Text>
         </View>
       )}
     </SafeAreaView>
@@ -500,34 +390,13 @@ const styles = StyleSheet.create({
     color: '#888',
     lineHeight: 20,
   },
-  currencySelector: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#F0E8D8',
+  pityRow: {
+    marginTop: 8,
   },
-  currencyTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 6,
-  },
-  currencyTabActive: {
-    backgroundColor: '#FFF8E7',
-  },
-  currencyTabText: {
-    fontSize: 14,
+  pityText: {
+    fontSize: 12,
+    color: '#D4A017',
     fontWeight: '600',
-    color: '#AAA',
-  },
-  currencyTabTextActive: {
-    color: '#1A1A1A',
   },
   ratesCard: {
     backgroundColor: '#FFFFFF',
@@ -647,11 +516,6 @@ const styles = StyleSheet.create({
   },
   resultItemInfo: {
     flex: 1,
-  },
-  resultItemName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1A1A1A',
   },
   resultItemRarity: {
     fontSize: 12,

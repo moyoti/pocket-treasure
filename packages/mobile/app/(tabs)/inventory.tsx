@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,16 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
-import { getInventory, getInventoryStats } from '@/api/inventory';
-import { InventoryItem, ItemRarity } from '@/types';
-
-const RARITY_COLORS: Record<ItemRarity, string> = {
-  common: '#8D99AE',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#F59E0B',
-};
+import { router } from 'expo-router';
+import { useP2P } from '@/src/p2p';
+import { InventoryItem, ItemRarity, RARITY_COLORS } from '@/src/p2p/types';
+import { getItemById } from '@/src/p2p/data/items';
 
 const RARITY_BG: Record<ItemRarity, string> = {
   common: '#F1F3F5',
@@ -42,40 +36,78 @@ const RARITY_ICONS: Record<ItemRarity, string> = {
   legendary: 'trophy',
 };
 
+interface DisplayItem {
+  id: string;
+  itemDef: {
+    id: string;
+    name: string;
+    rarity: ItemRarity;
+  };
+  quantity: number;
+  poiName?: string;
+  collectedAt: number;
+}
+
 export default function InventoryScreen() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { inventory, nearbyPOIs, isLoading, refreshInventory } = useP2P();
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = async () => {
-    try {
-      const [inventoryData, statsData] = await Promise.all([
-        getInventory(),
-        getInventoryStats(),
-      ]);
-      setItems(inventoryData);
-      setStats(statsData);
-    } catch (error) {
-      console.error('Failed to fetch inventory:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [])
-  );
-
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchData();
+    await refreshInventory();
+    setRefreshing(false);
   };
 
-  if (loading) {
+  const displayItems: DisplayItem[] = useMemo(() => {
+    const grouped: Record<string, DisplayItem> = {};
+    
+    for (const invItem of inventory) {
+      const itemDef = getItemById(invItem.itemId);
+      if (!itemDef) continue;
+      
+      const key = invItem.itemId;
+      if (grouped[key]) {
+        grouped[key].quantity += invItem.quantity;
+      } else {
+        const poi = nearbyPOIs.find(p => p.id === invItem.sourcePoiId);
+        grouped[key] = {
+          id: invItem.id,
+          itemDef: {
+            id: itemDef.id,
+            name: itemDef.name,
+            rarity: itemDef.rarity,
+          },
+          quantity: invItem.quantity,
+          poiName: poi?.name,
+          collectedAt: invItem.collectedAt,
+        };
+      }
+    }
+    
+    return Object.values(grouped).sort((a, b) => {
+      const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
+      return rarityOrder[a.itemDef.rarity] - rarityOrder[b.itemDef.rarity];
+    });
+  }, [inventory, nearbyPOIs]);
+
+  const stats = useMemo(() => {
+    const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
+    const uniqueItems = displayItems.length;
+    const byRarity: Record<ItemRarity, number> = {
+      common: 0,
+      rare: 0,
+      epic: 0,
+      legendary: 0,
+    };
+    
+    for (const item of displayItems) {
+      byRarity[item.itemDef.rarity] += item.quantity;
+    }
+    
+    return { totalItems, uniqueItems, byRarity };
+  }, [inventory, displayItems]);
+
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -86,12 +118,12 @@ export default function InventoryScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: InventoryItem }) => {
-    const rarity = item.item.rarity as ItemRarity;
+  const renderItem = ({ item }: { item: DisplayItem }) => {
+    const rarity = item.itemDef.rarity;
     return (
       <TouchableOpacity
         style={[styles.itemCard, { borderLeftColor: RARITY_COLORS[rarity] }]}
-        onPress={() => router.push(`/item/${item.id}`)}
+        onPress={() => router.push(`/item/${item.itemDef.id}`)}
         activeOpacity={0.7}
       >
         <View style={[styles.itemIconContainer, { backgroundColor: RARITY_BG[rarity] }]}>
@@ -102,7 +134,7 @@ export default function InventoryScreen() {
           />
         </View>
         <View style={styles.itemInfo}>
-          <Text style={styles.itemName} numberOfLines={1}>{item.item.name}</Text>
+          <Text style={styles.itemName} numberOfLines={1}>{item.itemDef.name}</Text>
           <View style={styles.rarityRow}>
             <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
               <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
@@ -127,13 +159,11 @@ export default function InventoryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Backpack</Text>
         <Text style={styles.subtitle}>Your collected treasures</Text>
       </View>
 
-      {/* Stats section */}
       {stats && (
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -146,7 +176,7 @@ export default function InventoryScreen() {
             <Text style={styles.statValue}>{stats.uniqueItems}</Text>
             <Text style={styles.statLabel}>Unique</Text>
           </View>
-          {stats.byRarity && Object.entries(stats.byRarity).map(([rarity, count]) => (
+          {Object.entries(stats.byRarity).map(([rarity, count]) => (
             <View key={rarity} style={styles.statCard}>
               <Ionicons
                 name={RARITY_ICONS[rarity as ItemRarity] as any}
@@ -154,7 +184,7 @@ export default function InventoryScreen() {
                 color={RARITY_COLORS[rarity as ItemRarity]}
               />
               <Text style={[styles.statValue, { color: RARITY_COLORS[rarity as ItemRarity] }]}>
-                {count as number}
+                {count}
               </Text>
               <Text style={styles.statLabel}>{RARITY_NAMES[rarity as ItemRarity]}</Text>
             </View>
@@ -162,9 +192,8 @@ export default function InventoryScreen() {
         </View>
       )}
 
-      {/* Items list */}
       <FlatList
-        data={items}
+        data={displayItems}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}

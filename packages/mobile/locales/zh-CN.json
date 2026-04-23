@@ -44,7 +44,12 @@
     "shop": "商店",
     "gacha": "抽奖",
     "market": "市场",
-    "profile": "我的"
+    "profile": "我的",
+    "tasks": "任务",
+    "achievements": "成就",
+    "cosmetics": "装饰品",
+    "explore": "探索",
+    "backpack": "背包"
   },
   "map": {
     "title": "寻宝地图",
@@ -122,7 +127,10 @@
     "dropRates": "掉落概率",
     "coins": "金币",
     "discount": "9折优惠！",
-    "noPool": "暂无奖池"
+    "noPool": "暂无奖池",
+    "insufficientCoins": "您没有足够的金币进行抽奖。",
+    "pullFailed": "抽奖失败",
+    "pullError": "抽奖失败，请稍后重试"
   },
   "market": {
     "title": "交易市场",
@@ -196,7 +204,17 @@
     "progress": "进度",
     "claimReward": "领取奖励",
     "claimed": "已领取",
-    "noAchievements": "暂无成就"
+    "noAchievements": "暂无成就",
+    "achievement": "成就",
+    "overallProgress": "总体进度",
+    "completedCount": "已完成 {{count}} / {{total}}",
+    "toClaim": "{{count}} 个待领取",
+    "startCollecting": "开始收集宝藏以解锁成就",
+    "status": {
+      "in_progress": "进行中",
+      "completed": "已完成",
+      "claimed": "已领取"
+    }
   },
   "leaderboard": {
     "title": "排行榜",
@@ -225,6 +243,7 @@
   },
   "tasks": {
     "title": "任务",
+    "dailyTasks": "每日任务",
     "dailyLogin": "每日登录",
     "collectTreasures": "收集宝物",
     "visitLocations": "访问地点",
@@ -234,7 +253,19 @@
     "inProgress": "进行中",
     "completed": "已完成",
     "expired": "已过期",
-    "rewards": "奖励"
+    "rewards": "奖励",
+    "progress": "进度",
+    "exp": "经验",
+    "todayProgress": "今日进度",
+    "taskTypes": {
+      "login": "每日登录",
+      "collect": "收集宝藏",
+      "visit_poi": "访问地点",
+      "collect_rarity": "稀有收集"
+    },
+    "rarityRequirement": "需要",
+    "noTasks": "暂无每日任务",
+    "checkBackTomorrow": "明天再来查看新任务"
   },
   "friends": {
     "title": "好友",
@@ -368,7 +399,44 @@
     "noTasks": "暂无任务"
   },
   "items": {
-    "common": {
+"screens": {
+    "itemDetails": "物品详情",
+    "statistics": "统计数据",
+    "settings": "设置",
+    "help": "帮助",
+    "about": "关于"
+  },
+  "rarity": {
+    "common": "普通",
+    "rare": "稀有",
+    "epic": "史诗",
+    "legendary": "传说"
+  },
+  "cosmetics": {
+    "title": "装饰品",
+    "all": "全部",
+    "avatarFrame": "头像框",
+    "badge": "徽章",
+    "mapSkin": "地图皮肤",
+    "sticker": "贴纸",
+    "titleItem": "称号",
+    "profileBackground": "背景",
+    "equipped": "已装备",
+    "owned": "已拥有",
+    "purchase": "购买",
+    "purchaseTitle": "购买装饰品",
+    "price": "价格",
+    "insufficientCoins": "金币不足，需要 {{price}} 金币",
+    "purchaseSuccess": "成功购买「{{name}}」！",
+    "purchaseFailed": "购买失败",
+    "equipSuccess": "成功装备「{{name}}」！",
+    "equipFailed": "装备失败",
+    "unequipTitle": "卸下",
+    "unequipConfirm": "是否卸下此装饰品？",
+    "noCosmetics": "暂无装饰品",
+    "comingSoon": "敬请期待更多装饰品上线"
+  },
+  "common": {
       "普通石子": "一颗普通的石子，虽然不起眼但也是收藏的一部分。",
       "小树枝": "从树上掉落的小树枝，朴实无华。",
       "露珠": "清晨凝结的露珠，纯净透明。",

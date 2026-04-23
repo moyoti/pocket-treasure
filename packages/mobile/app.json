@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "treasurehunt",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -15,12 +16,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.treasurehunt.app",
-      "buildNumber": "1.0.0",
+      "buildNumber": "1",
       "infoPlist": {
-        "CFBundleDisplayName": "Treasure Hunt",
-        "NSLocationWhenInUseUsageDescription": "Allow Treasure Hunt to use your location to show nearby treasures.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow Treasure Hunt to use your location to detect nearby treasures.",
-        "NSLocationAlwaysUsageDescription": "Allow Treasure Hunt to use your location to detect nearby treasures.",
+        "CFBundleDisplayName": "寻宝记",
+        "NSLocationWhenInUseUsageDescription": "寻宝记需要您的位置来显示附近的宝藏。",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "寻宝记需要您的位置来检测附近的宝藏。",
+        "NSLocationAlwaysUsageDescription": "寻宝记需要您的位置来检测附近的宝藏。",
         "UIUserInterfaceStyle": "Light"
       }
     },
@@ -32,7 +33,8 @@
       "package": "com.treasurehunt.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "INTERNET"
       ]
     },
     "web": {
@@ -46,9 +48,10 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Treasure Hunt to use your location to detect nearby treasures."
+          "locationAlwaysAndWhenInUsePermission": "寻宝记需要您的位置来检测附近的宝藏。"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

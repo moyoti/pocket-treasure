@@ -1,253 +1,112 @@
-import axios, { AxiosError } from 'axios';
-import { getStoredToken, clearAuth } from './storage';
+import { ItemRarity } from '@/types';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+export type CosmeticType = 'avatar_frame' | 'badge' | 'map_skin' | 'sticker' | 'title' | 'profile_background';
 
-// API Error response type
-interface ApiErrorResponse {
-  statusCode: number;
-  message: string | string[];
-  error?: string;
-  timestamp: string;
-  path: string;
+export interface CosmeticDefinition {
+  id: string;
+  name: string;
+  description: string;
+  type: CosmeticType;
+  rarity: ItemRarity;
+  price: number;
+  iconUrl?: string;
+  isLimited: boolean;
+  validFrom?: string;
+  validUntil?: string;
+  isActive: boolean;
+  metadata?: Record<string, any>;
 }
 
-// Custom error class for API errors
-export class ApiError extends Error {
-  public statusCode: number;
-  public details?: string | string[];
-
-  constructor(message: string, statusCode: number, details?: string | string[]) {
-    super(message);
-    this.name = 'ApiError';
-    this.statusCode = statusCode;
-    this.details = details;
-  }
+export interface UserCosmetic {
+  id: string;
+  userId: string;
+  cosmeticId: string;
+  cosmeticType: CosmeticType;
+  isEquipped: boolean;
+  equippedAt?: string;
+  purchasedAt: string;
+  definition: CosmeticDefinition;
 }
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  async (config) => {
-    const token = await getStoredToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError<ApiErrorResponse>) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid - clear auth data
-      console.warn('Authentication failed, clearing stored credentials');
-      await clearAuth();
-      // Note: Navigation to login should be handled by the calling component
-      // or via a global event/listener pattern
-    }
-
-    // Transform error for consistent handling
-    const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
-    const statusCode = error.response?.status || 500;
-    const details = error.response?.data?.message;
-
-    console.error(`API Error [${statusCode}]:`, message);
-
-    return Promise.reject(new ApiError(
-      typeof message === 'string' ? message : message.join(', '),
-      statusCode,
-      details
-    ));
-  }
-);
-
-export default api;
-
-// ==================== Daily Tasks API ====================
-
-export async function getDailyTasks() {
-  const response = await api.get('/daily-tasks');
-  return response.data;
+export async function getGachaPools() {
+  return { pools: [] };
 }
 
-export async function claimTaskReward(taskId: string) {
-  const response = await api.post(`/daily-tasks/claim/${taskId}`);
-  return response.data;
+export async function pullGacha(_data: { poolId: string; pullType?: 'single' | 'ten'; currency?: 'coins' | 'gems' }) {
+  return {
+    success: true,
+    pool: { id: 'default', name: 'Default Pool' },
+    pullType: 'single' as const,
+    results: [],
+    coinsSpent: 0,
+    gemsSpent: 0,
+    newCoinBalance: 0,
+    newGemBalance: 0,
+    newPityCount: 0,
+    currencyUsed: 'coins' as const,
+  };
 }
 
-export async function refreshDailyTasks() {
-  const response = await api.post('/daily-tasks/refresh');
-  return response.data;
+export async function getCoinBalance() {
+  return { balance: 0 };
 }
 
-export async function getDailyTaskStats() {
-  const response = await api.get('/daily-tasks/stats');
-  return response.data;
-}
-
-// ==================== Achievements API ====================
-
-export async function getAchievements() {
-  const response = await api.get('/achievements');
-  return response.data;
+export async function getGemBalance() {
+  return { balance: 0, totalEarned: 0, totalSpent: 0 };
 }
 
 export async function getUserAchievements() {
-  const response = await api.get('/achievements/me');
-  return response.data;
+  return [];
 }
 
-export async function claimAchievementReward(achievementId: string) {
-  const response = await api.post(`/achievements/claim/${achievementId}`);
-  return response.data;
+export async function claimAchievementReward(_achievementId: string) {
+  return { success: false, rewards: { coins: 0, experience: 0 }, newCoins: 0, newExperience: 0, newLevel: 1 };
 }
 
-// ==================== User Stats API ====================
+export async function getDailyTasks() {
+  return { tasks: [], stats: { todayCompleted: 0, todayTotal: 0, todayClaimed: 0 } };
+}
+
+export async function claimTaskReward(_taskId: string) {
+  return { success: false, message: 'Not implemented', rewards: { coins: 0, experience: 0 }, task: null as any };
+}
+
+export async function refreshDailyTasks() {
+  return { tasks: [], stats: { todayCompleted: 0, todayTotal: 0, todayClaimed: 0 } };
+}
+
+export async function getDailyTaskStats() {
+  return { todayCompleted: 0, todayTotal: 0, todayClaimed: 0 };
+}
 
 export async function getUserStats() {
-  const response = await api.get('/users/stats');
-  return response.data;
+  return { totalItems: 0, uniqueItems: 0, byRarity: { common: 0, rare: 0, epic: 0, legendary: 0 } };
 }
 
-// ==================== Economy API ====================
-
-export async function getCoinBalance() {
-  const response = await api.get('/economy/balance');
-  return response.data;
+export async function getAllCosmetics(): Promise<CosmeticDefinition[]> {
+  return [];
 }
 
-export async function getCoinStats() {
-  const response = await api.get('/economy/stats');
-  return response.data;
+export async function getUserCosmetics() {
+  return { owned: [] as UserCosmetic[], equipped: [] as UserCosmetic[] };
 }
 
-export async function sellItemToNPC(data: { inventoryItemId: string; quantity: number }) {
-  const response = await api.post('/economy/sell', data);
-  return response.data;
+export async function purchaseCosmetic(_cosmeticId: string) {
+  return { success: false, userCosmetic: null as any, newGemsBalance: 0 };
 }
 
-export async function sellItemsToNPC(items: { inventoryItemId: string; quantity: number }[]) {
-  const response = await api.post('/economy/sell-batch', { items });
-  return response.data;
+export async function equipCosmetic(_cosmeticId: string) {
+  return { success: false, equippedCosmetic: null as any };
 }
 
-// ==================== Shop API ====================
+export async function unequipCosmetic(_cosmeticType: CosmeticType) {
+  return { success: false };
+}
 
 export async function getShopItems() {
-  const response = await api.get('/shop/items');
-  return response.data.items || [];
+  return [];
 }
 
-export async function purchaseShopItem(data: { shopItemId: string; quantity: number }) {
-  const response = await api.post('/shop/purchase', data);
-  return response.data;
-}
-
-// ==================== Chest API ====================
-
-export async function getChests() {
-  const response = await api.get('/chests');
-  return response.data;
-}
-
-export async function openChest(data: { chestId: string }) {
-  const response = await api.post('/chests/open', data);
-  return response.data;
-}
-
-// ==================== Gacha API ====================
-
-export async function getGachaPools() {
-  const response = await api.get('/gacha/pools');
-  return response.data;
-}
-
-export async function pullGacha(data: { poolId: string; pullType?: 'single' | 'ten'; currency?: 'coins' | 'gems' }) {
-  const response = await api.post('/gacha/pull', data);
-  return response.data;
-}
-
-// ==================== Market API ====================
-
-export async function getMarketListings(params?: {
-  rarity?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  search?: string;
-  page?: number;
-  limit?: number;
-}) {
-  const response = await api.get('/market/listings', { params });
-  return response.data.listings || [];
-}
-
-export async function getMyListings() {
-  const response = await api.get('/market/my/listings');
-  return response.data;
-}
-
-export async function createMarketListing(data: { inventoryItemId: string; quantity: number; price: number }) {
-  const response = await api.post('/market/list', data);
-  return response.data;
-}
-
-export async function buyMarketListing(listingId: string) {
-  const response = await api.post(`/market/buy/${listingId}`);
-  return response.data;
-}
-
-export async function cancelMarketListing(listingId: string) {
-  const response = await api.post(`/market/cancel/${listingId}`);
-  return response.data;
-}
-
-// ==================== Gems API ====================
-
-export async function getGemBalance(): Promise<{ balance: number; totalEarned: number; totalSpent: number }> {
-  const response = await api.get('/gems/balance');
-  return response.data;
-}
-
-export async function getGemTransactions(page = 1, limit = 20) {
-  const response = await api.get('/gems/transactions', { params: { page, limit } });
-  return response.data;
-}
-
-// ==================== Recharge API ====================
-
-export async function getRechargePackages() {
-  const response = await api.get('/recharge/packages');
-  return response.data;
-}
-
-export async function createRechargeOrder(packageId: string) {
-  const response = await api.post('/recharge/orders', { packageId });
-  return response.data;
-}
-
-export async function getRechargeHistory() {
-  const response = await api.get('/recharge/history');
-  return response.data;
-}
-
-export async function mockPaymentCallback(orderId: string) {
-  // Mock: simulate WeChat/Alipay callback for development
-  const response = await api.post('/recharge/callback', {
-    orderId,
-    transactionId: `MOCK_${Date.now()}`,
-    status: 'completed',
-  });
-  return response.data;
+export async function purchaseShopItem(_data: { shopItemId: string; quantity: number }) {
+  return { success: false, coinsSpent: 0, newBalance: 0, itemsReceived: [] };
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,41 +10,47 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getUserAchievements, claimAchievementReward } from '@/lib/api';
-import { AchievementProgress, AchievementStatus } from '@/types';
+import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useP2P } from '@/src/p2p/P2PContext';
+import { AchievementDefinition, UserAchievement, AchievementStatus } from '@/src/p2p/types';
+import { ACHIEVEMENT_DEFINITIONS, getAchievementById } from '@/src/p2p/data/achievements';
+
+interface AchievementProgress {
+  achievement: AchievementDefinition;
+  progress: number;
+  requirement: number;
+  status: AchievementStatus;
+  canClaim: boolean;
+}
 
 export default function AchievementsScreen() {
-  const [achievements, setAchievements] = useState<AchievementProgress[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
+  const { achievements, claimAchievement, refreshAchievements, isInitialized } = useP2P();
   const [refreshing, setRefreshing] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
-  const fetchAchievements = useCallback(async () => {
-    try {
-      const data = await getUserAchievements();
-      setAchievements(data || []);
-    } catch (error) {
-      console.error('Failed to fetch achievements:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  const achievementProgress: AchievementProgress[] = ACHIEVEMENT_DEFINITIONS.map(def => {
+    const userAch = achievements.find(ua => ua.achievementId === def.id);
+    return {
+      achievement: def,
+      progress: userAch?.progress || 0,
+      requirement: def.requirement,
+      status: userAch?.status || 'in_progress',
+      canClaim: userAch?.status === 'completed' && !userAch?.claimedAt,
+    };
+  });
 
-  useEffect(() => {
-    fetchAchievements();
-  }, [fetchAchievements]);
-
-  const onRefresh = () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    fetchAchievements();
-  };
+    await refreshAchievements();
+    setRefreshing(false);
+  }, [refreshAchievements]);
 
   const handleClaim = async (achievementId: string) => {
     setClaimingId(achievementId);
     try {
-      await claimAchievementReward(achievementId);
-      await fetchAchievements();
+      await claimAchievement(achievementId);
     } catch (error) {
       console.error('Failed to claim achievement:', error);
     } finally {
@@ -52,7 +58,7 @@ export default function AchievementsScreen() {
     }
   };
 
-  if (loading) {
+  if (!isInitialized) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.centerContainer}>
@@ -63,7 +69,7 @@ export default function AchievementsScreen() {
   }
 
   const completedCount = achievements.filter(a => a.status === 'claimed').length;
-  const canClaimCount = achievements.filter(a => a.canClaim).length;
+  const canClaimCount = achievementProgress.filter(a => a.canClaim).length;
 
   const tierColors: Record<number, string> = {
     1: '#8D99AE',
@@ -85,7 +91,7 @@ export default function AchievementsScreen() {
           <View style={styles.titleRow}>
             <Text style={styles.icon}>{ach.icon}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{ach.name}</Text>
+              <Text style={styles.cardTitle}>{ach.nameZh || ach.name}</Text>
               <Text style={styles.description} numberOfLines={2}>{ach.description}</Text>
             </View>
             {isClaimed && (
@@ -98,7 +104,7 @@ export default function AchievementsScreen() {
 
           <View style={styles.progressSection}>
             <View style={styles.progressRow}>
-              <Text style={styles.progressLabel}>Progress</Text>
+              <Text style={styles.progressLabel}>{t('achievements.progress')}</Text>
               <Text style={styles.progressValue}>{progress} / {requirement}</Text>
             </View>
             <View style={styles.progressBar}>
@@ -139,7 +145,7 @@ export default function AchievementsScreen() {
                   {claimingId === ach.id ? (
                     <ActivityIndicator size="small" color="#FFF" />
                   ) : (
-                    <Text style={styles.claimButtonText}>Claim</Text>
+                    <Text style={styles.claimButtonText}>{t('achievements.claimReward')}</Text>
                   )}
                 </TouchableOpacity>
               )}
@@ -153,19 +159,18 @@ export default function AchievementsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Achievements</Text>
+        <Text style={styles.title}>{t('achievements.title')}</Text>
         <Text style={styles.subtitle}>
-          {completedCount} of {achievements.length} completed
-          {canClaimCount > 0 ? ` -- ${canClaimCount} to claim` : ''}
+          {t('achievements.completedCount', { count: completedCount, total: achievementProgress.length })}
+          {canClaimCount > 0 ? ` — ${t('achievements.toClaim', { count: canClaimCount })}` : ''}
         </Text>
       </View>
 
-      {/* Overall progress */}
       <View style={styles.statsCard}>
         <View style={styles.statsRow}>
           <View>
-            <Text style={styles.statsLabel}>Overall Progress</Text>
-            <Text style={styles.statsValue}>{completedCount} / {achievements.length}</Text>
+            <Text style={styles.statsLabel}>{t('achievements.overallProgress')}</Text>
+            <Text style={styles.statsValue}>{completedCount} / {achievementProgress.length}</Text>
           </View>
           <View style={styles.statsIconCircle}>
             <Ionicons name="medal" size={24} color="#9B59B6" />
@@ -177,7 +182,7 @@ export default function AchievementsScreen() {
               styles.progressFill,
               { backgroundColor: '#9B59B6' },
               {
-                width: `${achievements.length > 0 ? (completedCount / achievements.length) * 100 : 0}%`,
+                width: `${achievementProgress.length > 0 ? (completedCount / achievementProgress.length) * 100 : 0}%`,
               },
             ]}
           />
@@ -185,7 +190,7 @@ export default function AchievementsScreen() {
       </View>
 
       <FlatList
-        data={achievements}
+        data={achievementProgress.filter(ap => !ap.achievement.isHidden)}
         keyExtractor={(item) => item.achievement.id}
         renderItem={renderAchievementItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
@@ -195,8 +200,8 @@ export default function AchievementsScreen() {
             <View style={styles.emptyIconCircle}>
               <Ionicons name="medal-outline" size={40} color="#CCC" />
             </View>
-            <Text style={styles.emptyText}>No achievements yet</Text>
-            <Text style={styles.emptySubtext}>Start collecting treasures to unlock achievements</Text>
+            <Text style={styles.emptyText}>{t('achievements.noAchievements')}</Text>
+            <Text style={styles.emptySubtext}>{t('achievements.startCollecting')}</Text>
           </View>
         }
       />

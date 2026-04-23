@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,25 +12,45 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { getShopItems, purchaseShopItem, getCoinBalance } from '@/lib/api';
-import { ShopItem, ItemRarity, CoinBalance } from '@/types';
-import { RARITY_COLORS, RARITY_BG, RARITY_NAMES, RARITY_ICONS } from '@/constants/colors';
-import { QuantitySelector } from '@/components/QuantitySelector';
-import { CoinBalance as CoinBalanceComponent } from '@/components/CoinBalance';
+import { useP2P } from '@/src/p2p/P2PContext';
+import { ShopItemDefinition, ItemRarity } from '@/src/p2p/types';
+import { RARITY_COLORS, RARITY_BG } from '@/src/p2p/types';
+
+const RARITY_NAMES: Record<ItemRarity, string> = {
+  common: '普通',
+  rare: '稀有',
+  epic: '史诗',
+  legendary: '传说',
+};
+
+const RARITY_ICONS: Record<ItemRarity, string> = {
+  common: 'star-outline',
+  rare: 'star',
+  epic: 'star-half',
+  legendary: 'star-sharp',
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  '补给': 'medical',
+  '道具': 'cube',
+  '宝箱': 'gift',
+  '礼包': 'gift-outline',
+};
 
 export default function ShopScreen() {
-  const { t } = useTranslation();
   const router = useRouter();
-  const [items, setItems] = useState<ShopItem[]>([]);
-  const [balance, setBalance] = useState<CoinBalance | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    profile,
+    shopItems,
+    purchaseShopItem,
+    refreshProfile,
+    refreshInventory,
+  } = useP2P();
+
   const [error, setError] = useState('');
-  
-  // Purchase modal state
   const [purchaseModal, setPurchaseModal] = useState<{
     isOpen: boolean;
-    item: ShopItem | null;
+    item: ShopItemDefinition | null;
     quantity: number;
     loading: boolean;
   }>({
@@ -40,7 +60,6 @@ export default function ShopScreen() {
     loading: false,
   });
 
-  // Success modal state
   const [successModal, setSuccessModal] = useState<{
     isOpen: boolean;
     message: string;
@@ -49,27 +68,11 @@ export default function ShopScreen() {
     message: '',
   });
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [itemsData, balanceData] = await Promise.all([
-        getShopItems(),
-        getCoinBalance(),
-      ]);
-      setItems(itemsData);
-      setBalance(balanceData);
-      setError('');
-    } catch (err: any) {
-      console.error('Failed to fetch shop data:', err);
-      setError(err.message || t('shop.loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const coinBalance = profile?.coins ?? 0;
 
   useFocusEffect(
     useCallback(() => {
-      fetchData();
-    }, [fetchData])
+    }, [])
   );
 
   const handlePurchase = async () => {
@@ -77,57 +80,53 @@ export default function ShopScreen() {
 
     setPurchaseModal((prev) => ({ ...prev, loading: true }));
     try {
-      const result = await purchaseShopItem({
-        shopItemId: purchaseModal.item.id,
-        quantity: purchaseModal.quantity,
-      });
+      const result = await purchaseShopItem(purchaseModal.item.id, purchaseModal.quantity);
 
-      setBalance((prev) =>
-        prev ? { ...prev, balance: result.newBalance } : null
-      );
+      if (result.success) {
+        await refreshProfile();
+        await refreshInventory();
 
-      fetchData();
-
-      setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false });
-      setSuccessModal({
-        isOpen: true,
-        message: t('shop.buySuccessDetail', { quantity: purchaseModal.quantity, name: purchaseModal.item.name }),
-      });
-    } catch (err: any) {
-      Alert.alert(t('shop.buyFailed'), err.message || t('shop.buyError'));
+        setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false });
+        setSuccessModal({
+          isOpen: true,
+          message: `成功购买 ${purchaseModal.quantity} 个 ${purchaseModal.item.nameZh || purchaseModal.item.name}`,
+        });
+      } else {
+        Alert.alert('购买失败', result.error || '购买时出错了');
+        setPurchaseModal((prev) => ({ ...prev, loading: false }));
+      }
+    } catch (err) {
+      Alert.alert('购买失败', '购买时出错了');
       setPurchaseModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
-  if (loading) {
+  if (!profile) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>Loading shop...</Text>
+          <Text style={styles.loadingText}>加载中...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  const renderItem = ({ item: shopItem, index }: { item: ShopItem; index: number }) => {
+  const renderItem = ({ item: shopItem }: { item: ShopItemDefinition }) => {
     const itemRarity = (shopItem.metadata?.rarity as ItemRarity) || 'common';
-    const canAfford = balance ? balance.balance >= shopItem.price : false;
+    const canAfford = coinBalance >= shopItem.price;
     const isAvailable = shopItem.isAvailable;
 
     return (
       <TouchableOpacity
-        style={[
-          styles.itemCard,
-          { animationDelay: `${Math.min(index * 50, 300)}ms` },
-        ]}
+        style={[styles.itemCard]}
         onPress={() => {
           if (!isAvailable) {
-            Alert.alert(t('shop.itemSoldOut'), t('shop.itemUnavailable'));
+            Alert.alert('已售罄', '该商品暂不可购买');
             return;
           }
           if (!canAfford) {
-            Alert.alert(t('shop.insufficientCoins'), t('shop.needMoreCoins'));
+            Alert.alert('金币不足', '您没有足够的金币');
             return;
           }
           setPurchaseModal({ isOpen: true, item: shopItem, quantity: 1, loading: false });
@@ -143,13 +142,15 @@ export default function ShopScreen() {
             ]}
           >
             <Ionicons
-              name={RARITY_ICONS[itemRarity] as any}
+              name={(CATEGORY_ICONS[shopItem.category] || RARITY_ICONS[itemRarity]) as any}
               size={28}
               color={RARITY_COLORS[itemRarity]}
             />
           </View>
           <View style={styles.itemInfo}>
-            <Text style={styles.itemName} numberOfLines={1}>{shopItem.name}</Text>
+            <Text style={styles.itemName} numberOfLines={1}>
+              {shopItem.nameZh || shopItem.name}
+            </Text>
             <Text style={[styles.itemCategory, { color: RARITY_COLORS[itemRarity] }]}>
               {shopItem.category}
             </Text>
@@ -166,7 +167,7 @@ export default function ShopScreen() {
             <Text style={styles.priceText}>{shopItem.price}</Text>
           </View>
           <Text style={styles.limitText}>
-            {shopItem.purchaseLimit > 0 ? t('shop.purchaseLimit', { limit: shopItem.purchaseLimit }) : t('shop.noLimit')}
+            {shopItem.purchaseLimit > 0 ? `限购 ${shopItem.purchaseLimit}` : '不限购'}
           </Text>
         </View>
 
@@ -178,7 +179,7 @@ export default function ShopScreen() {
           disabled={!isAvailable || !canAfford}
         >
           <Text style={styles.buyButtonText}>
-            {!isAvailable ? t('shop.soldOut') : !canAfford ? t('shop.insufficientCoinsShort') : t('shop.buy')}
+            {!isAvailable ? '已售罄' : !canAfford ? '金币不足' : '购买'}
           </Text>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -191,9 +192,12 @@ export default function ShopScreen() {
         <View style={styles.headerTop}>
           <View style={styles.titleRow}>
             <Ionicons name="cart" size={28} color="#D4A017" />
-            <Text style={styles.title}>{t('shop.npcShop')}</Text>
+            <Text style={styles.title}>NPC商店</Text>
           </View>
-          {balance && <CoinBalanceComponent balance={balance.balance} />}
+          <View style={styles.coinBalance}>
+            <Ionicons name="logo-usd" size={18} color="#D4A017" />
+            <Text style={styles.coinBalanceText}>{coinBalance}</Text>
+          </View>
         </View>
       </View>
 
@@ -207,7 +211,7 @@ export default function ShopScreen() {
       )}
 
       <FlatList
-        data={items}
+        data={shopItems}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         numColumns={2}
@@ -218,8 +222,8 @@ export default function ShopScreen() {
             <View style={styles.emptyIconCircle}>
               <Ionicons name="cube-outline" size={48} color="#CCC" />
             </View>
-            <Text style={styles.emptyText}>{t('shop.noItems')}</Text>
-            <Text style={styles.emptySubtext}>{t('shop.checkBackLater')}</Text>
+            <Text style={styles.emptyText}>商店暂无商品</Text>
+            <Text style={styles.emptySubtext}>请稍后再来看看</Text>
           </View>
         }
       />
@@ -233,7 +237,7 @@ export default function ShopScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('shop.confirmPurchase')}</Text>
+              <Text style={styles.modalTitle}>确认购买</Text>
               <TouchableOpacity
                 onPress={() => setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false })}
               >
@@ -251,29 +255,52 @@ export default function ShopScreen() {
                     ]}
                   >
                     <Ionicons
-                      name={RARITY_ICONS[(purchaseModal.item.metadata?.rarity as ItemRarity) || 'common'] as any}
+                      name={(CATEGORY_ICONS[purchaseModal.item.category] || 'cube') as any}
                       size={32}
                       color={RARITY_COLORS[(purchaseModal.item.metadata?.rarity as ItemRarity) || 'common']}
                     />
                   </View>
                   <View style={styles.itemPreviewInfo}>
-                    <Text style={styles.itemPreviewName}>{purchaseModal.item.name}</Text>
+                    <Text style={styles.itemPreviewName}>
+                      {purchaseModal.item.nameZh || purchaseModal.item.name}
+                    </Text>
                     <Text style={styles.itemPreviewCategory}>{purchaseModal.item.category}</Text>
                   </View>
                 </View>
 
                 <View style={styles.quantitySection}>
-                  <QuantitySelector
-                    value={purchaseModal.quantity}
-                    onValueChange={(value) => setPurchaseModal((prev) => ({ ...prev, quantity: value }))}
-                    min={1}
-                    max={purchaseModal.item.purchaseLimit > 0 ? purchaseModal.item.purchaseLimit : undefined}
-                  />
+                  <Text style={styles.quantityLabel}>数量</Text>
+                  <View style={styles.quantityControls}>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => setPurchaseModal((prev) => ({
+                        ...prev,
+                        quantity: Math.max(1, prev.quantity - 1),
+                      }))}
+                    >
+                      <Ionicons name="remove" size={20} color="#1A1A1A" />
+                    </TouchableOpacity>
+                    <Text style={styles.quantityValue}>{purchaseModal.quantity}</Text>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => {
+                        const max = purchaseModal.item!.purchaseLimit > 0
+                          ? purchaseModal.item!.purchaseLimit
+                          : 99;
+                        setPurchaseModal((prev) => ({
+                          ...prev,
+                          quantity: Math.min(max, prev.quantity + 1),
+                        }));
+                      }}
+                    >
+                      <Ionicons name="add" size={20} color="#1A1A1A" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.totalSection}>
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>{t('shop.total')}:</Text>
+                    <Text style={styles.totalLabel}>总价:</Text>
                     <View style={styles.totalPrice}>
                       <Ionicons name="logo-usd" size={20} color="#D4A017" />
                       <Text style={styles.totalValue}>
@@ -281,8 +308,8 @@ export default function ShopScreen() {
                       </Text>
                     </View>
                   </View>
-                  {balance && balance.balance < purchaseModal.item.price * purchaseModal.quantity && (
-                    <Text style={styles.insufficientFunds}>{t('shop.insufficientCoinsExclaim')}</Text>
+                  {coinBalance < purchaseModal.item.price * purchaseModal.quantity && (
+                    <Text style={styles.insufficientFunds}>金币不足！</Text>
                   )}
                 </View>
 
@@ -291,22 +318,22 @@ export default function ShopScreen() {
                     style={styles.cancelButton}
                     onPress={() => setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false })}
                   >
-                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+                    <Text style={styles.cancelButtonText}>取消</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.confirmButton,
-                      purchaseModal.loading || (balance !== null && balance.balance < purchaseModal.item.price * purchaseModal.quantity)
+                      purchaseModal.loading || coinBalance < purchaseModal.item.price * purchaseModal.quantity
                         ? styles.confirmButtonDisabled
                         : undefined,
                     ]}
                     onPress={handlePurchase}
-                    disabled={purchaseModal.loading || (balance !== null && balance.balance < purchaseModal.item.price * purchaseModal.quantity)}
+                    disabled={purchaseModal.loading || coinBalance < purchaseModal.item.price * purchaseModal.quantity}
                   >
                     {purchaseModal.loading ? (
                       <ActivityIndicator color="#FFF" />
                     ) : (
-                      <Text style={styles.confirmButtonText}>{t('common.confirm')}</Text>
+                      <Text style={styles.confirmButtonText}>确认</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -327,13 +354,13 @@ export default function ShopScreen() {
             <View style={styles.successIcon}>
               <Ionicons name="checkmark-circle" size={64} color="#16A34A" />
             </View>
-            <Text style={styles.successTitle}>{t('shop.purchaseSuccess')}</Text>
+            <Text style={styles.successTitle}>购买成功</Text>
             <Text style={styles.successMessage}>{successModal.message}</Text>
             <TouchableOpacity
               style={styles.successButton}
               onPress={() => setSuccessModal({ isOpen: false, message: '' })}
             >
-              <Text style={styles.successButtonText}>{t('common.confirm')}</Text>
+              <Text style={styles.successButtonText}>确认</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -379,6 +406,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: '#1A1A1A',
+  },
+  coinBalance: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8E7',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#333',
+    gap: 6,
+  },
+  coinBalanceText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#D4A017',
   },
   errorContainer: {
     flexDirection: 'row',
@@ -578,6 +621,32 @@ const styles = StyleSheet.create({
   quantitySection: {
     alignItems: 'center',
     marginBottom: 16,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  quantityButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF8E7',
+  },
+  quantityValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1A1A1A',
   },
   totalSection: {
     backgroundColor: '#FEF9C3',

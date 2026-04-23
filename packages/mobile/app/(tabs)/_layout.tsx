@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, View, Text } from 'react-native';
+import { Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
+
   return (
     <Tabs
       screenOptions={{
@@ -45,7 +48,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Explore',
+          title: t('nav.explore'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'compass' : 'compass-outline'}
@@ -58,7 +61,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="inventory"
         options={{
-          title: 'Backpack',
+          title: t('nav.backpack'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? 'cube' : 'cube-outline'}
@@ -69,90 +72,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="friends"
-        options={{
-          title: 'Social',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'people' : 'people-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="gacha"
-        options={{
-          title: 'Gacha',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'gift' : 'gift-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: 'Shop',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'storefront' : 'storefront-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="market"
-        options={{
-          title: 'Market',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'pricetag' : 'pricetag-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="tasks"
         options={{
-          title: 'Quests',
+          title: t('nav.tasks'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? 'flag' : 'flag-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'person-circle' : 'person-circle-outline'}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="recharge"
-        options={{
-          title: 'Recharge',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'diamond' : 'diamond-outline'}
+              name={focused ? 'list' : 'list-outline'}
               size={24}
               color={color}
             />
@@ -162,15 +87,58 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="achievements"
         options={{
-          href: null,
+          title: t('nav.achievements'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'trophy' : 'trophy-outline'}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="leaderboard"
+        name="gacha"
         options={{
-          href: null,
+          title: t('nav.gacha'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'sparkles' : 'sparkles-outline'}
+              size={24}
+              color={color}
+            />
+          ),
         }}
       />
+      <Tabs.Screen
+        name="cosmetics"
+        options={{
+          title: t('nav.cosmetics'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'color-palette' : 'color-palette-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: t('nav.profile'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'person-circle' : 'person-circle-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen name="shop" options={{ href: null }} />
+      <Tabs.Screen name="map-p2p" options={{ href: null }} />
     </Tabs>
   );
 }

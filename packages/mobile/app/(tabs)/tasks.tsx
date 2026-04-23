@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,76 +10,54 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  getDailyTasks,
-  claimTaskReward,
-  refreshDailyTasks,
-  getUserAchievements,
-  claimAchievementReward,
-} from '@/lib/api';
-import {
-  DailyTask,
-  DailyTaskStats,
-  AchievementProgress,
-  TaskStatus,
-} from '@/types';
+import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useP2P } from '@/src/p2p/P2PContext';
+import { DailyTaskDefinition, UserDailyTask, TaskStatus, TaskType } from '@/src/p2p/types';
+import { DAILY_TASK_DEFINITIONS } from '@/src/p2p/data/dailyTasks';
 
 type TabType = 'tasks' | 'achievements';
 
-const TASK_ICONS: Record<string, string> = {
+const TASK_ICONS: Record<TaskType, string> = {
   login: 'key-outline',
   collect: 'diamond-outline',
   visit_poi: 'location-outline',
   collect_rarity: 'star-outline',
 };
 
-const TASK_NAMES: Record<string, string> = {
-  login: 'Daily Login',
-  collect: 'Collect Treasures',
-  visit_poi: 'Visit Locations',
-  collect_rarity: 'Rare Collection',
-};
+interface DailyTaskWithDefinition {
+  userTask: UserDailyTask;
+  definition: DailyTaskDefinition;
+}
 
 export default function TasksScreen() {
+  const { t } = useTranslation();
+  const { dailyTasks, achievements, claimDailyTask, claimAchievement, refreshDailyTasks, refreshAchievements, isInitialized } = useP2P();
   const [activeTab, setActiveTab] = useState<TabType>('tasks');
-  const [tasks, setTasks] = useState<DailyTask[]>([]);
-  const [taskStats, setTaskStats] = useState<DailyTaskStats | null>(null);
-  const [achievements, setAchievements] = useState<AchievementProgress[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
-  const fetchTasks = useCallback(async () => {
-    try {
-      const data = await getDailyTasks();
-      setTasks(data.tasks || []);
-      setTaskStats(data.stats || null);
-    } catch (error) {
-      console.error('Failed to fetch tasks:', error);
-    }
-  }, []);
+  const getTaskName = (taskType: TaskType): string => {
+    const key = `tasks.taskTypes.${taskType}`;
+    const translated = t(key);
+    return translated === key ? taskType : translated;
+  };
 
-  const fetchAchievements = useCallback(async () => {
-    try {
-      const data = await getUserAchievements();
-      setAchievements(data || []);
-    } catch (error) {
-      console.error('Failed to fetch achievements:', error);
-    }
-  }, []);
+  const tasksWithDefinitions: DailyTaskWithDefinition[] = dailyTasks.map(ut => {
+    const def = DAILY_TASK_DEFINITIONS.find(d => d.id === ut.taskDefinitionId);
+    return { userTask: ut, definition: def! };
+  }).filter(t => t.definition);
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await Promise.all([fetchTasks(), fetchAchievements()]);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchTasks, fetchAchievements]);
+    await refreshDailyTasks();
+    await refreshAchievements();
+  }, [refreshDailyTasks, refreshAchievements]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -90,8 +68,7 @@ export default function TasksScreen() {
   const handleClaimTask = async (taskId: string) => {
     setClaimingId(taskId);
     try {
-      await claimTaskReward(taskId);
-      await fetchTasks();
+      await claimDailyTask(taskId);
     } catch (error) {
       console.error('Failed to claim task:', error);
     } finally {
@@ -102,8 +79,7 @@ export default function TasksScreen() {
   const handleClaimAchievement = async (achievementId: string) => {
     setClaimingId(achievementId);
     try {
-      await claimAchievementReward(achievementId);
-      await fetchAchievements();
+      await claimAchievement(achievementId);
     } catch (error) {
       console.error('Failed to claim achievement:', error);
     } finally {
@@ -111,19 +87,24 @@ export default function TasksScreen() {
     }
   };
 
-  const handleRefreshTasks = async () => {
-    try {
-      await refreshDailyTasks();
-      await fetchTasks();
-    } catch (error) {
-      console.error('Failed to refresh tasks:', error);
-    }
-  };
+  if (!isInitialized) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#D4A017" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const renderTaskItem = ({ item }: { item: DailyTask }) => {
-    const progressPercent = Math.min((item.currentProgress / item.targetProgress) * 100, 100);
-    const isCompleted = item.status === 'completed';
-    const isClaimed = item.status === 'claimed';
+  const completedTasks = dailyTasks.filter((t) => t.status === 'completed' || t.status === 'claimed').length;
+  const completedAchievements = achievements.filter((a) => a.status === 'claimed').length;
+
+  const renderTaskItem = ({ item }: { item: DailyTaskWithDefinition }) => {
+    const { userTask, definition } = item;
+    const progressPercent = Math.min((userTask.currentProgress / definition.targetProgress) * 100, 100);
+    const isCompleted = userTask.status === 'completed';
+    const isClaimed = userTask.status === 'claimed';
 
     return (
       <View style={[styles.taskCard, isCompleted && !isClaimed && styles.claimableCard]}>
@@ -131,15 +112,17 @@ export default function TasksScreen() {
           <View style={styles.taskTitleRow}>
             <View style={[styles.taskIconContainer, isClaimed && styles.taskIconClaimed]}>
               <Ionicons
-                name={(TASK_ICONS[item.taskType] || 'flag-outline') as any}
+                name={(TASK_ICONS[definition.taskType] || 'flag-outline') as any}
                 size={20}
                 color={isClaimed ? '#22c55e' : '#D4A017'}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.taskName}>{TASK_NAMES[item.taskType] || item.taskType}</Text>
-              {item.rarityRequirement && (
-                <Text style={styles.rarityRequirement}>Requires: {item.rarityRequirement}</Text>
+              <Text style={styles.taskName}>{definition.nameZh || getTaskName(definition.taskType)}</Text>
+              {definition.rarityRequirement && (
+                <Text style={styles.rarityRequirement}>
+                  {t('tasks.rarityRequirement')}: {t(`rarity.${definition.rarityRequirement}`)}
+                </Text>
               )}
             </View>
           </View>
@@ -153,15 +136,15 @@ export default function TasksScreen() {
               isClaimed && styles.claimedStatusText,
               isCompleted && !isClaimed && styles.completedStatusText,
             ]}>
-              {isClaimed ? 'Claimed' : isCompleted ? 'Claim' : 'In Progress'}
+              {isClaimed ? t('tasks.claimed') : isCompleted ? t('tasks.claim') : t('tasks.inProgress')}
             </Text>
           </View>
         </View>
 
         <View style={styles.progressSection}>
           <View style={styles.progressRow}>
-            <Text style={styles.progressLabel}>Progress</Text>
-            <Text style={styles.progressValue}>{item.currentProgress} / {item.targetProgress}</Text>
+            <Text style={styles.progressLabel}>{t('tasks.progress')}</Text>
+            <Text style={styles.progressValue}>{userTask.currentProgress} / {definition.targetProgress}</Text>
           </View>
           <View style={styles.progressBar}>
             <View style={[
@@ -177,24 +160,24 @@ export default function TasksScreen() {
           <View style={styles.rewardsGroup}>
             <View style={styles.rewardChip}>
               <Ionicons name="cash-outline" size={14} color="#D4A017" />
-              <Text style={styles.rewardText}>{item.rewards.coins}</Text>
+              <Text style={styles.rewardText}>{definition.rewards.coins}</Text>
             </View>
             <View style={styles.rewardChip}>
               <Ionicons name="star-outline" size={14} color="#9B59B6" />
-              <Text style={styles.rewardText}>{item.rewards.experience} EXP</Text>
+              <Text style={styles.rewardText}>{definition.rewards.experience} {t('tasks.exp')}</Text>
             </View>
           </View>
 
           {isCompleted && !isClaimed && (
             <TouchableOpacity
               style={styles.claimButton}
-              onPress={() => handleClaimTask(item.id)}
-              disabled={claimingId === item.id}
+              onPress={() => handleClaimTask(definition.id)}
+              disabled={claimingId === definition.id}
             >
-              {claimingId === item.id ? (
+              {claimingId === definition.id ? (
                 <ActivityIndicator size="small" color="#FFF" />
               ) : (
-                <Text style={styles.claimButtonText}>Claim</Text>
+                <Text style={styles.claimButtonText}>{t('tasks.claim')}</Text>
               )}
             </TouchableOpacity>
           )}
@@ -203,107 +186,12 @@ export default function TasksScreen() {
     );
   };
 
-  const renderAchievementItem = ({ item }: { item: AchievementProgress }) => {
-    const { achievement: ach, progress, requirement, status, canClaim } = item;
-    const progressPercent = Math.min((progress / requirement) * 100, 100);
-    const isClaimed = status === 'claimed';
-    const isCompleted = status === 'completed' || progress >= requirement;
-
-    const tierColors: Record<number, string> = {
-      1: '#8D99AE',
-      2: '#3b82f6',
-      3: '#9B59B6',
-      4: '#D4A017',
-    };
-
-    return (
-      <View style={[styles.achievementCard, canClaim && styles.claimableCard]}>
-        <View style={[styles.achievementColorBar, { backgroundColor: tierColors[ach.tier] || '#8D99AE' }]} />
-        <View style={styles.achievementContent}>
-          <View style={styles.achievementTitleRow}>
-            <Text style={styles.achievementIcon}>{ach.icon}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.achievementName}>{ach.name}</Text>
-              <Text style={styles.achievementDescription} numberOfLines={2}>{ach.description}</Text>
-            </View>
-            {isClaimed && (
-              <Ionicons name="checkmark-circle" size={22} color="#22c55e" />
-            )}
-          </View>
-
-          <View style={styles.progressSection}>
-            <View style={styles.progressRow}>
-              <Text style={styles.progressLabel}>Progress</Text>
-              <Text style={styles.progressValue}>{progress} / {requirement}</Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View style={[
-                styles.progressFill,
-                { width: `${progressPercent}%`, backgroundColor: tierColors[ach.tier] || '#8D99AE' },
-                isCompleted && { backgroundColor: '#22c55e' },
-              ]} />
-            </View>
-          </View>
-
-          {ach.rewards && (
-            <View style={styles.rewardsRow}>
-              <View style={styles.rewardsGroup}>
-                <View style={styles.rewardChip}>
-                  <Ionicons name="cash-outline" size={14} color="#D4A017" />
-                  <Text style={styles.rewardText}>{ach.rewards.coins}</Text>
-                </View>
-                <View style={styles.rewardChip}>
-                  <Ionicons name="star-outline" size={14} color="#9B59B6" />
-                  <Text style={styles.rewardText}>{ach.rewards.experience}</Text>
-                </View>
-                {ach.rewards.title && (
-                  <View style={styles.titleReward}>
-                    <Text style={styles.titleText}>{ach.rewards.title}</Text>
-                  </View>
-                )}
-              </View>
-
-              {(canClaim || isCompleted) && !isClaimed && (
-                <TouchableOpacity
-                  style={styles.claimButton}
-                  onPress={() => handleClaimAchievement(ach.id)}
-                  disabled={claimingId === ach.id}
-                >
-                  {claimingId === ach.id ? (
-                    <ActivityIndicator size="small" color="#FFF" />
-                  ) : (
-                    <Text style={styles.claimButtonText}>Claim</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#D4A017" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const completedTasks = tasks.filter((t) => t.status === 'completed' || t.status === 'claimed').length;
-  const completedAchievements = achievements.filter((a) => a.status === 'claimed').length;
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Quests</Text>
+        <Text style={styles.title}>{t('tasks.title')}</Text>
       </View>
 
-      {/* Tab Switcher */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'tasks' && styles.activeTab]}
@@ -315,7 +203,7 @@ export default function TasksScreen() {
             color={activeTab === 'tasks' ? '#1A1A1A' : '#AAA'}
           />
           <Text style={[styles.tabText, activeTab === 'tasks' && styles.activeTabText]}>
-            Daily Tasks
+            {t('tasks.dailyTasks')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -328,52 +216,37 @@ export default function TasksScreen() {
             color={activeTab === 'achievements' ? '#1A1A1A' : '#AAA'}
           />
           <Text style={[styles.tabText, activeTab === 'achievements' && styles.activeTabText]}>
-            Achievements
+            {t('achievements.title')}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
       {activeTab === 'tasks' ? (
         <>
-          {/* Stats Card */}
-          {taskStats && (
-            <View style={styles.statsCard}>
-              <View style={styles.statsRow}>
-                <View>
-                  <Text style={styles.statsLabel}>Today's Progress</Text>
-                  <Text style={styles.statsValue}>
-                    {taskStats.todayCompleted} / {taskStats.todayTotal}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.refreshIconButton}
-                  onPress={handleRefreshTasks}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                >
-                  <Ionicons name="refresh" size={20} color="#D4A017" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${
-                        taskStats.todayTotal > 0
-                          ? (taskStats.todayCompleted / taskStats.todayTotal) * 100
-                          : 0
-                      }%`,
-                    },
-                  ]}
-                />
+          <View style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View>
+                <Text style={styles.statsLabel}>{t('tasks.todayProgress')}</Text>
+                <Text style={styles.statsValue}>
+                  {completedTasks} / {dailyTasks.length}
+                </Text>
               </View>
             </View>
-          )}
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${dailyTasks.length > 0 ? (completedTasks / dailyTasks.length) * 100 : 0}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
 
           <FlatList
-            data={tasks}
-            keyExtractor={(item) => item.id}
+            data={tasksWithDefinitions}
+            keyExtractor={(item) => item.userTask.id}
             renderItem={renderTaskItem}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
             contentContainerStyle={styles.list}
@@ -382,19 +255,18 @@ export default function TasksScreen() {
                 <View style={styles.emptyIconCircle}>
                   <Ionicons name="flag-outline" size={40} color="#CCC" />
                 </View>
-                <Text style={styles.emptyText}>No daily tasks</Text>
-                <Text style={styles.emptySubtext}>Check back tomorrow for new tasks</Text>
+                <Text style={styles.emptyText}>{t('tasks.noTasks')}</Text>
+                <Text style={styles.emptySubtext}>{t('tasks.checkBackTomorrow')}</Text>
               </View>
             }
           />
         </>
       ) : (
         <>
-          {/* Stats Card */}
           <View style={styles.statsCard}>
             <View style={styles.statsRow}>
               <View>
-                <Text style={styles.statsLabel}>Achievement Progress</Text>
+                <Text style={styles.statsLabel}>{t('achievements.progress')}</Text>
                 <Text style={styles.statsValue}>
                   {completedAchievements} / {achievements.length}
                 </Text>
@@ -409,11 +281,7 @@ export default function TasksScreen() {
                   styles.progressFill,
                   { backgroundColor: '#9B59B6' },
                   {
-                    width: `${
-                      achievements.length > 0
-                        ? (completedAchievements / achievements.length) * 100
-                        : 0
-                    }%`,
+                    width: `${achievements.length > 0 ? (completedAchievements / achievements.length) * 100 : 0}%`,
                   },
                 ]}
               />
@@ -422,8 +290,14 @@ export default function TasksScreen() {
 
           <FlatList
             data={achievements}
-            keyExtractor={(item) => item.achievement.id}
-            renderItem={renderAchievementItem}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.achievementCard}>
+                <Text style={styles.achievementName}>{t('achievements.achievement')} {item.achievementId}</Text>
+                <Text style={styles.achievementProgress}>{item.progress} {t('tasks.progress')}</Text>
+                <Text style={styles.achievementStatus}>{t(`achievements.status.${item.status}`)}</Text>
+              </View>
+            )}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
@@ -431,8 +305,8 @@ export default function TasksScreen() {
                 <View style={styles.emptyIconCircle}>
                   <Ionicons name="medal-outline" size={40} color="#CCC" />
                 </View>
-                <Text style={styles.emptyText}>No achievements</Text>
-                <Text style={styles.emptySubtext}>Start collecting treasures to unlock achievements</Text>
+                <Text style={styles.emptyText}>{t('achievements.noAchievements')}</Text>
+                <Text style={styles.emptySubtext}>{t('achievements.startCollecting')}</Text>
               </View>
             }
           />
@@ -531,16 +405,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  refreshIconButton: {
-    padding: 8,
-    borderRadius: 10,
-    backgroundColor: '#FFF8E7',
-  },
   list: {
     padding: 16,
     paddingTop: 0,
   },
-  // Task Card
   taskCard: {
     backgroundColor: '#FFF',
     borderRadius: 14,
@@ -671,17 +539,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#666',
   },
-  titleReward: {
-    backgroundColor: '#F5F0FF',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  titleText: {
-    fontSize: 11,
-    color: '#9B59B6',
-    fontWeight: '600',
-  },
   claimButton: {
     backgroundColor: '#D4A017',
     paddingHorizontal: 16,
@@ -695,41 +552,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFF',
   },
-  // Achievement Card
   achievementCard: {
     backgroundColor: '#FFF',
     borderRadius: 14,
     marginBottom: 10,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#F0E8D8',
-    overflow: 'hidden',
-    flexDirection: 'row',
-  },
-  achievementColorBar: {
-    width: 4,
-  },
-  achievementContent: {
-    flex: 1,
-    padding: 14,
-  },
-  achievementTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  achievementIcon: {
-    fontSize: 28,
-    marginRight: 12,
   },
   achievementName: {
     fontSize: 15,
     fontWeight: '700',
     color: '#1A1A1A',
   },
-  achievementDescription: {
+  achievementProgress: {
     fontSize: 12,
+    color: '#888',
+  },
+  achievementStatus: {
+    fontSize: 11,
     color: '#AAA',
-    marginTop: 2,
   },
   emptyIconCircle: {
     width: 80,

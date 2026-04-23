@@ -1,0 +1,1 @@
+export { POIService, poiService } from './POIService';

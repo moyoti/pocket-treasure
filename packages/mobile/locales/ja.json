@@ -44,7 +44,12 @@
     "shop": "ショップ",
     "gacha": "ガチャ",
     "market": "市場",
-    "profile": "プロフィール"
+    "profile": "プロフィール",
+    "tasks": "タスク",
+    "achievements": "実績",
+    "cosmetics": "コスメ",
+    "explore": "探索",
+    "backpack": "バッグ"
   },
   "map": {
     "title": "トレジャーマップ",
@@ -130,7 +135,10 @@
     "dropRates": "排出率",
     "coins": "コイン",
     "discount": "10%オフ！",
-    "noPool": "プールがありません"
+    "noPool": "プールがありません",
+    "insufficientCoins": "このガチャに必要なコインがありません。",
+    "pullFailed": "ガチャ失敗",
+    "pullError": "ガチャの実行に失敗しました"
   },
   "market": {
     "title": "取引市場",
@@ -204,7 +212,17 @@
     "progress": "進捗",
     "claimReward": "報酬を受け取る",
     "claimed": "受け取り済み",
-    "noAchievements": "実績がありません"
+    "noAchievements": "実績がありません",
+    "achievement": "実績",
+    "overallProgress": "全体進捗",
+    "completedCount": "{{count}} / {{total}} 完了",
+    "toClaim": "{{count}} 件受け取り可能",
+    "startCollecting": "宝物を集めて実績を解除しましょう",
+    "status": {
+      "in_progress": "進行中",
+      "completed": "完了",
+      "claimed": "受け取り済み"
+    }
   },
   "leaderboard": {
     "title": "ランキング",
@@ -233,6 +251,7 @@
   },
   "tasks": {
     "title": "クエスト",
+    "dailyTasks": "デイリータスク",
     "dailyLogin": "デイリーログイン",
     "collectTreasures": "宝物を集める",
     "visitLocations": "場所を訪れる",
@@ -242,7 +261,19 @@
     "inProgress": "進行中",
     "completed": "完了",
     "expired": "期限切れ",
-    "rewards": "報酬"
+    "rewards": "報酬",
+    "progress": "進捗",
+    "exp": "EXP",
+    "todayProgress": "今日の進捗",
+    "taskTypes": {
+      "login": "デイリーログイン",
+      "collect": "宝物を集める",
+      "visit_poi": "場所を訪れる",
+      "collect_rarity": "レアコレクション"
+    },
+    "rarityRequirement": "必要",
+    "noTasks": "タスクがありません",
+    "checkBackTomorrow": "明日新しいタスクを確認してください"
   },
   "friends": {
     "title": "フレンド",
@@ -376,7 +407,44 @@
     "noTasks": "タスクがありません"
   },
   "items": {
-    "common": {
+"screens": {
+    "itemDetails": "アイテム詳細",
+    "statistics": "統計",
+    "settings": "設定",
+    "help": "ヘルプ",
+    "about": "アプリについて"
+  },
+  "rarity": {
+    "common": "コモン",
+    "rare": "レア",
+    "epic": "エピック",
+    "legendary": "レジェンダリー"
+  },
+  "cosmetics": {
+    "title": "コスメ",
+    "all": "すべて",
+    "avatarFrame": "アバター枠",
+    "badge": "バッジ",
+    "mapSkin": "マップスキン",
+    "sticker": "ステッカー",
+    "titleItem": "称号",
+    "profileBackground": "背景",
+    "equipped": "装備済み",
+    "owned": "所持済み",
+    "purchase": "購入",
+    "purchaseTitle": "コスメ購入",
+    "price": "価格",
+    "insufficientCoins": "コイン不足、{{price}} コイン必要",
+    "purchaseSuccess": "{{name}}を購入しました！",
+    "purchaseFailed": "購入に失敗しました",
+    "equipSuccess": "{{name}}を装備しました！",
+    "equipFailed": "装備に失敗しました",
+    "unequipTitle": "解除",
+    "unequipConfirm": "このコスメを解除しますか？",
+    "noCosmetics": "コスメがありません",
+    "comingSoon": "今後さらにコスメが追加されます"
+  },
+  "common": {
       "普通石子": "つまらない石だが、コレクションの一部。",
       "小树枝": "木から落ちた小さな枝、質素。",
       "露珠": "朝方に凝结した露珠、純粋透明。",

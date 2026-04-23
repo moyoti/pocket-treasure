@@ -44,7 +44,12 @@
     "shop": "Shop",
     "gacha": "Gacha",
     "market": "Market",
-    "profile": "Profile"
+    "profile": "Profile",
+    "tasks": "Tasks",
+    "achievements": "Achievements",
+    "cosmetics": "Cosmetics",
+    "explore": "Explore",
+    "backpack": "Backpack"
   },
   "map": {
     "title": "Treasure Map",
@@ -122,7 +127,10 @@
     "dropRates": "Drop Rates",
     "coins": "Coins",
     "discount": "10% off!",
-    "noPool": "No pools available"
+    "noPool": "No pools available",
+    "insufficientCoins": "You don't have enough coins for this pull.",
+    "pullFailed": "Pull Failed",
+    "pullError": "Failed to perform gacha pull"
   },
   "market": {
     "title": "Market",
@@ -196,7 +204,17 @@
     "progress": "Progress",
     "claimReward": "Claim Reward",
     "claimed": "Claimed",
-    "noAchievements": "No achievements yet"
+    "noAchievements": "No achievements yet",
+    "achievement": "Achievement",
+    "overallProgress": "Overall Progress",
+    "completedCount": "{{count}} of {{total}} completed",
+    "toClaim": "{{count}} to claim",
+    "startCollecting": "Start collecting treasures to unlock achievements",
+    "status": {
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "claimed": "Claimed"
+    }
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -225,6 +243,7 @@
   },
   "tasks": {
     "title": "Quests",
+    "dailyTasks": "Daily Tasks",
     "dailyLogin": "Daily Login",
     "collectTreasures": "Collect Treasures",
     "visitLocations": "Visit Locations",
@@ -234,7 +253,19 @@
     "inProgress": "In Progress",
     "completed": "Completed",
     "expired": "Expired",
-    "rewards": "Rewards"
+    "rewards": "Rewards",
+    "progress": "Progress",
+    "exp": "EXP",
+    "todayProgress": "Today's Progress",
+    "taskTypes": {
+      "login": "Daily Login",
+      "collect": "Collect Treasures",
+      "visit_poi": "Visit Locations",
+      "collect_rarity": "Rare Collection"
+    },
+    "rarityRequirement": "Requires",
+    "noTasks": "No daily tasks",
+    "checkBackTomorrow": "Check back tomorrow for new tasks"
   },
   "friends": {
     "title": "Friends",
@@ -368,7 +399,44 @@
     "noTasks": "No tasks available"
   },
   "items": {
-    "common": {
+"screens": {
+    "itemDetails": "Item Details",
+    "statistics": "Statistics",
+    "settings": "Settings",
+    "help": "Help",
+    "about": "About"
+  },
+  "rarity": {
+    "common": "Common",
+    "rare": "Rare",
+    "epic": "Epic",
+    "legendary": "Legendary"
+  },
+  "cosmetics": {
+    "title": "Cosmetics",
+    "all": "All",
+    "avatarFrame": "Avatar Frame",
+    "badge": "Badge",
+    "mapSkin": "Map Skin",
+    "sticker": "Sticker",
+    "title": "Title",
+    "profileBackground": "Background",
+    "equipped": "Equipped",
+    "owned": "Owned",
+    "purchase": "Purchase",
+    "purchaseTitle": "Purchase Cosmetic",
+    "price": "Price",
+    "insufficientCoins": "Insufficient coins, need {{price}} coins",
+    "purchaseSuccess": "Successfully purchased {{name}}!",
+    "purchaseFailed": "Purchase failed",
+    "equipSuccess": "Successfully equipped {{name}}!",
+    "equipFailed": "Equip failed",
+    "unequipTitle": "Unequip",
+    "unequipConfirm": "Unequip this cosmetic?",
+    "noCosmetics": "No cosmetics available",
+    "comingSoon": "More cosmetics coming soon"
+  },
+  "common": {
       "普通石子": "An ordinary stone, humble but part of any collection.",
       "小树枝": "A small twig fallen from a tree, simple and unadorned.",
       "露珠": "Morning dew, pure and transparent.",

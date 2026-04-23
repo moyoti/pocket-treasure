@@ -11,33 +11,23 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Circle, UrlTile } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
-import { getNearbyItems, collectItem } from '@/api/items';
-import { getCoinBalance, getGemBalance } from '@/lib/api';
-import { ItemRarity } from '@/types';
-import { COLLECTION_RADIUS_METERS, RARITY_COLORS as SHARED_RARITY_COLORS } from '@treasure-hunt/shared';
-import { ApiError } from '@/lib/api';
+import { useP2P } from '@/src/p2p';
+import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/p2p/types';
+import { getItemById } from '@/src/p2p/data/items';
 
 const { width, height } = Dimensions.get('window');
 
 const DEFAULT_REGION = {
-  latitude: 39.9042,
-  longitude: 116.4074,
-  latitudeDelta: 0.0922,
-  longitudeDelta: 0.0421,
+  latitude: 51.5074,
+  longitude: -0.1278,
+  latitudeDelta: 0.05,
+  longitudeDelta: 0.05,
 };
 
-interface SpawnedItem {
-  id: string;
-  latitude: number;
-  longitude: number;
-  itemName: string;
-  itemRarity: ItemRarity;
-  itemIconUrl?: string;
-  poiName?: string;
-}
+type ItemRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 const RARITY_LABEL: Record<ItemRarity, string> = {
   common: 'Common',
@@ -55,20 +45,28 @@ const RARITY_ICON: Record<ItemRarity, string> = {
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { 
+    isInitialized, 
+    isLoading, 
+    error, 
+    nearbyPOIs, 
+    nearbySpawns, 
+    userLocation,
+    inventory,
+    refreshNearby, 
+    collectTreasure 
+  } = useP2P();
+  
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [items, setItems] = useState<SpawnedItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<SpawnedItem | null>(null);
+  const [selectedSpawn, setSelectedSpawn] = useState<SpawnedTreasure | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
-  const [coinBalance, setCoinBalance] = useState(0);
-  const [gemBalance, setGemBalance] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const requestLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Location access is required to find nearby treasures.');
-      setLoading(false);
       return;
     }
 
@@ -79,217 +77,197 @@ export default function MapScreen() {
     setMapRegion({
       latitude: loc.coords.latitude,
       longitude: loc.coords.longitude,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
+      latitudeDelta: 0.02,
+      longitudeDelta: 0.02,
     });
-  };
-
-  const fetchNearbyItems = async () => {
-    if (!location) return;
-
-    try {
-      const nearbyItems = await getNearbyItems(
-        location.coords.latitude,
-        location.coords.longitude
-      );
-      setItems(nearbyItems);
-    } catch (error) {
-      console.error('Failed to fetch nearby items:', error);
-      if (error instanceof ApiError) {
-        if (error.statusCode === 401) {
-          Alert.alert('Session expired', 'Please log in again.');
-        } else {
-          Alert.alert('Load failed', error.message);
-        }
-      } else {
-        Alert.alert('Load failed', 'Unable to fetch nearby treasures. Check your connection.');
-      }
-    } finally {
-      setLoading(false);
-    }
   };
 
   useFocusEffect(
     useCallback(() => {
       requestLocation();
-      getCoinBalance()
-        .then((data) => setCoinBalance(data.balance ?? data))
-        .catch((err) => console.error('Failed to fetch coin balance:', err));
-      getGemBalance()
-        .then((data) => setGemBalance(data.balance))
-        .catch((err) => console.error('Failed to fetch gem balance:', err));
     }, [])
   );
 
   useEffect(() => {
-    if (location) {
-      fetchNearbyItems();
+    if (location && isInitialized) {
+      refreshNearby(location.coords.latitude, location.coords.longitude);
     }
-  }, [location]);
+  }, [location, isInitialized]);
 
-  const handleCollect = async (item: SpawnedItem) => {
+  const handleRefresh = async () => {
+    if (!location || refreshing) return;
+    setRefreshing(true);
+    await refreshNearby(location.coords.latitude, location.coords.longitude);
+    setRefreshing(false);
+  };
+
+  const handleCollect = async (spawn: SpawnedTreasure) => {
     if (!location || collecting) return;
 
     setCollecting(true);
     try {
-      const result = await collectItem(
-        item.id,
-        location.coords.latitude,
-        location.coords.longitude
-      );
+      const result = await collectTreasure(spawn);
 
       if (result.success) {
+        const item = getItemById(spawn.itemId);
         Alert.alert(
           'Collected!',
-          `You found ${item.itemName}!\nRarity: ${RARITY_LABEL[item.itemRarity]}`,
-          [{ text: 'Awesome', onPress: () => setSelectedItem(null) }]
+          `You found ${item?.name || 'treasure'}!\nRarity: ${RARITY_LABEL[item?.rarity || 'common']}`,
+          [{ text: 'Awesome', onPress: () => setSelectedSpawn(null) }]
         );
-        fetchNearbyItems();
       } else {
-        Alert.alert(
-          'Too far away',
-          `Move ${Math.round(result.distance)}m closer to collect.`,
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Failed', result.error || 'Unable to collect');
       }
-    } catch (error: any) {
-      console.error('Collect item error:', error);
-      if (error instanceof ApiError) {
-        if (error.statusCode === 401) {
-          Alert.alert('Session expired', 'Please log in again.');
-        } else {
-          Alert.alert('Collection failed', error.message);
-        }
-      } else {
-        Alert.alert('Collection failed', error.message || 'Please try again.');
-      }
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Collection failed');
     } finally {
       setCollecting(false);
     }
   };
 
-  const handleMarkerPress = (item: SpawnedItem) => {
-    setSelectedItem(item);
+  const getSpawnDetails = (spawn: SpawnedTreasure) => {
+    const item = getItemById(spawn.itemId);
+    const poi = nearbyPOIs.find(p => p.id === spawn.poiId);
+    return {
+      itemName: item?.name || 'Unknown Treasure',
+      itemRarity: item?.rarity || 'common',
+      poiName: poi?.name || 'Mystery Location',
+    };
   };
 
-  if (loading) {
+  if (isLoading || !location) {
     return (
       <View style={styles.loadingContainer}>
         <View style={styles.loadingContent}>
           <Ionicons name="compass-outline" size={48} color="#D4A017" />
           <ActivityIndicator size="large" color="#D4A017" style={{ marginTop: 16 }} />
-          <Text style={styles.loadingText}>Finding your location...</Text>
+          <Text style={styles.loadingText}>
+            {isLoading ? 'Initializing...' : 'Finding your location...'}
+          </Text>
         </View>
       </View>
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingContent}>
+          <Ionicons name="alert-circle-outline" size={48} color="#E91E63" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => requestLocation()}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const visibleSpawns = nearbySpawns.filter(s => !s.isCollected);
+
   return (
     <View style={styles.container}>
       <MapView
-        provider={PROVIDER_GOOGLE}
         style={styles.map}
-        initialRegion={{
-          latitude: mapRegion.latitude,
-          longitude: mapRegion.longitude,
-          latitudeDelta: mapRegion.latitudeDelta,
-          longitudeDelta: mapRegion.longitudeDelta,
-        }}
+        initialRegion={mapRegion}
         showsUserLocation={true}
         showsCompass={true}
         showsScale={true}
-        zoomControlsEnabled={false}
-        onRegionChangeComplete={(region) => {
-          setMapRegion({
-            latitude: region.latitude,
-            longitude: region.longitude,
-            latitudeDelta: region.latitudeDelta,
-            longitudeDelta: region.longitudeDelta,
-          });
-        }}
+        onRegionChangeComplete={(region) => setMapRegion(region)}
       >
-        {items.map((item) => (
-          <React.Fragment key={item.id}>
-            <Circle
-              center={{
-                latitude: item.latitude,
-                longitude: item.longitude,
-              }}
-              radius={COLLECTION_RADIUS_METERS}
-              strokeWidth={2}
-              strokeColor={`${SHARED_RARITY_COLORS[item.itemRarity]}80`}
-              fillColor={`${SHARED_RARITY_COLORS[item.itemRarity]}26`}
-            />
-            <Marker
-              coordinate={{
-                latitude: item.latitude,
-                longitude: item.longitude,
-              }}
-              title={item.itemName}
-              description={`${RARITY_LABEL[item.itemRarity]} - ${item.poiName || 'Treasure'}`}
-              onPress={() => handleMarkerPress(item)}
-              pinColor={SHARED_RARITY_COLORS[item.itemRarity]}
-            />
-          </React.Fragment>
-        ))}
+        <UrlTile
+          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maximumZ={19}
+          flipY={false}
+        />
+
+        {visibleSpawns.map((spawn) => {
+          const poi = nearbyPOIs.find(p => p.id === spawn.poiId);
+          if (!poi) return null;
+
+          const details = getSpawnDetails(spawn);
+          const color = RARITY_COLORS[details.itemRarity];
+
+          return (
+            <React.Fragment key={spawn.poiId}>
+              <Circle
+                center={{
+                  latitude: poi.latitude,
+                  longitude: poi.longitude,
+                }}
+                radius={COLLECTION_RADIUS_METERS}
+                strokeWidth={2}
+                strokeColor={`${color}80`}
+                fillColor={`${color}26`}
+              />
+              <Marker
+                coordinate={{
+                  latitude: poi.latitude,
+                  longitude: poi.longitude,
+                }}
+                title={details.itemName}
+                description={`${RARITY_LABEL[details.itemRarity]} - ${details.poiName}`}
+                onPress={() => setSelectedSpawn(spawn)}
+                pinColor={color}
+              />
+            </React.Fragment>
+          );
+        })}
       </MapView>
 
       <View style={[styles.topOverlay, { top: insets.top + 12 }]}>
-        <View style={styles.balancesContainer}>
-          <View style={styles.balancePill}>
-            <Ionicons name="cash-outline" size={16} color="#D4A017" />
-            <Text style={styles.balanceText}>{coinBalance}</Text>
-          </View>
-          <View style={[styles.balancePill, { borderColor: '#F0E0E8' }]}>
-            <Ionicons name="diamond" size={16} color="#E91E63" />
-            <Text style={[styles.balanceText, { color: '#E91E63' }]}>{gemBalance}</Text>
-          </View>
-        </View>
         <View style={styles.countPill}>
           <Ionicons name="compass" size={16} color="#D4A017" />
           <Text style={styles.countText}>
-            {items.length} treasure{items.length !== 1 ? 's' : ''} nearby
+            {visibleSpawns.length} treasure{visibleSpawns.length !== 1 ? 's' : ''} nearby
           </Text>
+        </View>
+        <View style={styles.inventoryPill}>
+          <Ionicons name="cube" size={16} color="#3B82F6" />
+          <Text style={styles.inventoryText}>{inventory.length} items</Text>
         </View>
       </View>
 
       <TouchableOpacity
         style={[styles.refreshButton, { bottom: Platform.OS === 'ios' ? 108 : 80 }]}
-        onPress={fetchNearbyItems}
+        onPress={handleRefresh}
         activeOpacity={0.8}
+        disabled={refreshing}
       >
-        <Ionicons name="refresh" size={22} color="#1A1A1A" />
+        {refreshing ? (
+          <ActivityIndicator size="small" color="#1A1A1A" />
+        ) : (
+          <Ionicons name="refresh" size={22} color="#1A1A1A" />
+        )}
       </TouchableOpacity>
 
-      {selectedItem && (
+      {selectedSpawn && (
         <View style={styles.bottomSheet}>
           <View style={styles.sheetHandle} />
           <View style={styles.sheetContent}>
             <View style={styles.sheetHeader}>
-              <View style={[styles.sheetIcon, { backgroundColor: `${SHARED_RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
+              <View style={[styles.sheetIcon, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
                 <Ionicons
-                  name={RARITY_ICON[selectedItem.itemRarity] as any}
+                  name={RARITY_ICON[getSpawnDetails(selectedSpawn).itemRarity] as any}
                   size={28}
-                  color={SHARED_RARITY_COLORS[selectedItem.itemRarity]}
+                  color={RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}
                 />
               </View>
               <View style={styles.sheetInfo}>
-                <Text style={styles.sheetTitle}>{selectedItem.itemName}</Text>
-                <View style={[styles.sheetRarityBadge, { backgroundColor: `${SHARED_RARITY_COLORS[selectedItem.itemRarity]}20` }]}>
-                  <Text style={[styles.sheetRarityText, { color: SHARED_RARITY_COLORS[selectedItem.itemRarity] }]}>
-                    {RARITY_LABEL[selectedItem.itemRarity]}
+                <Text style={styles.sheetTitle}>{getSpawnDetails(selectedSpawn).itemName}</Text>
+                <View style={[styles.sheetRarityBadge, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
+                  <Text style={[styles.sheetRarityText, { color: RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity] }]}>
+                    {RARITY_LABEL[getSpawnDetails(selectedSpawn).itemRarity]}
                   </Text>
                 </View>
-                {selectedItem.poiName && (
-                  <View style={styles.sheetLocationRow}>
-                    <Ionicons name="location-outline" size={13} color="#999" />
-                    <Text style={styles.sheetLocation}>{selectedItem.poiName}</Text>
-                  </View>
-                )}
+                <View style={styles.sheetLocationRow}>
+                  <Ionicons name="location-outline" size={13} color="#999" />
+                  <Text style={styles.sheetLocation}>{getSpawnDetails(selectedSpawn).poiName}</Text>
+                </View>
               </View>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setSelectedItem(null)}
+                onPress={() => setSelectedSpawn(null)}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <Ionicons name="close" size={20} color="#999" />
@@ -298,7 +276,7 @@ export default function MapScreen() {
 
             <TouchableOpacity
               style={styles.collectButton}
-              onPress={() => handleCollect(selectedItem)}
+              onPress={() => handleCollect(selectedSpawn)}
               disabled={collecting}
               activeOpacity={0.8}
             >
@@ -338,6 +316,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
+  errorText: {
+    color: '#E91E63',
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#D4A017',
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFF',
+    fontWeight: '600',
+  },
   map: {
     width: width,
     height: height,
@@ -349,31 +345,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  balancesContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  balancePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#F0E8D8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  balanceText: {
-    color: '#D4A017',
-    fontSize: 14,
-    fontWeight: '700',
   },
   countPill: {
     flexDirection: 'row',
@@ -391,6 +362,25 @@ const styles = StyleSheet.create({
   },
   countText: {
     color: '#1A1A1A',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  inventoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  inventoryText: {
+    color: '#3B82F6',
     fontSize: 13,
     fontWeight: '600',
   },

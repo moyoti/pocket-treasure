@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import api from '@/lib/api';
-
-interface StatsData {
-  totalItems: number;
-  uniqueItems: number;
-  byRarity: Record<string, number>;
-}
-
-interface AchievementProgress {
-  total: number;
-  completed: number;
-}
+import { useP2P } from '@/src/p2p';
+import { ITEM_DEFINITIONS } from '@/src/p2p/data';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#8D99AE',
@@ -35,42 +25,43 @@ const RARITY_NAMES: Record<string, string> = {
   legendary: 'Legendary',
 };
 
+const RARITY_ORDER = ['legendary', 'epic', 'rare', 'common'];
+
 export default function StatsScreen() {
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [achievementProgress, setAchievementProgress] = useState<AchievementProgress | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { inventory, isLoading, refreshInventory } = useP2P();
 
-  const fetchStats = async () => {
-    try {
-      const [statsRes, achievementsRes] = await Promise.all([
-        api.get('/inventory/stats'),
-        api.get('/achievements/me'),
-      ]);
-      setStats(statsRes.data);
-      const achievements = achievementsRes.data;
-      setAchievementProgress({
-        total: achievements.length,
-        completed: achievements.filter((a: any) => a.completed).length,
-      });
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
+  const itemLookup = useMemo(() => {
+    const map = new Map<string, typeof ITEM_DEFINITIONS[0]>();
+    ITEM_DEFINITIONS.forEach(item => map.set(item.id, item));
+    return map;
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchStats();
+  const stats = useMemo(() => {
+    const totalItems = inventory.length;
+    const uniqueItemIds = new Set(inventory.map(item => item.itemId));
+    const uniqueItems = uniqueItemIds.size;
+    
+    const byRarity: Record<string, number> = {
+      common: 0,
+      rare: 0,
+      epic: 0,
+      legendary: 0,
+    };
+    
+    inventory.forEach(invItem => {
+      const definition = itemLookup.get(invItem.itemId);
+      const rarity = definition?.rarity || 'common';
+      byRarity[rarity] = (byRarity[rarity] || 0) + 1;
+    });
+    
+    return { totalItems, uniqueItems, byRarity };
+  }, [inventory, itemLookup]);
+
+  const handleRefresh = async () => {
+    await refreshInventory();
   };
 
-  if (loading) {
+  if (isLoading && inventory.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -81,35 +72,36 @@ export default function StatsScreen() {
     );
   }
 
-  const rarityData = stats?.byRarity || {};
-  const totalByRarity = Object.values(rarityData).reduce((a, b) => a + b, 0);
+  const totalByRarity = Object.values(stats.byRarity).reduce((a, b) => a + b, 0);
+
+  const sortedRarityData = RARITY_ORDER
+    .filter(rarity => stats.byRarity[rarity] > 0)
+    .map(rarity => [rarity, stats.byRarity[rarity]] as [string, number]);
 
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor="#D4A017" />}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Main Stats */}
       <View style={styles.mainStatsContainer}>
         <View style={styles.statCard}>
           <Ionicons name="layers-outline" size={28} color="#D4A017" />
-          <Text style={styles.statNumber}>{stats?.totalItems || 0}</Text>
+          <Text style={styles.statNumber}>{stats.totalItems}</Text>
           <Text style={styles.statLabel}>Total Collected</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="apps-outline" size={28} color="#3b82f6" />
-          <Text style={styles.statNumber}>{stats?.uniqueItems || 0}</Text>
+          <Text style={styles.statNumber}>{stats.uniqueItems}</Text>
           <Text style={styles.statLabel}>Unique Items</Text>
         </View>
       </View>
 
-      {/* Rarity Distribution */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>RARITY DISTRIBUTION</Text>
         <View style={styles.sectionCard}>
-          {Object.entries(rarityData).length > 0 ? (
-            Object.entries(rarityData).map(([rarity, count]) => (
+          {sortedRarityData.length > 0 ? (
+            sortedRarityData.map(([rarity, count]) => (
               <View key={rarity} style={styles.rarityItem}>
                 <View style={styles.rarityInfo}>
                   <View style={[styles.rarityDot, { backgroundColor: RARITY_COLORS[rarity] || '#999' }]} />
@@ -141,37 +133,24 @@ export default function StatsScreen() {
         </View>
       </View>
 
-      {/* Achievement Progress */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>ACHIEVEMENTS</Text>
+        <Text style={styles.sectionTitle}>YOUR COLLECTION</Text>
         <View style={styles.sectionCard}>
-          <View style={styles.achievementRow}>
-            <View>
-              <Text style={styles.achievementValue}>
-                {achievementProgress?.completed || 0} / {achievementProgress?.total || 0}
-              </Text>
-              <Text style={styles.achievementLabel}>Completed</Text>
-            </View>
-            <View style={styles.achievementIcon}>
-              <Ionicons name="medal" size={24} color="#9B59B6" />
-            </View>
+          <View style={styles.localInfoRow}>
+            <Ionicons name="lock-closed-outline" size={20} color="#10B981" />
+            <Text style={styles.localInfoText}>
+              All data stored locally on your device
+            </Text>
           </View>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${achievementProgress?.total
-                    ? (achievementProgress.completed / achievementProgress.total) * 100
-                    : 0}%`,
-                },
-              ]}
-            />
+          <View style={styles.localInfoRow}>
+            <Ionicons name="sync-outline" size={20} color="#3b82f6" />
+            <Text style={styles.localInfoText}>
+              Trade with nearby players via P2P
+            </Text>
           </View>
         </View>
       </View>
 
-      {/* Tip */}
       <View style={styles.tipCard}>
         <Ionicons name="bulb-outline" size={18} color="#D4A017" />
         <Text style={styles.tipText}>
@@ -307,40 +286,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#AAA',
   },
-  achievementRow: {
+  localInfoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 8,
   },
-  achievementValue: {
-    fontSize: 24,
-    fontWeight: '800',
+  localInfoText: {
+    fontSize: 14,
     color: '#1A1A1A',
-  },
-  achievementLabel: {
-    fontSize: 12,
-    color: '#AAA',
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  achievementIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F5F0FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#F0E8D8',
-    borderRadius: 3,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#9B59B6',
-    borderRadius: 3,
   },
   tipCard: {
     flexDirection: 'row',

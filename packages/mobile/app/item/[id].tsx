@@ -2,31 +2,27 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { InventoryItem, ItemRarity } from '@/types';
-import { getInventoryItem } from '@/api/inventory';
+import { useP2P } from '@/src/p2p';
+import { ItemRarity, RARITY_COLORS } from '@/src/p2p/types';
+import { getItemById } from '@/src/p2p/data/items';
 
-const RARITY_COLORS: Record<ItemRarity, string> = {
-  common: '#8D99AE',
-  rare: '#3b82f6',
-  epic: '#a855f7',
-  legendary: '#F59E0B',
-};
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
-const RARITY_BG: Record<ItemRarity, string> = {
+const RARITY_BG: Record<Rarity, string> = {
   common: '#F1F3F5',
   rare: '#EBF5FF',
   epic: '#F5F0FF',
   legendary: '#FFFBEB',
 };
 
-const RARITY_NAMES: Record<ItemRarity, string> = {
+const RARITY_NAMES: Record<Rarity, string> = {
   common: 'Common',
   rare: 'Rare',
   epic: 'Epic',
   legendary: 'Legendary',
 };
 
-const RARITY_ICONS: Record<ItemRarity, string> = {
+const RARITY_ICONS: Record<Rarity, string> = {
   common: 'diamond-outline',
   rare: 'diamond',
   epic: 'star',
@@ -35,27 +31,41 @@ const RARITY_ICONS: Record<ItemRarity, string> = {
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [item, setItem] = useState<InventoryItem | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { inventory, nearbyPOIs, isLoading } = useP2P();
+  const [item, setItem] = useState<{
+    itemDef: { id: string; name: string; description: string; rarity: Rarity };
+    quantity: number;
+    poiName: string;
+    collectedAt: number;
+  } | null>(null);
 
   useEffect(() => {
-    if (id) {
-      fetchItem();
+    if (!isLoading && id) {
+      const invItem = inventory.find(i => i.id === id || i.itemId === id);
+      if (invItem) {
+        const itemDef = getItemById(invItem.itemId);
+        const poi = nearbyPOIs.find(p => p.id === invItem.sourcePoiId);
+        setItem({
+          itemDef: itemDef ? {
+            id: itemDef.id,
+            name: itemDef.name,
+            description: itemDef.description,
+            rarity: itemDef.rarity as Rarity,
+          } : {
+            id: invItem.itemId,
+            name: 'Unknown',
+            description: '',
+            rarity: 'common',
+          },
+          quantity: invItem.quantity,
+          poiName: poi?.name || 'Unknown Location',
+          collectedAt: invItem.collectedAt,
+        });
+      }
     }
-  }, [id]);
+  }, [id, inventory, nearbyPOIs, isLoading]);
 
-  const fetchItem = async () => {
-    try {
-      const data = await getInventoryItem(id!);
-      setItem(data);
-    } catch (error) {
-      console.error('Failed to fetch item:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -82,7 +92,7 @@ export default function ItemDetailScreen() {
     );
   }
 
-  const rarity = item.item.rarity as ItemRarity;
+  const rarity = item.itemDef.rarity;
 
   return (
     <ScrollView style={styles.container}>
@@ -94,7 +104,7 @@ export default function ItemDetailScreen() {
             color={RARITY_COLORS[rarity]}
           />
         </View>
-        <Text style={styles.name}>{item.item.name}</Text>
+        <Text style={styles.name}>{item.itemDef.name}</Text>
         <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
           <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
             {RARITY_NAMES[rarity]}
@@ -105,7 +115,7 @@ export default function ItemDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>DESCRIPTION</Text>
         <View style={styles.sectionCard}>
-          <Text style={styles.description}>{item.item.description}</Text>
+          <Text style={styles.description}>{item.itemDef.description || 'A mysterious treasure waiting to be discovered.'}</Text>
         </View>
       </View>
 
@@ -117,7 +127,7 @@ export default function ItemDetailScreen() {
               <Ionicons name="location-outline" size={16} color="#AAA" />
               <Text style={styles.infoLabel}>Location</Text>
             </View>
-            <Text style={styles.infoValue}>{item.poiName || 'Unknown'}</Text>
+            <Text style={styles.infoValue}>{item.poiName}</Text>
           </View>
           <View style={styles.infoDivider} />
           <View style={styles.infoRow}>

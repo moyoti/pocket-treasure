@@ -582,3 +582,54 @@ export interface SubscriptionTier {
   benefits: SubscriptionBenefit;
   price: number;                 // 价格(分)
 }
+
+// ============================================
+// MONTHLY CARD (月卡) TYPES
+// ============================================
+
+export enum MonthlyCardProductId {
+  IOS = 'com.treasurehunt.monthly_card',
+  ANDROID = 'monthly_card',
+}
+
+export interface MonthlyCardConfig {
+  productId: string;
+  name: string;
+  nameZh: string;
+  description: string;
+  descriptionZh: string;
+  durationDays: number;
+  dailyBonusCoins: number;
+  exclusiveCosmeticId: string;
+  exclusiveCosmeticName: string;
+  exclusiveCosmeticNameZh: string;
+  price: number;
+}
+
+export interface MonthlyCardStatus {
+  isActive: boolean;
+  purchasedAt: string | null;
+  expiresAt: string | null;
+  daysRemaining: number;
+  lastDailyBonusClaim: string | null;
+  canClaimDailyBonus: boolean;
+  ownedCosmetics: string[];
+}
+
+export interface DailyBonusResult {
+  success: boolean;
+  bonusCoins: number;
+  newBalance: number;
+  daysRemaining: number;
+  nextClaimTime: string;
+  message: string;
+}
+
+export interface PurchaseMonthlyCardResult {
+  success: boolean;
+  message: string;
+  monthlyCardExpiry: string;
+  daysRemaining: number;
+  grantedCosmetics: string[];
+  newBalance?: number;
+}

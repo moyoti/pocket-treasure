@@ -2,25 +2,15 @@
   "name": "treasure-hunt",
   "version": "1.0.0",
   "private": true,
-  "description": "寻宝记 - A location-based item collection game",
+  "description": "寻宝记 - A location-based item collection game (纯客户端版)",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "backend": "yarn workspace @treasure-hunt/backend",
     "mobile": "yarn workspace @treasure-hunt/mobile",
-    "web": "yarn workspace @treasure-hunt/web",
     "shared": "yarn workspace @treasure-hunt/shared",
     "miniprogram": "yarn workspace @treasure-hunt/miniprogram",
-    "dev:backend": "yarn workspace @treasure-hunt/backend start:dev",
     "dev:mobile": "yarn workspace @treasure-hunt/mobile start",
-    "dev:web": "yarn workspace @treasure-hunt/web dev",
-    "build:backend": "yarn workspace @treasure-hunt/backend build",
-    "build:web": "yarn workspace @treasure-hunt/web build",
-    "build:miniprogram": "yarn workspace @treasure-hunt/miniprogram build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:build": "docker-compose build",
     "lint": "yarn workspaces run lint",
     "test": "yarn workspaces run test",
     "prepare": "husky install"
@@ -32,9 +22,5 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "packageManager": "yarn@1.22.22",
-  "dependencies": {
-    "framer-motion": "^12.34.5",
-    "lucide-react": "^0.576.0"
-  }
+  "packageManager": "yarn@1.22.22"
 }
