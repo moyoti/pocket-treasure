@@ -26,13 +26,17 @@ export class SpawnService {
     longitude: number,
     radiusMeters: number = 2000
   ): Promise<SpawnedTreasure[]> {
+    console.log('[SpawnService] getNearbySpawns called:', latitude, longitude, radiusMeters);
     const pois = await databaseService.getPOIsNearby(latitude, longitude, radiusMeters / 1000);
+    console.log('[SpawnService] POIs from database:', pois.length, pois.map(p => ({ id: p.id, name: p.name, lat: p.latitude, lng: p.longitude })));
     
     if (pois.length === 0) {
+      console.log('[SpawnService] No POIs found, returning empty spawns');
       return [];
     }
 
     const currentSlot = this.currentTimeSlot();
+    console.log('[SpawnService] Current time slot:', currentSlot);
     const collectedSlots = await databaseService.getCollectedSlots();
     const collectedSet = new Set(collectedSlots.map(s => `${s.poiId}:${s.timeSlot}`));
 
@@ -40,10 +44,12 @@ export class SpawnService {
 
     for (const poi of pois) {
       const spawn = this.generateSpawnForPOI(poi, currentSlot);
+      console.log('[SpawnService] Generated spawn for POI:', poi.name, '-> itemId:', spawn.itemId, 'isCollected:', spawn.isCollected);
       spawn.isCollected = collectedSet.has(`${poi.id}:${currentSlot}`);
       spawns.push(spawn);
     }
 
+    console.log('[SpawnService] Total spawns generated:', spawns.length);
     return spawns;
   }
 

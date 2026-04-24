@@ -1,14 +1,9 @@
-/**
- * Identity Service - Local cryptographic identity management
- * 
- * Uses Ed25519 for signing and verification.
- * Private key stored in expo-secure-store (encrypted at rest).
- */
-
 import * as ed from '@noble/ed25519';
-import { sha256 } from '@noble/hashes/sha2';
+import { sha256, sha512 } from '@noble/hashes/sha2';
 import * as SecureStore from 'expo-secure-store';
 import { LocalIdentity, KeyPair } from '../types';
+
+ed.hashes.sha512 = sha512;
 
 const PRIVATE_KEY_KEY = 'treasure_hunt_private_key';
 const PUBLIC_KEY_KEY = 'treasure_hunt_public_key';
@@ -20,12 +15,8 @@ export class IdentityService {
   private publicKey: Uint8Array | null = null;
   private identity: LocalIdentity | null = null;
 
-  /**
-   * Initialize identity - load existing or create new
-   */
   async initialize(): Promise<LocalIdentity> {
     try {
-      // Try to load existing identity
       const existing = await this.loadExistingIdentity();
       if (existing) {
         this.identity = existing;
@@ -35,13 +26,9 @@ export class IdentityService {
       console.log('No existing identity found, creating new one');
     }
 
-    // Create new identity
     return await this.createNewIdentity();
   }
 
-  /**
-   * Load existing identity from secure storage
-   */
   private async loadExistingIdentity(): Promise<LocalIdentity | null> {
     const privateKeyHex = await SecureStore.getItemAsync(PRIVATE_KEY_KEY);
     const publicKeyHex = await SecureStore.getItemAsync(PUBLIC_KEY_KEY);
@@ -64,18 +51,14 @@ export class IdentityService {
     return this.identity;
   }
 
-  /**
-   * Create new identity with random keypair
-   */
   private async createNewIdentity(): Promise<LocalIdentity> {
     this.privateKey = ed.utils.randomSecretKey();
-    this.publicKey = await ed.getPublicKeyAsync(this.privateKey);
+    this.publicKey = ed.getPublicKey(this.privateKey);
 
     const privateKeyHex = this.bytesToHex(this.privateKey);
     const publicKeyHex = this.bytesToHex(this.publicKey);
     const createdAt = Date.now();
 
-    // Store in secure storage
     await SecureStore.setItemAsync(PRIVATE_KEY_KEY, privateKeyHex);
     await SecureStore.setItemAsync(PUBLIC_KEY_KEY, publicKeyHex);
     await SecureStore.setItemAsync(DISPLAY_NAME_KEY, 'Explorer');
@@ -90,23 +73,14 @@ export class IdentityService {
     return this.identity;
   }
 
-  /**
-   * Get current identity
-   */
   getIdentity(): LocalIdentity | null {
     return this.identity;
   }
 
-  /**
-   * Get public key (hex string)
-   */
   getPublicKeyHex(): string {
     return this.identity?.publicKey || '';
   }
 
-  /**
-   * Update display name
-   */
   async updateDisplayName(name: string): Promise<void> {
     if (!this.identity) {
       throw new Error('Identity not initialized');
@@ -116,45 +90,33 @@ export class IdentityService {
     this.identity.displayName = name;
   }
 
-  /**
-   * Sign a message
-   */
   async sign(message: string): Promise<string> {
     if (!this.privateKey) {
       throw new Error('Private key not loaded');
     }
 
     const messageBytes = new TextEncoder().encode(message);
-    const signature = await ed.signAsync(messageBytes, this.privateKey);
+    const signature = ed.sign(messageBytes, this.privateKey);
     return this.bytesToHex(signature);
   }
 
-  /**
-   * Sign structured data (JSON object)
-   */
   async signObject(obj: object): Promise<string> {
     const canonicalJson = JSON.stringify(obj, Object.keys(obj).sort());
     return await this.sign(canonicalJson);
   }
 
-  /**
-   * Verify a signature
-   */
   async verify(message: string, signature: string, publicKey: string): Promise<boolean> {
     try {
       const messageBytes = new TextEncoder().encode(message);
       const signatureBytes = this.hexToBytes(signature);
       const publicKeyBytes = this.hexToBytes(publicKey);
-      return await ed.verifyAsync(signatureBytes, messageBytes, publicKeyBytes);
+      return ed.verify(signatureBytes, messageBytes, publicKeyBytes);
     } catch (error) {
       console.error('Signature verification failed:', error);
       return false;
     }
   }
 
-  /**
-   * Verify structured data signature
-   */
   async verifyObject(obj: object, signature: string, publicKey: string): Promise<boolean> {
     const canonicalJson = JSON.stringify(obj, Object.keys(obj).sort());
     return await this.verify(canonicalJson, signature, publicKey);

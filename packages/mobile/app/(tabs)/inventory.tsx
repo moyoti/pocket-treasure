@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,21 +43,55 @@ interface DisplayItem {
   itemDef: {
     id: string;
     name: string;
+    nameZh: string;
     rarity: ItemRarity;
   };
   quantity: number;
   poiName?: string;
   collectedAt: number;
+  inventoryIds: string[];
 }
 
 export default function InventoryScreen() {
-  const { inventory, nearbyPOIs, isLoading, refreshInventory } = useP2P();
+  const { inventory, nearbyPOIs, isLoading, refreshInventory, sellItem, getSellPrice, sellPrices, profile } = useP2P();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DisplayItem | null>(null);
+  const [sellModalVisible, setSellModalVisible] = useState(false);
+  const [selling, setSelling] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshInventory();
     setRefreshing(false);
+  };
+
+  const handleSellPress = (item: DisplayItem) => {
+    setSelectedItem(item);
+    setSellModalVisible(true);
+  };
+
+  const handleConfirmSell = async () => {
+    if (!selectedItem || selling) return;
+    
+    setSelling(true);
+    try {
+      const result = await sellItem(selectedItem.inventoryIds[0]);
+      
+      if (result.success) {
+        Alert.alert(
+          'Sold!',
+          `You sold ${result.soldItem?.itemName} for ${result.coinsEarned} coins!`,
+          [{ text: 'OK', onPress: () => setSellModalVisible(false) }]
+        );
+        setSelectedItem(null);
+      } else {
+        Alert.alert('Failed', result.error || 'Unable to sell item');
+      }
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Sell failed');
+    } finally {
+      setSelling(false);
+    }
   };
 
   const displayItems: DisplayItem[] = useMemo(() => {
@@ -68,6 +104,7 @@ export default function InventoryScreen() {
       const key = invItem.itemId;
       if (grouped[key]) {
         grouped[key].quantity += invItem.quantity;
+        grouped[key].inventoryIds.push(invItem.id);
       } else {
         const poi = nearbyPOIs.find(p => p.id === invItem.sourcePoiId);
         grouped[key] = {
@@ -75,11 +112,13 @@ export default function InventoryScreen() {
           itemDef: {
             id: itemDef.id,
             name: itemDef.name,
+            nameZh: itemDef.nameZh,
             rarity: itemDef.rarity,
           },
           quantity: invItem.quantity,
           poiName: poi?.name,
           collectedAt: invItem.collectedAt,
+          inventoryIds: [invItem.id],
         };
       }
     }
@@ -120,6 +159,7 @@ export default function InventoryScreen() {
 
   const renderItem = ({ item }: { item: DisplayItem }) => {
     const rarity = item.itemDef.rarity;
+    const sellPrice = sellPrices[rarity];
     return (
       <TouchableOpacity
         style={[styles.itemCard, { borderLeftColor: RARITY_COLORS[rarity] }]}
@@ -134,13 +174,14 @@ export default function InventoryScreen() {
           />
         </View>
         <View style={styles.itemInfo}>
-          <Text style={styles.itemName} numberOfLines={1}>{item.itemDef.name}</Text>
+          <Text style={styles.itemName} numberOfLines={1}>{item.itemDef.nameZh || item.itemDef.name}</Text>
           <View style={styles.rarityRow}>
             <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
               <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
                 {RARITY_NAMES[rarity]}
               </Text>
             </View>
+            <Text style={styles.sellPriceText}>Sell: {sellPrice} coins</Text>
           </View>
           {item.poiName && (
             <View style={styles.locationRow}>
@@ -152,7 +193,13 @@ export default function InventoryScreen() {
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityText}>x{item.quantity}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#CCC" />
+        <TouchableOpacity 
+          style={styles.sellButton}
+          onPress={() => handleSellPress(item)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="cash-outline" size={18} color="#22C55E" />
+        </TouchableOpacity>
       </TouchableOpacity>
     );
   };
@@ -215,6 +262,88 @@ export default function InventoryScreen() {
           </View>
         }
       />
+
+      {/* Sell Modal */}
+      <Modal
+        visible={sellModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSellModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedItem && (
+              <>
+                <View style={styles.modalHeader}>
+                  <View style={[styles.modalIconContainer, { backgroundColor: RARITY_BG[selectedItem.itemDef.rarity] }]}>
+                    <Ionicons
+                      name={RARITY_ICONS[selectedItem.itemDef.rarity] as any}
+                      size={32}
+                      color={RARITY_COLORS[selectedItem.itemDef.rarity]}
+                    />
+                  </View>
+                  <View style={styles.modalItemInfo}>
+                    <Text style={styles.modalItemName}>{selectedItem.itemDef.nameZh || selectedItem.itemDef.name}</Text>
+                    <View style={[styles.modalRarityBadge, { backgroundColor: RARITY_BG[selectedItem.itemDef.rarity] }]}>
+                      <Text style={[styles.modalRarityText, { color: RARITY_COLORS[selectedItem.itemDef.rarity] }]}>
+                        {RARITY_NAMES[selectedItem.itemDef.rarity]}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => setSellModalVisible(false)}>
+                    <Ionicons name="close" size={24} color="#999" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalSellInfo}>
+                  <View style={styles.sellRow}>
+                    <Ionicons name="cube-outline" size={20} color="#666" />
+                    <Text style={styles.sellLabel}>Quantity:</Text>
+                    <Text style={styles.sellValue}>x{selectedItem.quantity}</Text>
+                  </View>
+                  <View style={styles.sellRow}>
+                    <Ionicons name="cash-outline" size={20} color="#22C55E" />
+                    <Text style={styles.sellLabel}>Sell Price:</Text>
+                    <Text style={[styles.sellValue, { color: '#22C55E' }]}>
+                      {sellPrices[selectedItem.itemDef.rarity] * selectedItem.quantity} coins
+                    </Text>
+                  </View>
+                  {profile && (
+                    <View style={styles.sellRow}>
+                      <Ionicons name="wallet-outline" size={20} color="#D4A017" />
+                      <Text style={styles.sellLabel}>Current Coins:</Text>
+                      <Text style={[styles.sellValue, { color: '#D4A017' }]}>{profile.coins}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setSellModalVisible(false)}
+                  >
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.confirmSellButton}
+                    onPress={handleConfirmSell}
+                    disabled={selling}
+                  >
+                    {selling ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <>
+                        <Ionicons name="cash" size={18} color="#FFF" />
+                        <Text style={styles.confirmSellText}>Sell</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -372,5 +501,113 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  sellPriceText: {
+    fontSize: 11,
+    color: '#22C55E',
+    marginLeft: 8,
+    fontWeight: '600',
+  },
+  sellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0FFF0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    maxWidth: 340,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  modalItemInfo: {
+    flex: 1,
+  },
+  modalItemName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  modalRarityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  modalRarityText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modalSellInfo: {
+    marginBottom: 20,
+    gap: 12,
+  },
+  sellRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sellLabel: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+  },
+  sellValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+  },
+  cancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  confirmSellButton: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  confirmSellText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
   },
 });

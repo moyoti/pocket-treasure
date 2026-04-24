@@ -64,15 +64,19 @@ export default function MapScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const requestLocation = async () => {
+    console.log('[Map] Requesting location permission...');
     const { status } = await Location.requestForegroundPermissionsAsync();
+    console.log('[Map] Permission status:', status);
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Location access is required to find nearby treasures.');
       return;
     }
 
+    console.log('[Map] Getting current position...');
     const loc = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,
     });
+    console.log('[Map] Location obtained:', loc.coords.latitude, loc.coords.longitude);
     setLocation(loc);
     setMapRegion({
       latitude: loc.coords.latitude,
@@ -84,12 +88,15 @@ export default function MapScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('[Map] Tab focused, requesting location...');
       requestLocation();
     }, [])
   );
 
   useEffect(() => {
+    console.log('[Map] Effect triggered - location:', location?.coords, 'isInitialized:', isInitialized);
     if (location && isInitialized) {
+      console.log('[Map] Calling refreshNearby...');
       refreshNearby(location.coords.latitude, location.coords.longitude);
     }
   }, [location, isInitialized]);
@@ -164,6 +171,13 @@ export default function MapScreen() {
   }
 
   const visibleSpawns = nearbySpawns.filter(s => !s.isCollected);
+  console.log('[Map] Rendering map with:', { 
+    nearbyPOIs: nearbyPOIs.length, 
+    nearbySpawns: nearbySpawns.length, 
+    visibleSpawns: visibleSpawns.length,
+    userLocation,
+    mapRegion
+  });
 
   return (
     <View style={styles.container}>

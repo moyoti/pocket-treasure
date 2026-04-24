@@ -5,6 +5,7 @@
 
 import { POI, PoiType, POI_TYPE_WEIGHTS } from '../types';
 import { databaseService } from '../database';
+import { getStaticPOIsNearby } from '../data';
 
 // Overpass API instances with different rate limits
 const OVERPASS_INSTANCES = [
@@ -228,6 +229,8 @@ export class POIService {
           body: `data=${encodeURIComponent(query)}`,
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'User-Agent': 'TreasureHunt/1.0 (React Native App - https://github.com/treasure-hunt)',
           },
         });
 
@@ -255,9 +258,15 @@ export class POIService {
       }
     }
 
-    // All instances failed, return cached data
-    console.warn('[POIService] All instances failed, falling back to cache');
+    console.warn('[POIService] All instances failed, using static POI data');
     console.warn('[POIService] Errors:', errors.join('; '));
+
+    const staticPOIs = getStaticPOIsNearby(latitude, longitude, radiusMeters / 1000);
+    if (staticPOIs.length > 0) {
+      console.log(`[POIService] Found ${staticPOIs.length} static POIs`);
+      await databaseService.cachePOIs(staticPOIs);
+      return staticPOIs;
+    }
 
     return await databaseService.getPOIsNearby(latitude, longitude, radiusMeters / 1000);
   }

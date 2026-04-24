@@ -24,6 +24,7 @@ import { ChestEngine } from '../p2p/engines/ChestEngine';
 import { CosmeticEngine } from '../p2p/engines/CosmeticEngine';
 import { DailyTaskEngine } from '../p2p/engines/DailyTaskEngine';
 import { AchievementEngine } from '../p2p/engines/AchievementEngine';
+import { SellEngine, SellResult, SELL_PRICES } from '../p2p/engines/SellEngine';
 import {
   ITEM_DEFINITIONS,
   SHOP_DEFINITIONS,
@@ -87,6 +88,9 @@ interface P2PContextValue {
   refreshProfile: () => Promise<void>;
   refreshDailyTasks: () => Promise<void>;
   refreshAchievements: () => Promise<void>;
+  sellItem: (inventoryItemId: string) => Promise<SellResult>;
+  getSellPrice: (itemId: string) => number;
+  sellPrices: Record<ItemRarity, number>;
 }
 
 const P2PContext = createContext<P2PContextValue | null>(null);
@@ -115,6 +119,7 @@ export function P2PProvider({ children }: { children: ReactNode }) {
   const [cosmeticEngine, setCosmeticEngine] = useState<CosmeticEngine | null>(null);
   const [dailyTaskEngine, setDailyTaskEngine] = useState<DailyTaskEngine | null>(null);
   const [achievementEngine, setAchievementEngine] = useState<AchievementEngine | null>(null);
+  const [sellEngine, setSellEngine] = useState<SellEngine | null>(null);
 
   useEffect(() => {
     initializeP2P();
@@ -124,9 +129,13 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
+      console.log('[P2P] Starting initialization...');
 
+      console.log('[P2P] Initializing database...');
       await databaseService.initialize();
+      console.log('[P2P] Database initialized');
 
+      console.log('[P2P] Seeding data...');
       await databaseService.seedItemDefinitions(ITEM_DEFINITIONS);
       await databaseService.seedShopItems(SHOP_DEFINITIONS);
       await databaseService.seedGachaPools(GACHA_DEFINITIONS);
@@ -134,13 +143,16 @@ export function P2PProvider({ children }: { children: ReactNode }) {
       await databaseService.seedCosmetics(COSMETIC_DEFINITIONS);
       await databaseService.seedDailyTaskDefinitions(DAILY_TASK_DEFINITIONS);
       await databaseService.seedAchievements(ACHIEVEMENT_DEFINITIONS);
+      console.log('[P2P] Data seeded');
 
+      console.log('[P2P] Initializing engines...');
       const shop = new ShopEngine(databaseService);
       const gacha = new GachaEngine(databaseService);
       const chest = new ChestEngine(databaseService);
       const cosmetic = new CosmeticEngine(databaseService);
       const dailyTask = new DailyTaskEngine(databaseService);
       const achievement = new AchievementEngine(databaseService);
+      const sell = new SellEngine(databaseService);
 
       await shop.initialize();
       await gacha.initialize();
@@ -148,6 +160,7 @@ export function P2PProvider({ children }: { children: ReactNode }) {
       await cosmetic.initialize();
       await dailyTask.initialize();
       await achievement.initialize();
+      console.log('[P2P] Engines initialized');
 
       setShopEngine(shop);
       setGachaEngine(gacha);
@@ -155,8 +168,11 @@ export function P2PProvider({ children }: { children: ReactNode }) {
       setCosmeticEngine(cosmetic);
       setDailyTaskEngine(dailyTask);
       setAchievementEngine(achievement);
+      setSellEngine(sell);
 
+      console.log('[P2P] Initializing identity...');
       const id = await identityService.initialize();
+      console.log('[P2P] Identity initialized:', id?.publicKey);
       setIdentity(id);
 
       const prof = await databaseService.getUserProfile();
@@ -188,8 +204,10 @@ export function P2PProvider({ children }: { children: ReactNode }) {
       const gachaPoolsList = await gacha.getGachaPools();
       setGachaPools(gachaPoolsList);
 
+      console.log('[P2P] Initialization complete!');
       setIsInitialized(true);
     } catch (err) {
+      console.error('[P2P] Initialization error:', err);
       setError(err instanceof Error ? err.message : 'Initialization failed');
     } finally {
       setIsLoading(false);
@@ -209,18 +227,26 @@ export function P2PProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshNearby(lat: number, lng: number) {
-    if (!isInitialized) return;
+    console.log('[P2PContext] refreshNearby called with:', lat, lng, 'isInitialized:', isInitialized);
+    if (!isInitialized) {
+      console.log('[P2PContext] Not initialized, skipping refreshNearby');
+      return;
+    }
 
     setUserLocation({ latitude: lat, longitude: lng });
 
     try {
+      console.log('[P2PContext] Fetching nearby POIs...');
       const pois = await poiService.fetchNearbyPOIs(lat, lng, 2000);
+      console.log('[P2PContext] Found POIs:', pois.length);
       setNearbyPOIs(pois);
 
+      console.log('[P2PContext] Getting nearby spawns...');
       const spawns = await spawnService.getNearbySpawns(lat, lng, 2000);
+      console.log('[P2PContext] Found spawns:', spawns.length, spawns.map(s => ({ poiId: s.poiId, itemId: s.itemId, isCollected: s.isCollected })));
       setNearbySpawns(spawns);
     } catch (err) {
-      console.error('Failed to refresh nearby:', err);
+      console.error('[P2PContext] Failed to refresh nearby:', err);
     }
   }
 
@@ -396,6 +422,26 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
+  async function sellItem(inventoryItemId: string): Promise<SellResult> {
+    if (!sellEngine) {
+      return { success: false, error: 'Sell engine not initialized' };
+    }
+
+    const result = await sellEngine.sellItem(inventoryItemId);
+
+    if (result.success) {
+      await refreshInventory();
+      await refreshProfile();
+    }
+
+    return result;
+  }
+
+  function getSellPrice(itemId: string): number {
+    if (!sellEngine) return 0;
+    return sellEngine.getSellPrice(itemId);
+  }
+
   const value: P2PContextValue = {
     isInitialized,
     isLoading,
@@ -427,6 +473,9 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     refreshProfile,
     refreshDailyTasks,
     refreshAchievements,
+    sellItem,
+    getSellPrice,
+    sellPrices: SELL_PRICES,
   };
 
   return (
