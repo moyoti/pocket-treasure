@@ -685,6 +685,22 @@
     "markerDescription": "Description",
     "selectIcon": "Select Icon",
     "selectColor": "Select Color",
+    "namePlaceholder": "Enter marker name",
+    "descriptionPlaceholder": "Add description (optional)",
+    "nameRequired": "Please enter marker name",
+    "markerCreated": "Marker created!",
+    "createFailed": "Failed to create marker",
+    "deleteFailed": "Failed to delete marker",
+    "icons": {
+      "star": "Star",
+      "flag": "Flag",
+      "treasure": "Treasure",
+      "camp": "Camp",
+      "note": "Note",
+      "camera": "Camera",
+      "heart": "Heart",
+      "pin": "Pin"
+    },
     "star": "Star",
     "flag": "Flag",
     "treasure": "Treasure",
@@ -693,6 +709,7 @@
     "camera": "Camera",
     "heart": "Heart",
     "pin": "Pin",
+    "color": "Color",
     "noMarkers": "No markers created",
     "createFirst": "Create your first marker!",
     "sharedMarkers": "Shared Markers",
@@ -703,7 +720,8 @@
     "markerCopied": "Marker copied!",
     "nearbyMarkers": "Nearby Markers",
     "myMarkers": "My Markers",
-    "shared": "Shared"
+    "shared": "Shared",
+    "create": "Create"
   },
   "mapbox": {
     "offlineMaps": "Offline Maps",

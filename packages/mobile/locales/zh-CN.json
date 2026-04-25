@@ -685,6 +685,22 @@
     "markerDescription": "描述",
     "selectIcon": "选择图标",
     "selectColor": "选择颜色",
+    "namePlaceholder": "输入标记名称",
+    "descriptionPlaceholder": "添加描述（可选）",
+    "nameRequired": "请输入标记名称",
+    "markerCreated": "标记创建成功！",
+    "createFailed": "创建标记失败",
+    "deleteFailed": "删除标记失败",
+    "icons": {
+      "star": "星星",
+      "flag": "旗帜",
+      "treasure": "宝藏",
+      "camp": "营地",
+      "note": "笔记",
+      "camera": "相机",
+      "heart": "爱心",
+      "pin": "定位"
+    },
     "star": "星星",
     "flag": "旗帜",
     "treasure": "宝藏",
@@ -693,6 +709,7 @@
     "camera": "相机",
     "heart": "爱心",
     "pin": "定位",
+    "color": "颜色",
     "noMarkers": "未创建标记",
     "createFirst": "创建您的第一个标记！",
     "sharedMarkers": "共享标记",
@@ -703,7 +720,8 @@
     "markerCopied": "标记已复制！",
     "nearbyMarkers": "附近标记",
     "myMarkers": "我的标记",
-    "shared": "已共享"
+    "shared": "已共享",
+    "create": "创建"
   },
   "mapbox": {
     "offlineMaps": "离线地图",

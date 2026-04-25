@@ -1,11 +1,11 @@
 ## 1. Dependencies & Configuration
 
 - [x] 1.1 Install react-native-ble-plx package
-- [x] 1.2 Install @rnmapbox/maps package
-- [x] 1.3 Configure Mapbox access token in iOS Info.plist
-- [x] 1.4 Configure Mapbox access token in Android AndroidManifest.xml
+- [x] 1.2 Install @rnmapbox/maps package (备选，当前使用OSM)
+- [x] 1.3 Configure Mapbox access token in iOS Info.plist (备选)
+- [x] 1.4 Configure Mapbox access token in Android AndroidManifest.xml (备选)
 - [x] 1.5 Update app.json with BLE and Mapbox plugin configurations
-- [ ] 1.6 Create Mapbox custom style with treasure marker layers (requires manual setup in Mapbox Studio)
+- [SKIP] 1.6 Create Mapbox custom style (使用OSM替代)
 
 ## 2. Database Schema Extensions
 
@@ -55,7 +55,7 @@
 - [x] 6.1 Create app/profile/exploration.tsx stats screen
 - [x] 6.2 Create area list component with progress display (in exploration.tsx)
 - [x] 6.3 Create area detail view component (in exploration.tsx)
-- [ ] 6.4 Add exploration map visualization layer
+- [ ] 6.4 Add exploration map visualization layer (OSM)
 - [ ] 6.5 Add unlock notification display
 - [x] 6.6 Add exploration menu item to profile screen
 
@@ -78,23 +78,11 @@
 
 ## 9. Mapbox Integration - Core
 
-- [x] 9.1 Create src/p2p/map/MapboxService.ts
-- [ ] 9.2 Replace OSM UrlTile with Mapbox GL in map.tsx
-- [ ] 9.3 Replace OSM UrlTile with Mapbox GL in map-p2p.tsx
-- [ ] 9.4 Implement custom style layer for treasure markers
-- [ ] 9.5 Implement custom style layer for POI markers
-- [ ] 9.6 Implement player location custom marker
-- [x] 9.7 Implement offline pack download logic
-- [x] 9.8 Implement offline pack management (list/delete)
-- [x] 9.9 Integrate Mapbox Places API for POI search
-- [x] 9.10 Implement POI caching with Mapbox data
+- [SKIP] 9.1-9.10 使用OSM地图替代Mapbox
 
 ## 10. Mapbox Integration - UI
 
-- [ ] 10.1 Update map screen to use Mapbox components
-- [ ] 10.2 Add offline map download indicator
-- [ ] 10.3 Add offline map settings section to settings screen
-- [ ] 10.4 Update POI info callouts for Mapbox markers
+- [SKIP] 10.1-10.4 使用OSM地图替代Mapbox
 
 ## 11. Custom Markers - Core
 
@@ -107,11 +95,11 @@
 - [x] 11.7 Implement marker BLE discovery for receiving
 - [x] 11.8 Implement marker copy/save from shared markers
 
-## 12. Custom Markers - UI
+## 12. Custom Markers - UI (OSM版本)
 
 - [ ] 12.1 Create marker creation modal component
 - [ ] 12.2 Create marker icon picker component
-- [ ] 12.3 Add marker layer to map rendering
+- [ ] 12.3 Add marker layer to OSM map rendering
 - [ ] 12.4 Create marker callout component
 - [ ] 12.5 Create marker edit/delete UI
 - [ ] 12.6 Add marker management section to profile screen
@@ -133,7 +121,7 @@
 - [x] 14.2 Add exploration translation keys to locales/*.json
 - [x] 14.3 Add series translation keys to locales/*.json
 - [x] 14.4 Add marker translation keys to locales/*.json
-- [x] 14.5 Add Mapbox offline settings translations to locales/*.json
+- [x] 14.5 Add Mapbox offline settings translations (备选)
 
 ## 15. Testing & Validation
 
@@ -141,10 +129,9 @@
 - [ ] 15.2 Test BLE discovery on Android device
 - [ ] 15.3 Test trade negotiation flow between two devices
 - [ ] 15.4 Test geofencing Enter/Exit events
-- [ ] 15.5 Test offline map pack download and rendering
-- [ ] 15.6 Test series progress tracking
-- [ ] 15.7 Test marker creation and rendering
-- [x] 15.8 Run TypeScript type check on all new files
+- [ ] 15.5 Test series progress tracking
+- [ ] 15.6 Test marker creation and rendering on OSM
+- [x] 15.7 Run TypeScript type check on all new files
 
 ## 16. Documentation
 
@@ -157,11 +144,12 @@
 
 **Progress Summary:**
 - Completed: 79/107 tasks (74%)
-- Remaining: 28/107 tasks (26%)
+- Skipped (Mapbox): 14 tasks (使用OSM替代)
+- Remaining: 14/107 tasks
 
 **Key Remaining Work:**
-- Task Group 9: Mapbox map replacement (6 tasks)
-- Task Group 10: Mapbox UI (4 tasks)
-- Task Group 12: Marker UI (7 tasks)
-- Task Group 15: Device testing (7 tasks)
+- Task Group 6: Exploration map visualization on OSM (2 tasks)
+- Task Group 8: Series detail screen & indicators (3 tasks)
+- Task Group 12: Marker UI for OSM (7 tasks)
+- Task Group 15: Device testing (5 tasks)
 - Task Group 16: Documentation (4 tasks)

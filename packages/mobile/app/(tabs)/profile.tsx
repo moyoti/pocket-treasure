@@ -17,7 +17,7 @@ interface MenuItem {
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { identity, inventory, isLoading, updateDisplayName, tradeHistory, areaUnlockProgress } = useP2P();
+  const { identity, inventory, isLoading, updateDisplayName, tradeHistory, areaUnlockProgress, userMarkers } = useP2P();
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
 
@@ -100,6 +100,22 @@ export default function ProfileScreen() {
           );
         } else {
           Alert.alert(t('trade.tradeHistory'), t('trade.noTradeHistory'));
+        }
+      },
+    },
+    {
+      icon: 'pin-outline',
+      label: t('markers.title'),
+      subtitle: `${userMarkers.length} markers`,
+      onPress: () => {
+        if (userMarkers.length > 0) {
+          Alert.alert(
+            t('markers.myMarkers'),
+            userMarkers.map(m => `${m.name} - ${m.iconType}`).join('\n'),
+            [{ text: t('common.close') }]
+          );
+        } else {
+          Alert.alert(t('markers.noMarkers'), t('markers.createFirst'));
         }
       },
     },
