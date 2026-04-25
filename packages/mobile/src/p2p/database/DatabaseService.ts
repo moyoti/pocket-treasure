@@ -23,6 +23,12 @@ import {
   AchievementDefinition,
   UserAchievement,
   AchievementStatus,
+  TradeRecord,
+  VisitedArea,
+  UserMarker,
+  SeriesProgress,
+  MarkerIconType,
+  SeriesCategory,
 } from '../types';
 
 const DB_NAME = 'treasure_hunt_p2p.db';
@@ -238,12 +244,78 @@ export class DatabaseService {
         UNIQUE(achievement_id)
       );
 
+      -- New tables for client-side features expansion
+
+      CREATE TABLE IF NOT EXISTS visited_areas (
+        id TEXT PRIMARY KEY,
+        area_id TEXT NOT NULL,
+        area_name TEXT NOT NULL,
+        area_name_zh TEXT,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        radius REAL NOT NULL,
+        first_visit_at INTEGER NOT NULL,
+        last_visit_at INTEGER NOT NULL,
+        visit_count INTEGER DEFAULT 1,
+        is_unlocked INTEGER DEFAULT 0,
+        unlock_conditions TEXT,
+        UNIQUE(area_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS user_markers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        icon_type TEXT NOT NULL,
+        color TEXT DEFAULT '#FFD700',
+        creator_public_key TEXT NOT NULL,
+        is_shared INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS trade_history (
+        id TEXT PRIMARY KEY,
+        partner_public_key TEXT NOT NULL,
+        partner_display_name TEXT,
+        items_given TEXT NOT NULL,
+        items_received TEXT NOT NULL,
+        my_signature TEXT NOT NULL,
+        partner_signature TEXT,
+        trade_status TEXT NOT NULL,
+        traded_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS collection_series_progress (
+        id TEXT PRIMARY KEY,
+        series_id TEXT NOT NULL,
+        series_name TEXT NOT NULL,
+        series_name_zh TEXT,
+        category TEXT NOT NULL,
+        required_items TEXT NOT NULL,
+        collected_items TEXT NOT NULL,
+        progress_percent REAL DEFAULT 0,
+        milestone_25 INTEGER DEFAULT 0,
+        milestone_50 INTEGER DEFAULT 0,
+        milestone_75 INTEGER DEFAULT 0,
+        is_completed INTEGER DEFAULT 0,
+        completed_at INTEGER,
+        rewards_claimed TEXT,
+        UNIQUE(series_id)
+      );
+
       CREATE INDEX IF NOT EXISTS idx_inventory_item ON inventory(item_id);
       CREATE INDEX IF NOT EXISTS idx_poi_location ON poi_cache(latitude, longitude);
       CREATE INDEX IF NOT EXISTS idx_poi_type ON poi_cache(poi_type);
       CREATE INDEX IF NOT EXISTS idx_user_daily_tasks_date ON user_daily_tasks(task_date);
       CREATE INDEX IF NOT EXISTS idx_user_cosmetics_type ON user_cosmetics(cosmetic_type);
       CREATE INDEX IF NOT EXISTS idx_user_chests_chest ON user_chests(chest_id);
+      CREATE INDEX IF NOT EXISTS idx_visited_areas_location ON visited_areas(latitude, longitude);
+      CREATE INDEX IF NOT EXISTS idx_user_markers_location ON user_markers(latitude, longitude);
+      CREATE INDEX IF NOT EXISTS idx_trade_history_time ON trade_history(traded_at);
+      CREATE INDEX IF NOT EXISTS idx_series_progress ON collection_series_progress(series_id);
     `);
   }
 
@@ -267,7 +339,101 @@ export class DatabaseService {
       DELETE FROM user_daily_tasks;
       DELETE FROM user_achievements;
       DELETE FROM gacha_pity;
+      DELETE FROM visited_areas;
+      DELETE FROM user_markers;
+      DELETE FROM trade_history;
+      DELETE FROM collection_series_progress;
     `);
+  }
+
+  async runMigration(): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const tables = await this.db.getAllAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('visited_areas', 'user_markers', 'trade_history', 'collection_series_progress')"
+    );
+
+    const existingTables = tables.map(t => t.name);
+
+    if (!existingTables.includes('visited_areas')) {
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS visited_areas (
+          id TEXT PRIMARY KEY,
+          area_id TEXT NOT NULL,
+          area_name TEXT NOT NULL,
+          area_name_zh TEXT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          radius REAL NOT NULL,
+          first_visit_at INTEGER NOT NULL,
+          last_visit_at INTEGER NOT NULL,
+          visit_count INTEGER DEFAULT 1,
+          is_unlocked INTEGER DEFAULT 0,
+          unlock_conditions TEXT,
+          UNIQUE(area_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_visited_areas_location ON visited_areas(latitude, longitude);
+      `);
+    }
+
+    if (!existingTables.includes('user_markers')) {
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS user_markers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          icon_type TEXT NOT NULL,
+          color TEXT DEFAULT '#FFD700',
+          creator_public_key TEXT NOT NULL,
+          is_shared INTEGER DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_user_markers_location ON user_markers(latitude, longitude);
+      `);
+    }
+
+    if (!existingTables.includes('trade_history')) {
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS trade_history (
+          id TEXT PRIMARY KEY,
+          partner_public_key TEXT NOT NULL,
+          partner_display_name TEXT,
+          items_given TEXT NOT NULL,
+          items_received TEXT NOT NULL,
+          my_signature TEXT NOT NULL,
+          partner_signature TEXT,
+          trade_status TEXT NOT NULL,
+          traded_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_trade_history_time ON trade_history(traded_at);
+      `);
+    }
+
+    if (!existingTables.includes('collection_series_progress')) {
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS collection_series_progress (
+          id TEXT PRIMARY KEY,
+          series_id TEXT NOT NULL,
+          series_name TEXT NOT NULL,
+          series_name_zh TEXT,
+          category TEXT NOT NULL,
+          required_items TEXT NOT NULL,
+          collected_items TEXT NOT NULL,
+          progress_percent REAL DEFAULT 0,
+          milestone_25 INTEGER DEFAULT 0,
+          milestone_50 INTEGER DEFAULT 0,
+          milestone_75 INTEGER DEFAULT 0,
+          is_completed INTEGER DEFAULT 0,
+          completed_at INTEGER,
+          rewards_claimed TEXT,
+          UNIQUE(series_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_series_progress ON collection_series_progress(series_id);
+      `);
+    }
   }
 
   async seedItemDefinitions(items: ItemDefinition[]): Promise<void> {
@@ -1377,6 +1543,349 @@ export class DatabaseService {
     await this.db.runAsync(
       `UPDATE user_achievements SET status = 'claimed', claimed_at = ? WHERE achievement_id = ?`,
       [Date.now(), achievementId]
+    );
+
+    return true;
+  }
+
+  // ============================================
+  // VISITED AREAS METHODS
+  // ============================================
+
+  async getVisitedAreas(): Promise<VisitedArea[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync<any>('SELECT * FROM visited_areas ORDER BY last_visit_at DESC');
+
+    return rows.map(row => ({
+      id: row.id,
+      areaId: row.area_id,
+      areaName: row.area_name,
+      areaNameZh: row.area_name_zh,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      radius: row.radius,
+      firstVisitAt: row.first_visit_at,
+      lastVisitAt: row.last_visit_at,
+      visitCount: row.visit_count,
+      isUnlocked: row.is_unlocked === 1,
+      unlockConditions: row.unlock_conditions,
+    }));
+  }
+
+  async addVisitedArea(area: VisitedArea): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO visited_areas 
+       (id, area_id, area_name, area_name_zh, latitude, longitude, radius, first_visit_at, last_visit_at, visit_count, is_unlocked, unlock_conditions)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        area.id,
+        area.areaId,
+        area.areaName,
+        area.areaNameZh || null,
+        area.latitude,
+        area.longitude,
+        area.radius,
+        area.firstVisitAt,
+        area.lastVisitAt,
+        area.visitCount,
+        area.isUnlocked ? 1 : 0,
+        area.unlockConditions || null,
+      ]
+    );
+  }
+
+  async updateAreaVisit(areaId: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const existing = await this.db.getFirstAsync<any>(
+      'SELECT * FROM visited_areas WHERE area_id = ?',
+      [areaId]
+    );
+
+    if (existing) {
+      await this.db.runAsync(
+        `UPDATE visited_areas SET last_visit_at = ?, visit_count = visit_count + 1 WHERE area_id = ?`,
+        [Date.now(), areaId]
+      );
+    }
+  }
+
+  async unlockArea(areaId: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+    await this.db.runAsync(
+      'UPDATE visited_areas SET is_unlocked = 1 WHERE area_id = ?',
+      [areaId]
+    );
+  }
+
+  // ============================================
+  // USER MARKERS METHODS
+  // ============================================
+
+  async getUserMarkers(): Promise<UserMarker[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync<any>('SELECT * FROM user_markers ORDER BY created_at DESC');
+
+    return rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      iconType: row.icon_type as MarkerIconType,
+      color: row.color,
+      creatorPublicKey: row.creator_public_key,
+      isShared: row.is_shared === 1,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async addUserMarker(marker: UserMarker): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO user_markers 
+       (id, name, description, latitude, longitude, icon_type, color, creator_public_key, is_shared, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        marker.id,
+        marker.name,
+        marker.description || null,
+        marker.latitude,
+        marker.longitude,
+        marker.iconType,
+        marker.color,
+        marker.creatorPublicKey,
+        marker.isShared ? 1 : 0,
+        marker.createdAt,
+        marker.updatedAt,
+      ]
+    );
+  }
+
+  async updateUserMarker(id: string, updates: Partial<UserMarker>): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (updates.name !== undefined) {
+      fields.push('name = ?');
+      values.push(updates.name);
+    }
+    if (updates.description !== undefined) {
+      fields.push('description = ?');
+      values.push(updates.description);
+    }
+    if (updates.latitude !== undefined) {
+      fields.push('latitude = ?');
+      values.push(updates.latitude);
+    }
+    if (updates.longitude !== undefined) {
+      fields.push('longitude = ?');
+      values.push(updates.longitude);
+    }
+    if (updates.iconType !== undefined) {
+      fields.push('icon_type = ?');
+      values.push(updates.iconType);
+    }
+    if (updates.color !== undefined) {
+      fields.push('color = ?');
+      values.push(updates.color);
+    }
+    if (updates.isShared !== undefined) {
+      fields.push('is_shared = ?');
+      values.push(updates.isShared ? 1 : 0);
+    }
+
+    fields.push('updated_at = ?');
+    values.push(Date.now());
+
+    if (fields.length > 1) {
+      await this.db.runAsync(
+        `UPDATE user_markers SET ${fields.join(', ')} WHERE id = ?`,
+        [...values, id]
+      );
+    }
+  }
+
+  async deleteUserMarker(id: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+    await this.db.runAsync('DELETE FROM user_markers WHERE id = ?', [id]);
+  }
+
+  // ============================================
+  // TRADE HISTORY METHODS
+  // ============================================
+
+  async getTradeHistory(limit: number = 20): Promise<TradeRecord[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync<any>(
+      'SELECT * FROM trade_history ORDER BY traded_at DESC LIMIT ?',
+      [limit]
+    );
+
+    return rows.map(row => ({
+      id: row.id,
+      partnerPublicKey: row.partner_public_key,
+      partnerDisplayName: row.partner_display_name,
+      itemsGiven: JSON.parse(row.items_given),
+      itemsReceived: JSON.parse(row.items_received),
+      mySignature: row.my_signature,
+      partnerSignature: row.partner_signature,
+      tradeStatus: row.trade_status,
+      tradedAt: row.traded_at,
+    }));
+  }
+
+  async addTradeRecord(record: TradeRecord): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT INTO trade_history 
+       (id, partner_public_key, partner_display_name, items_given, items_received, my_signature, partner_signature, trade_status, traded_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        record.id,
+        record.partnerPublicKey,
+        record.partnerDisplayName || null,
+        JSON.stringify(record.itemsGiven),
+        JSON.stringify(record.itemsReceived),
+        record.mySignature,
+        record.partnerSignature || null,
+        record.tradeStatus,
+        record.tradedAt,
+      ]
+    );
+  }
+
+  // ============================================
+  // SERIES PROGRESS METHODS
+  // ============================================
+
+  async getSeriesProgress(): Promise<SeriesProgress[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const rows = await this.db.getAllAsync<any>('SELECT * FROM collection_series_progress ORDER BY category, series_name');
+
+    return rows.map(row => ({
+      id: row.id,
+      seriesId: row.series_id,
+      seriesName: row.series_name,
+      seriesNameZh: row.series_name_zh,
+      category: row.category as SeriesCategory,
+      requiredItems: JSON.parse(row.required_items),
+      collectedItems: JSON.parse(row.collected_items),
+      progressPercent: row.progress_percent,
+      milestone25: row.milestone_25 === 1,
+      milestone50: row.milestone_50 === 1,
+      milestone75: row.milestone_75 === 1,
+      isCompleted: row.is_completed === 1,
+      completedAt: row.completed_at,
+      rewardsClaimed: JSON.parse(row.rewards_claimed || '[]'),
+    }));
+  }
+
+  async initSeriesProgress(series: { id: string; name: string; nameZh?: string; category: SeriesCategory; requiredItems: string[] }): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    await this.db.runAsync(
+      `INSERT OR IGNORE INTO collection_series_progress 
+       (id, series_id, series_name, series_name_zh, category, required_items, collected_items, progress_percent, milestone_25, milestone_50, milestone_75, is_completed, rewards_claimed)
+       VALUES (?, ?, ?, ?, ?, ?, '[]', 0, 0, 0, 0, 0, '[]')`,
+      [series.id, series.id, series.name, series.nameZh || null, series.category, JSON.stringify(series.requiredItems)]
+    );
+  }
+
+  async updateSeriesProgress(seriesId: string, collectedItems: string[]): Promise<SeriesProgress | null> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const series = await this.db.getFirstAsync<any>(
+      'SELECT * FROM collection_series_progress WHERE series_id = ?',
+      [seriesId]
+    );
+
+    if (!series) return null;
+
+    const requiredItems = JSON.parse(series.required_items);
+    const progressPercent = (collectedItems.filter(i => requiredItems.includes(i)).length / requiredItems.length) * 100;
+    const milestone25 = progressPercent >= 25;
+    const milestone50 = progressPercent >= 50;
+    const milestone75 = progressPercent >= 75;
+    const isCompleted = progressPercent >= 100;
+    const completedAt = isCompleted ? Date.now() : null;
+
+    await this.db.runAsync(
+      `UPDATE collection_series_progress SET 
+       collected_items = ?, progress_percent = ?, milestone_25 = ?, milestone_50 = ?, milestone_75 = ?, is_completed = ?, completed_at = ?
+       WHERE series_id = ?`,
+      [
+        JSON.stringify(collectedItems),
+        progressPercent,
+        milestone25 ? 1 : 0,
+        milestone50 ? 1 : 0,
+        milestone75 ? 1 : 0,
+        isCompleted ? 1 : 0,
+        completedAt,
+        seriesId,
+      ]
+    );
+
+    return await this.getSeriesProgressById(seriesId);
+  }
+
+  async getSeriesProgressById(seriesId: string): Promise<SeriesProgress | null> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const row = await this.db.getFirstAsync<any>(
+      'SELECT * FROM collection_series_progress WHERE series_id = ?',
+      [seriesId]
+    );
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      seriesId: row.series_id,
+      seriesName: row.series_name,
+      seriesNameZh: row.series_name_zh,
+      category: row.category as SeriesCategory,
+      requiredItems: JSON.parse(row.required_items),
+      collectedItems: JSON.parse(row.collected_items),
+      progressPercent: row.progress_percent,
+      milestone25: row.milestone_25 === 1,
+      milestone50: row.milestone_50 === 1,
+      milestone75: row.milestone_75 === 1,
+      isCompleted: row.is_completed === 1,
+      completedAt: row.completed_at,
+      rewardsClaimed: JSON.parse(row.rewards_claimed || '[]'),
+    };
+  }
+
+  async claimSeriesReward(seriesId: string, milestone: string): Promise<boolean> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const series = await this.getSeriesProgressById(seriesId);
+    if (!series) return false;
+
+    const rewardsClaimed = series.rewardsClaimed;
+    if (rewardsClaimed.includes(milestone)) return false;
+
+    const milestoneKey = milestone === '25' ? 'milestone_25' : milestone === '50' ? 'milestone_50' : milestone === '75' ? 'milestone_75' : 'is_completed';
+    const milestoneValue = milestone === 'completion' ? series.isCompleted : series[`milestone${milestone}` as keyof SeriesProgress];
+    
+    if (!milestoneValue) return false;
+
+    rewardsClaimed.push(milestone);
+    await this.db.runAsync(
+      'UPDATE collection_series_progress SET rewards_claimed = ? WHERE series_id = ?',
+      [JSON.stringify(rewardsClaimed), seriesId]
     );
 
     return true;

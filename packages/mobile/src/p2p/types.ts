@@ -382,3 +382,167 @@ export const POI_TYPE_WEIGHTS: Record<PoiType, number> = {
   business: 1.0,
   other: 1.0,
 };
+
+// ============================================
+// TRADE TYPES (BLE Local Trading)
+// ============================================
+
+export type TradeStatus = 'pending' | 'completed' | 'cancelled' | 'failed';
+
+export interface TradeRecord {
+  id: string;
+  partnerPublicKey: string;
+  partnerDisplayName?: string;
+  itemsGiven: string[];           // Inventory item IDs given
+  itemsReceived: string[];        // Inventory item IDs received
+  mySignature: string;            // Ed25519 signature (hex)
+  partnerSignature?: string;      // Partner's signature (hex)
+  tradeStatus: TradeStatus;
+  tradedAt: number;
+}
+
+export interface TradeOffer {
+  offerId: string;
+  offererPublicKey: string;
+  offererDisplayName: string;
+  offeredItems: {
+    inventoryId: string;
+    itemId: string;
+    quantity: number;
+  }[];
+  requestedItems?: {
+    itemId: string;
+    quantity: number;
+  }[];
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface TradeSession {
+  sessionId: string;
+  partnerPublicKey: string;
+  partnerDisplayName: string;
+  myOffer?: TradeOffer;
+  partnerOffer?: TradeOffer;
+  status: 'discovering' | 'connecting' | 'negotiating' | 'exchanging' | 'completed' | 'failed' | 'cancelled';
+  startedAt: number;
+}
+
+export interface NearbyTrader {
+  publicKey: string;
+  displayName: string;
+  deviceId: string;
+}
+
+// ============================================
+// AREA EXPLORATION TYPES (Geofencing)
+// ============================================
+
+export interface AreaDefinition {
+  id: string;
+  name: string;
+  nameZh?: string;
+  latitude: number;
+  longitude: number;
+  radius: number;                 // meters
+  unlockConditions?: {
+    minVisitCount?: number;
+    requiredItems?: string[];
+    minLevel?: number;
+  };
+  rewards?: {
+    coins: number;
+    experience: number;
+    title?: string;
+  };
+}
+
+export interface VisitedArea {
+  id: string;
+  areaId: string;
+  areaName: string;
+  areaNameZh?: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  firstVisitAt: number;
+  lastVisitAt: number;
+  visitCount: number;
+  isUnlocked: boolean;
+  unlockConditions?: string;      // JSON stringified
+}
+
+// ============================================
+// COLLECTION SERIES TYPES
+// ============================================
+
+export type SeriesCategory = 'themed' | 'rarity' | 'location' | 'seasonal' | 'special';
+
+export interface SeriesDefinition {
+  id: string;
+  name: string;
+  nameZh?: string;
+  category: SeriesCategory;
+  requiredItems: string[];        // Item definition IDs
+  rewards: {
+    milestone25?: { coins: number; experience: number; };
+    milestone50?: { coins: number; experience: number; itemId?: string; };
+    milestone75?: { coins: number; experience: number; itemId?: string; };
+    completion: { coins: number; experience: number; title?: string; itemId?: string; };
+  };
+  isHidden?: boolean;
+}
+
+export interface SeriesProgress {
+  id: string;
+  seriesId: string;
+  seriesName: string;
+  seriesNameZh?: string;
+  category: SeriesCategory;
+  requiredItems: string[];
+  collectedItems: string[];
+  progressPercent: number;
+  milestone25: boolean;
+  milestone50: boolean;
+  milestone75: boolean;
+  isCompleted: boolean;
+  completedAt?: number;
+  rewardsClaimed: string[];       // Array of claimed milestone IDs
+}
+
+// ============================================
+// CUSTOM MARKER TYPES
+// ============================================
+
+export type MarkerIconType = 'star' | 'flag' | 'treasure' | 'camp' | 'note' | 'camera' | 'heart' | 'pin';
+
+export interface UserMarker {
+  id: string;
+  name: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  iconType: MarkerIconType;
+  color: string;
+  creatorPublicKey: string;
+  isShared: boolean;              // Whether shared via BLE
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SharedMarker extends UserMarker {
+  receivedFrom: string;           // Public key of sharer
+  receivedAt: number;
+}
+
+// ============================================
+// BLE SERVICE CONSTANTS
+// ============================================
+
+export const BLE_SERVICE_UUID = 'treasure-hunt-trade-v1';
+export const BLE_CHARACTERISTIC_OFFER = 'offer-data';
+export const BLE_CHARACTERISTIC_RESPONSE = 'response-data';
+export const BLE_CHARACTERISTIC_SIGNATURE = 'signature-data';
+export const BLE_SCAN_TIMEOUT_MS = 30000;        // 30 seconds
+export const BLE_CONNECTION_TIMEOUT_MS = 30000;  // 30 seconds
+export const BLE_MAX_RANGE_METERS = 10;         // ~10m BLE range

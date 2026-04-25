@@ -79,6 +79,12 @@
       <string>UIInterfaceOrientationLandscapeLeft</string>
       <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <key>MGLMapboxAccessToken</key>
+    <string>$(MAPBOX_ACCESS_TOKEN)</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>寻宝记需要蓝牙权限来发现附近的玩家进行交易。</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>寻宝记需要蓝牙权限来发现附近的玩家进行交易。</string>
     <key>UIUserInterfaceStyle</key>
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>

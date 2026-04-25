@@ -5,4 +5,8 @@ export * from './poi';
 export * from './spawn';
 export * from './data';
 export * from './engines';
+export * from './trade';
+export * from './exploration';
+export * from './markers';
+export * from './map';
 export { P2PProvider, useP2P } from './P2PContext';

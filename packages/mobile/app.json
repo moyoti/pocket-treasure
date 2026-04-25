@@ -51,7 +51,13 @@
           "locationAlwaysAndWhenInUsePermission": "寻宝记需要您的位置来检测附近的宝藏。"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "@rnmapbox/maps",
+        {
+          "accessToken": "${MAPBOX_ACCESS_TOKEN}"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -77,6 +77,10 @@ export class IdentityService {
     return this.identity;
   }
 
+  getPrivateKey(): Uint8Array | null {
+    return this.privateKey;
+  }
+
   getPublicKeyHex(): string {
     return this.identity?.publicKey || '';
   }

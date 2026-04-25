@@ -1,6 +1,7 @@
 import { DatabaseService } from '../database/DatabaseService';
-import { AchievementDefinition, UserAchievement, AchievementType, AchievementStatus } from '../types';
+import { AchievementDefinition, UserAchievement, AchievementType, AchievementStatus, SeriesProgress, SeriesCategory, SeriesDefinition } from '../types';
 import { ACHIEVEMENT_DEFINITIONS, getAchievementById } from '../data/achievements';
+import { COLLECTION_SERIES, getSeriesById, checkItemInSeries } from '../data/series';
 
 export class AchievementEngine {
   private db: DatabaseService;
@@ -165,5 +166,165 @@ export class AchievementEngine {
     if (!definition || !userAch) return 0;
 
     return Math.min(100, Math.floor((userAch.progress / definition.requirement) * 100));
+  }
+
+  async initializeSeriesProgress(): Promise<void> {
+    for (const series of COLLECTION_SERIES) {
+      await this.db.initSeriesProgress({
+        id: series.id,
+        name: series.name,
+        nameZh: series.nameZh,
+        category: series.category,
+        requiredItems: series.requiredItems,
+      });
+    }
+  }
+
+  async getSeriesProgress(): Promise<SeriesProgress[]> {
+    return await this.db.getSeriesProgress();
+  }
+
+  async getSeriesProgressById(seriesId: string): Promise<SeriesProgress | null> {
+    return await this.db.getSeriesProgressById(seriesId);
+  }
+
+  async updateSeriesProgressOnCollect(itemId: string): Promise<SeriesProgress[]> {
+    const affectedSeries = checkItemInSeries(itemId);
+    const updatedProgress: SeriesProgress[] = [];
+
+    for (const series of affectedSeries) {
+      const currentProgress = await this.db.getSeriesProgressById(series.id);
+      if (!currentProgress) continue;
+
+      const inventory = await this.db.getInventory();
+      const collectedItems = inventory
+        .filter(i => series.requiredItems.includes(i.itemId))
+        .map(i => i.itemId);
+
+      const uniqueCollected = [...new Set(collectedItems)];
+      const updated = await this.db.updateSeriesProgress(series.id, uniqueCollected);
+
+      if (updated) {
+        updatedProgress.push(updated);
+      }
+    }
+
+    return updatedProgress;
+  }
+
+  async recalculateAllSeriesProgress(): Promise<void> {
+    const inventory = await this.db.getInventory();
+    const collectedItemIds = inventory.map(i => i.itemId);
+
+    for (const series of COLLECTION_SERIES) {
+      const uniqueCollected = collectedItemIds.filter(id => series.requiredItems.includes(id));
+      const uniqueItems = [...new Set(uniqueCollected)];
+      await this.db.updateSeriesProgress(series.id, uniqueItems);
+    }
+  }
+
+  async claimSeriesMilestone(seriesId: string, milestone: '25' | '50' | '75' | 'completion'): Promise<{
+    success: boolean;
+    error?: string;
+    rewards?: { coins: number; experience: number; itemId?: string; title?: string };
+  }> {
+    const seriesDef = getSeriesById(seriesId);
+    const progress = await this.db.getSeriesProgressById(seriesId);
+
+    if (!seriesDef || !progress) {
+      return { success: false, error: 'Series not found' };
+    }
+
+    const milestoneThreshold = milestone === '25' ? 25 : milestone === '50' ? 50 : milestone === '75' ? 75 : 100;
+    const milestoneKey = milestone === 'completion' ? 'isCompleted' : `milestone${milestone}`;
+
+    if (milestone === 'completion' && !progress.isCompleted) {
+      return { success: false, error: 'Series not completed' };
+    }
+
+    if (milestone !== 'completion' && progress.progressPercent < milestoneThreshold) {
+      return { success: false, error: `Milestone ${milestone}% not reached` };
+    }
+
+    if (progress.rewardsClaimed.includes(milestone)) {
+      return { success: false, error: 'Already claimed' };
+    }
+
+    const rewards = milestone === '25' ? seriesDef.rewards.milestone25
+      : milestone === '50' ? seriesDef.rewards.milestone50
+      : milestone === '75' ? seriesDef.rewards.milestone75
+      : seriesDef.rewards.completion;
+
+    if (!rewards) {
+      return { success: false, error: 'No rewards for this milestone' };
+    }
+
+    const claimed = await this.db.claimSeriesReward(seriesId, milestone);
+    if (!claimed) {
+      return { success: false, error: 'Claim failed' };
+    }
+
+    await this.applySeriesRewards(rewards);
+
+    return { success: true, rewards };
+  }
+
+  private async applySeriesRewards(rewards: { coins: number; experience: number; itemId?: string; title?: string }): Promise<void> {
+    await this.db.addCoins(rewards.coins);
+
+    const profile = await this.db.getUserProfile();
+    if (profile) {
+      await this.db.updateUserProfile({ experience: profile.experience + rewards.experience });
+    }
+
+    if (rewards.itemId) {
+      const itemDef = await this.db.getItemById(rewards.itemId);
+      if (itemDef) {
+        await this.db.addInventoryItem({
+          id: `${rewards.itemId}_${Date.now()}`,
+          itemId: rewards.itemId,
+          quantity: 1,
+          sourceSignature: 'series_reward',
+          collectedAt: Date.now(),
+          isLocked: false,
+        });
+      }
+    }
+  }
+
+  async getSeriesByCategory(category: SeriesCategory): Promise<{ definition: SeriesDefinition; progress: SeriesProgress | null }[]> {
+    const seriesInCategory = COLLECTION_SERIES.filter(s => s.category === category);
+    const results: { definition: SeriesDefinition; progress: SeriesProgress | null }[] = [];
+
+    for (const series of seriesInCategory) {
+      const progress = await this.db.getSeriesProgressById(series.id);
+      results.push({ definition: series, progress });
+    }
+
+    return results;
+  }
+
+  async getVisibleSeries(): Promise<{ definition: SeriesDefinition; progress: SeriesProgress | null }[]> {
+    const visible = COLLECTION_SERIES.filter(s => !s.isHidden);
+    const results: { definition: SeriesDefinition; progress: SeriesProgress | null }[] = [];
+
+    for (const series of visible) {
+      const progress = await this.db.getSeriesProgressById(series.id);
+      results.push({ definition: series, progress });
+    }
+
+    return results;
+  }
+
+  async getHiddenSeries(): Promise<{ definition: SeriesDefinition; progress: SeriesProgress | null }[]> {
+    const hidden = COLLECTION_SERIES.filter(s => s.isHidden);
+    const results: { definition: SeriesDefinition; progress: SeriesProgress | null }[] = [];
+
+    for (const series of hidden) {
+      const progress = await this.db.getSeriesProgressById(series.id);
+      results.push({ definition: series, progress });
+    }
+
+    return results;
   }
 }
