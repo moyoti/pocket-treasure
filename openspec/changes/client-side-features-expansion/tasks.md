@@ -119,21 +119,21 @@
 
 ## 13. P2PContext Integration
 
-- [ ] 13.1 Add trade state to P2PContext (nearbyTraders, activeTrade, tradeHistory)
-- [ ] 13.2 Add exploration state to P2PContext (visitedAreas, areaProgress)
-- [ ] 13.3 Add series state to P2PContext (seriesProgress)
-- [ ] 13.4 Add markers state to P2PContext (userMarkers, sharedMarkers)
-- [ ] 13.5 Add trade functions to P2PContext (startDiscovery, connectTrade, executeTrade)
-- [ ] 13.6 Add exploration functions to P2PContext (refreshAreas, checkUnlocks)
-- [ ] 13.7 Add marker functions to P2PContext (createMarker, updateMarker, deleteMarker)
+- [x] 13.1 Add trade state to P2PContext (nearbyTraders, activeTrade, tradeHistory)
+- [x] 13.2 Add exploration state to P2PContext (visitedAreas, areaProgress)
+- [x] 13.3 Add series state to P2PContext (seriesProgress)
+- [x] 13.4 Add markers state to P2PContext (userMarkers, sharedMarkers)
+- [x] 13.5 Add trade functions to P2PContext (startDiscovery, connectTrade, executeTrade)
+- [x] 13.6 Add exploration functions to P2PContext (refreshAreas, checkUnlocks)
+- [x] 13.7 Add marker functions to P2PContext (createMarker, updateMarker, deleteMarker)
 
 ## 14. Localization
 
-- [ ] 14.1 Add trading translation keys to locales/*.json
-- [ ] 14.2 Add exploration translation keys to locales/*.json
-- [ ] 14.3 Add series translation keys to locales/*.json
-- [ ] 14.4 Add marker translation keys to locales/*.json
-- [ ] 14.5 Add Mapbox offline settings translations to locales/*.json
+- [x] 14.1 Add trading translation keys to locales/*.json
+- [x] 14.2 Add exploration translation keys to locales/*.json
+- [x] 14.3 Add series translation keys to locales/*.json
+- [x] 14.4 Add marker translation keys to locales/*.json
+- [x] 14.5 Add Mapbox offline settings translations to locales/*.json
 
 ## 15. Testing & Validation
 

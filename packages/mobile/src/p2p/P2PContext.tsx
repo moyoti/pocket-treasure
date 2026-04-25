@@ -17,6 +17,13 @@ import {
   UserDailyTask,
   UserAchievement,
   ItemRarity,
+  TradeSession,
+  TradeRecord,
+  NearbyTrader,
+  VisitedArea,
+  SeriesProgress,
+  UserMarker,
+  TradeOffer,
 } from '../p2p';
 import { ShopEngine } from '../p2p/engines/ShopEngine';
 import { GachaEngine } from '../p2p/engines/GachaEngine';
@@ -25,6 +32,13 @@ import { CosmeticEngine } from '../p2p/engines/CosmeticEngine';
 import { DailyTaskEngine } from '../p2p/engines/DailyTaskEngine';
 import { AchievementEngine } from '../p2p/engines/AchievementEngine';
 import { SellEngine, SellResult, SELL_PRICES } from '../p2p/engines/SellEngine';
+import { tradeService } from '../p2p/trade/TradeService';
+import { tradeEngine } from '../p2p/trade/TradeEngine';
+import { areaService } from '../p2p/exploration/AreaService';
+import { areaUnlockEngine } from '../p2p/exploration/AreaUnlockEngine';
+import { markerService } from '../p2p/markers/MarkerService';
+import { markerEngine } from '../p2p/markers/MarkerEngine';
+import { MarkerIconType } from '../p2p/types';
 import {
   ITEM_DEFINITIONS,
   SHOP_DEFINITIONS,
@@ -91,6 +105,37 @@ interface P2PContextValue {
   sellItem: (inventoryItemId: string) => Promise<SellResult>;
   getSellPrice: (itemId: string) => number;
   sellPrices: Record<ItemRarity, number>;
+
+  nearbyTraders: NearbyTrader[];
+  activeTrade: TradeSession | null;
+  tradeHistory: TradeRecord[];
+  startTradeDiscovery: () => Promise<void>;
+  stopTradeDiscovery: () => void;
+  connectToTrader: (deviceId: string) => Promise<TradeSession | null>;
+  sendTradeOffer: (offer: TradeOffer) => Promise<void>;
+  acceptTradeOffer: () => Promise<void>;
+  rejectTradeOffer: () => Promise<void>;
+  executeTrade: (mySignature: string) => Promise<TradeRecord | null>;
+  cancelTrade: () => Promise<void>;
+  disconnectTrade: () => Promise<void>;
+  refreshTradeHistory: () => Promise<void>;
+
+  visitedAreas: VisitedArea[];
+  areaUnlockProgress: { total: number; unlocked: number };
+  startAreaTracking: () => Promise<void>;
+  stopAreaTracking: () => void;
+  refreshVisitedAreas: () => Promise<void>;
+  checkAreaUnlock: (areaId: string) => Promise<boolean>;
+
+  seriesProgress: SeriesProgress[];
+  refreshSeriesProgress: () => Promise<void>;
+  claimSeriesReward: (seriesId: string, milestone: '25' | '50' | '75' | 'completion') => Promise<{ success: boolean; error?: string; rewards?: any }>;
+
+  userMarkers: UserMarker[];
+  createMarker: (name: string, lat: number, lng: number, iconType: MarkerIconType, color?: string, description?: string) => Promise<UserMarker>;
+  updateMarker: (id: string, updates: Partial<UserMarker>) => Promise<UserMarker | null>;
+  deleteMarker: (id: string) => Promise<void>;
+  refreshMarkers: () => Promise<void>;
 }
 
 const P2PContext = createContext<P2PContextValue | null>(null);
@@ -112,6 +157,17 @@ export function P2PProvider({ children }: { children: ReactNode }) {
   const [gachaPities, setGachaPities] = useState<Record<string, GachaPity>>({});
   const [shopItems, setShopItems] = useState<ShopItemDefinition[]>([]);
   const [gachaPools, setGachaPools] = useState<GachaPoolDefinition[]>([]);
+
+  const [nearbyTraders, setNearbyTraders] = useState<NearbyTrader[]>([]);
+  const [activeTrade, setActiveTrade] = useState<TradeSession | null>(null);
+  const [tradeHistory, setTradeHistory] = useState<TradeRecord[]>([]);
+
+  const [visitedAreas, setVisitedAreas] = useState<VisitedArea[]>([]);
+  const [areaUnlockProgress, setAreaUnlockProgress] = useState<{ total: number; unlocked: number }>({ total: 0, unlocked: 0 });
+
+  const [seriesProgress, setSeriesProgress] = useState<SeriesProgress[]>([]);
+
+  const [userMarkers, setUserMarkers] = useState<UserMarker[]>([]);
 
   const [shopEngine, setShopEngine] = useState<ShopEngine | null>(null);
   const [gachaEngine, setGachaEngine] = useState<GachaEngine | null>(null);
@@ -204,6 +260,21 @@ export function P2PProvider({ children }: { children: ReactNode }) {
       const gachaPoolsList = await gacha.getGachaPools();
       setGachaPools(gachaPoolsList);
 
+      await achievement.initializeSeriesProgress();
+      const series = await databaseService.getSeriesProgress();
+      setSeriesProgress(series);
+
+      const areas = await databaseService.getVisitedAreas();
+      setVisitedAreas(areas);
+      const areaProgress = await areaService.getUnlockProgress();
+      setAreaUnlockProgress(areaProgress);
+
+      const markers = await databaseService.getUserMarkers();
+      setUserMarkers(markers);
+
+      const trades = await databaseService.getTradeHistory(20);
+      setTradeHistory(trades);
+
       console.log('[P2P] Initialization complete!');
       setIsInitialized(true);
     } catch (err) {
@@ -273,7 +344,9 @@ export function P2PProvider({ children }: { children: ReactNode }) {
       if (achievementEngine) {
         const stats = await databaseService.getInventoryStats();
         await achievementEngine.checkCollectionAchievement(stats.total);
+        await achievementEngine.updateSeriesProgressOnCollect(spawn.itemId);
         await refreshAchievements();
+        await refreshSeriesProgress();
       }
     }
 
@@ -442,6 +515,217 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     return sellEngine.getSellPrice(itemId);
   }
 
+  async function startTradeDiscovery(): Promise<void> {
+    if (!identity) {
+      console.error('No identity for trade discovery');
+      return;
+    }
+
+    setNearbyTraders([]);
+
+    await tradeService.startDiscovery(
+      (trader: NearbyTrader) => {
+        setNearbyTraders(prev => {
+          if (prev.find(t => t.publicKey === trader.publicKey)) return prev;
+          return [...prev, trader];
+        });
+      },
+      (message) => {
+        handleTradeMessage(message);
+      }
+    );
+  }
+
+  function stopTradeDiscovery(): void {
+    tradeService.stopDiscovery();
+    setNearbyTraders([]);
+  }
+
+  async function connectToTrader(deviceId: string): Promise<TradeSession | null> {
+    if (!identity) return null;
+
+    try {
+      const session = await tradeService.connectToDevice(deviceId, identity);
+      setActiveTrade(session);
+      return session;
+    } catch (error) {
+      console.error('Failed to connect to trader:', error);
+      return null;
+    }
+  }
+
+  async function sendTradeOffer(offer: TradeOffer): Promise<void> {
+    await tradeService.sendOffer(offer);
+  }
+
+  async function acceptTradeOffer(): Promise<void> {
+    await tradeService.acceptOffer();
+  }
+
+  async function rejectTradeOffer(): Promise<void> {
+    await tradeService.rejectOffer();
+  }
+
+  async function executeTrade(mySignature: string): Promise<TradeRecord | null> {
+    const session = tradeService.getCurrentSession();
+    if (!session || !session.myOffer || !session.partnerOffer) return null;
+
+    try {
+      const context = {
+        offerId: session.sessionId,
+        myPublicKey: identity?.publicKey || '',
+        partnerPublicKey: session.partnerPublicKey,
+        myOffer: session.myOffer,
+        partnerOffer: session.partnerOffer,
+        myItems: [],
+        partnerItems: [],
+      };
+
+      const record = await tradeEngine.executeTrade(context, mySignature);
+      
+      await tradeService.completeTrade();
+      await refreshInventory();
+      await refreshTradeHistory();
+      setActiveTrade(null);
+
+      return record;
+    } catch (error) {
+      console.error('Trade execution failed:', error);
+      return null;
+    }
+  }
+
+  async function cancelTrade(): Promise<void> {
+    await tradeService.cancelTrade();
+    setActiveTrade(null);
+  }
+
+  async function disconnectTrade(): Promise<void> {
+    await tradeService.disconnect();
+    setActiveTrade(null);
+    setNearbyTraders([]);
+  }
+
+  async function refreshTradeHistory(): Promise<void> {
+    const trades = await databaseService.getTradeHistory(20);
+    setTradeHistory(trades);
+  }
+
+  function handleTradeMessage(message: any): void {
+    if (!activeTrade) return;
+
+    if (message.type === 'offer' || message.type === 'counter') {
+      setActiveTrade(prev => prev ? { ...prev, partnerOffer: message.payload } : null);
+    } else if (message.type === 'accept') {
+      setActiveTrade(prev => prev ? { ...prev, status: 'exchanging' } : null);
+    } else if (message.type === 'reject' || message.type === 'cancel') {
+      setActiveTrade(null);
+    } else if (message.type === 'complete') {
+      setActiveTrade(prev => prev ? { ...prev, status: 'completed' } : null);
+    }
+  }
+
+  async function startAreaTracking(): Promise<void> {
+    if (!userLocation) return;
+
+    try {
+      await areaService.initialize(
+        (area) => {
+          console.log('Entered area:', area.name);
+        },
+        (area) => {
+          console.log('Exited area:', area.name);
+        },
+        (area) => {
+          console.log('Area unlocked:', area.name);
+          refreshVisitedAreas();
+        }
+      );
+
+      await areaService.startTracking(userLocation.latitude, userLocation.longitude);
+    } catch (error) {
+      console.error('Failed to start area tracking:', error);
+    }
+  }
+
+  function stopAreaTracking(): void {
+    areaService.stopTracking();
+  }
+
+  async function refreshVisitedAreas(): Promise<void> {
+    const areas = await databaseService.getVisitedAreas();
+    setVisitedAreas(areas);
+    const progress = await areaService.getUnlockProgress();
+    setAreaUnlockProgress(progress);
+  }
+
+  async function checkAreaUnlock(areaId: string): Promise<boolean> {
+    const result = await areaUnlockEngine.attemptUnlock(areaId);
+    if (result) {
+      await refreshVisitedAreas();
+      await refreshProfile();
+    }
+    return result;
+  }
+
+  async function refreshSeriesProgress(): Promise<void> {
+    const series = await databaseService.getSeriesProgress();
+    setSeriesProgress(series);
+  }
+
+  async function claimSeriesReward(seriesId: string, milestone: '25' | '50' | '75' | 'completion'): Promise<{ success: boolean; error?: string; rewards?: any }> {
+    if (!achievementEngine) {
+      return { success: false, error: 'Achievement engine not initialized' };
+    }
+
+    const result = await achievementEngine.claimSeriesMilestone(seriesId, milestone);
+
+    if (result.success) {
+      await refreshProfile();
+      await refreshSeriesProgress();
+      await refreshInventory();
+    }
+
+    return result;
+  }
+
+  async function createMarker(
+    name: string,
+    latitude: number,
+    longitude: number,
+    iconType: MarkerIconType,
+    color?: string,
+    description?: string
+  ): Promise<UserMarker> {
+    const marker = await markerEngine.createMarkerWithValidation(
+      name,
+      latitude,
+      longitude,
+      iconType,
+      color || '#FFD700',
+      description
+    );
+
+    await refreshMarkers();
+    return marker;
+  }
+
+  async function updateMarker(id: string, updates: Partial<UserMarker>): Promise<UserMarker | null> {
+    const marker = await markerEngine.updateMarkerWithValidation(id, updates);
+    await refreshMarkers();
+    return marker;
+  }
+
+  async function deleteMarker(id: string): Promise<void> {
+    await markerService.deleteMarker(id);
+    await refreshMarkers();
+  }
+
+  async function refreshMarkers(): Promise<void> {
+    const markers = await databaseService.getUserMarkers();
+    setUserMarkers(markers);
+  }
+
   const value: P2PContextValue = {
     isInitialized,
     isLoading,
@@ -476,6 +760,37 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     sellItem,
     getSellPrice,
     sellPrices: SELL_PRICES,
+
+    nearbyTraders,
+    activeTrade,
+    tradeHistory,
+    startTradeDiscovery,
+    stopTradeDiscovery,
+    connectToTrader,
+    sendTradeOffer,
+    acceptTradeOffer,
+    rejectTradeOffer,
+    executeTrade,
+    cancelTrade,
+    disconnectTrade,
+    refreshTradeHistory,
+
+    visitedAreas,
+    areaUnlockProgress,
+    startAreaTracking,
+    stopAreaTracking,
+    refreshVisitedAreas,
+    checkAreaUnlock,
+
+    seriesProgress,
+    refreshSeriesProgress,
+    claimSeriesReward,
+
+    userMarkers,
+    createMarker,
+    updateMarker,
+    deleteMarker,
+    refreshMarkers,
   };
 
   return (
