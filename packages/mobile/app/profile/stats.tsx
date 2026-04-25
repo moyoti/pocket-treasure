@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
 import { ITEM_DEFINITIONS } from '@/src/p2p/data';
 
@@ -18,16 +19,10 @@ const RARITY_COLORS: Record<string, string> = {
   legendary: '#F59E0B',
 };
 
-const RARITY_NAMES: Record<string, string> = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
-};
-
 const RARITY_ORDER = ['legendary', 'epic', 'rare', 'common'];
 
 export default function StatsScreen() {
+  const { t } = useTranslation();
   const { inventory, isLoading, refreshInventory } = useP2P();
 
   const itemLookup = useMemo(() => {
@@ -61,12 +56,16 @@ export default function StatsScreen() {
     await refreshInventory();
   };
 
+const getRarityName = (rarity: string): string => {
+    return t(`rarity.${rarity}`);
+  };
+
   if (isLoading && inventory.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>Loading stats...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </View>
     );
@@ -88,24 +87,24 @@ export default function StatsScreen() {
         <View style={styles.statCard}>
           <Ionicons name="layers-outline" size={28} color="#D4A017" />
           <Text style={styles.statNumber}>{stats.totalItems}</Text>
-          <Text style={styles.statLabel}>Total Collected</Text>
+          <Text style={styles.statLabel}>{t('market.total')}</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="apps-outline" size={28} color="#3b82f6" />
           <Text style={styles.statNumber}>{stats.uniqueItems}</Text>
-          <Text style={styles.statLabel}>Unique Items</Text>
+          <Text style={styles.statLabel}>{t('market.unique')}</Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>RARITY DISTRIBUTION</Text>
+        <Text style={styles.sectionTitle}>{t('inventory.rarity').toUpperCase()}</Text>
         <View style={styles.sectionCard}>
           {sortedRarityData.length > 0 ? (
             sortedRarityData.map(([rarity, count]) => (
               <View key={rarity} style={styles.rarityItem}>
                 <View style={styles.rarityInfo}>
                   <View style={[styles.rarityDot, { backgroundColor: RARITY_COLORS[rarity] || '#999' }]} />
-                  <Text style={styles.rarityName}>{RARITY_NAMES[rarity] || rarity}</Text>
+                  <Text style={styles.rarityName}>{getRarityName(rarity)}</Text>
                 </View>
                 <View style={styles.rarityBarContainer}>
                   <View
@@ -126,15 +125,15 @@ export default function StatsScreen() {
               <View style={styles.emptyIconCircle}>
                 <Ionicons name="search-outline" size={32} color="#CCC" />
               </View>
-              <Text style={styles.emptyText}>No items collected yet</Text>
-              <Text style={styles.emptySubtext}>Explore the map to find treasures!</Text>
+              <Text style={styles.emptyText}>{t('inventory.empty')}</Text>
+              <Text style={styles.emptySubtext}>{t('inventory.exploreMap')}</Text>
             </View>
           )}
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>YOUR COLLECTION</Text>
+        <Text style={styles.sectionTitle}>{t('nav.inventory').toUpperCase()}</Text>
         <View style={styles.sectionCard}>
           <View style={styles.localInfoRow}>
             <Ionicons name="lock-closed-outline" size={20} color="#10B981" />
@@ -154,7 +153,7 @@ export default function StatsScreen() {
       <View style={styles.tipCard}>
         <Ionicons name="bulb-outline" size={18} color="#D4A017" />
         <Text style={styles.tipText}>
-          Keep exploring the map and collecting items to improve your stats!
+          {t('settings.viewCollectionStats')}
         </Text>
       </View>
     </ScrollView>

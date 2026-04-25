@@ -49,7 +49,8 @@
     "achievements": "成就",
     "cosmetics": "装饰品",
     "explore": "探索",
-    "backpack": "背包"
+    "backpack": "背包",
+    "trade": "交易"
   },
   "map": {
     "title": "寻宝地图",
@@ -65,6 +66,7 @@
     "title": "我的背包",
     "empty": "背包是空的",
     "totalCount": "总计 {count} 件",
+    "all": "全部",
     "rarity": {
       "common": "普通",
       "rare": "稀有",
@@ -602,7 +604,15 @@
     "tradeable": "可交易",
     "notTradeable": "不可交易",
     "lockItem": "锁定物品",
-    "unlockItem": "解锁物品"
+    "unlockItem": "解锁物品",
+    "lockItemDesc": "锁定后无法交易",
+    "unlockItemDesc": "解锁后可以交易",
+    "itemLockedDesc": "物品已锁定，无法在交易中使用",
+    "itemUnlockedDesc": "物品已解锁，可以在交易中使用",
+    "lockUpdateFailed": "锁定状态更新失败",
+    "selected": "已选择",
+    "waitingForPartner": "等待对方报价...",
+    "connectionFailed": "连接失败"
   },
   "exploration": {
     "title": "区域探索",
@@ -628,7 +638,10 @@
     "minLevel": "最低等级",
     "requiredItems": "需要物品",
     "conditionsMet": "条件已满足！",
-    "conditionsPending": "条件待满足"
+    "conditionsPending": "条件待满足",
+    "notVisited": "未访问",
+    "noAreas": "暂无区域",
+    "tryUnlock": "尝试解锁"
   },
   "series": {
     "title": "收藏系列",
@@ -654,6 +667,10 @@
     "noSeries": "暂无系列",
     "startCollecting": "开始收集以推进系列",
     "hiddenSeries": "隐藏系列",
+    "items": "物品",
+    "completedSeries": "已完成系列",
+    "complete": "完成"
+  },
     "hiddenHint": "有些系列是隐藏的。通过收集来发现它们！",
     "partOfSeries": "属于系列",
     "seriesProgress": "{series}进度"

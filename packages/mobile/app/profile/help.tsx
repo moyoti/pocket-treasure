@@ -8,60 +8,37 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface FAQItem {
-  question: string;
-  answer: string;
+  questionKey: string;
+  answerKey: string;
 }
 
-const faqs: FAQItem[] = [
-  {
-    question: 'How do I collect items?',
-    answer: 'Find item markers on the map, move within 50 meters of the item, then tap the collect button to add it to your backpack.',
-  },
-  {
-    question: 'How often do items refresh?',
-    answer: 'Items automatically refresh every hour. Different locations spawn different types of items, so check the map often!',
-  },
-  {
-    question: 'What does rarity mean?',
-    answer: 'Items come in four rarities: Common, Rare, Epic, and Legendary. Higher rarity items are harder to find but more valuable to collect.',
-  },
-  {
-    question: 'What are achievements?',
-    answer: 'Achievements are rewards for completing specific goals, like collecting a certain number of items or finding specific rarities.',
-  },
-  {
-    question: 'Why is my location inaccurate?',
-    answer: 'Make sure GPS is enabled on your device and you are outdoors. Indoor areas or weak signal zones may affect accuracy.',
-  },
-];
-
-const gameRules = [
-  {
-    icon: 'map-outline' as keyof typeof Ionicons.glyphMap,
-    title: 'Explore the Map',
-    description: 'Move in the real world to discover treasures',
-  },
-  {
-    icon: 'hand-left-outline' as keyof typeof Ionicons.glyphMap,
-    title: 'Distance Limit',
-    description: 'Must be within 50m to collect an item',
-  },
-  {
-    icon: 'time-outline' as keyof typeof Ionicons.glyphMap,
-    title: 'Timed Collection',
-    description: 'Items expire after 24 hours',
-  },
-  {
-    icon: 'star-outline' as keyof typeof Ionicons.glyphMap,
-    title: 'Rarity System',
-    description: 'Common > Rare > Epic > Legendary',
-  },
-];
+interface GameRule {
+  icon: keyof typeof Ionicons.glyphMap;
+  titleKey: string;
+  descKey: string;
+}
 
 export default function HelpScreen() {
+  const { t } = useTranslation();
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(0);
+
+  const faqs: FAQItem[] = [
+    { questionKey: 'help.faqCollect', answerKey: 'help.faqCollectAnswer' },
+    { questionKey: 'help.faqRefresh', answerKey: 'help.faqRefreshAnswer' },
+    { questionKey: 'help.faqRarity', answerKey: 'help.faqRarityAnswer' },
+    { questionKey: 'help.faqAchievements', answerKey: 'help.faqAchievementsAnswer' },
+    { questionKey: 'help.faqLocation', answerKey: 'help.faqLocationAnswer' },
+  ];
+
+  const gameRules: GameRule[] = [
+    { icon: 'map-outline', titleKey: 'help.ruleExplore', descKey: 'help.ruleExploreDesc' },
+    { icon: 'hand-left-outline', titleKey: 'help.ruleDistance', descKey: 'help.ruleDistanceDesc' },
+    { icon: 'time-outline', titleKey: 'help.ruleTimed', descKey: 'help.ruleTimedDesc' },
+    { icon: 'star-outline', titleKey: 'help.ruleRarity', descKey: 'help.ruleRarityDesc' },
+  ];
 
   const handleEmailSupport = () => {
     Linking.openURL('mailto:support@treasurehunt.com?subject=Treasure%20Hunt%20Feedback');
@@ -75,7 +52,7 @@ export default function HelpScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Game Rules */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>GAME RULES</Text>
+        <Text style={styles.sectionTitle}>{t('help.gameRules')}</Text>
         <View style={styles.card}>
           {gameRules.map((rule, index) => (
             <View key={index} style={[styles.ruleItem, index < gameRules.length - 1 && styles.ruleItemBorder]}>
@@ -83,8 +60,8 @@ export default function HelpScreen() {
                 <Ionicons name={rule.icon} size={22} color="#D4A017" />
               </View>
               <View style={styles.ruleContent}>
-                <Text style={styles.ruleTitle}>{rule.title}</Text>
-                <Text style={styles.ruleDescription}>{rule.description}</Text>
+                <Text style={styles.ruleTitle}>{t(rule.titleKey)}</Text>
+                <Text style={styles.ruleDescription}>{t(rule.descKey)}</Text>
               </View>
             </View>
           ))}
@@ -93,7 +70,7 @@ export default function HelpScreen() {
 
       {/* FAQ */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>FAQ</Text>
+        <Text style={styles.sectionTitle}>{t('help.faq')}</Text>
         <View style={styles.card}>
           {faqs.map((faq, index) => (
             <View key={index}>
@@ -102,7 +79,7 @@ export default function HelpScreen() {
                 onPress={() => toggleFAQ(index)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.faqQuestion}>{faq.question}</Text>
+                <Text style={styles.faqQuestion}>{t(faq.questionKey)}</Text>
                 <Ionicons
                   name={expandedFAQ === index ? 'chevron-up' : 'chevron-down'}
                   size={18}
@@ -111,7 +88,7 @@ export default function HelpScreen() {
               </TouchableOpacity>
               {expandedFAQ === index && (
                 <View style={styles.faqAnswerContainer}>
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                  <Text style={styles.faqAnswer}>{t(faq.answerKey)}</Text>
                 </View>
               )}
               {index < faqs.length - 1 && <View style={styles.divider} />}
@@ -122,14 +99,14 @@ export default function HelpScreen() {
 
       {/* Contact */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>CONTACT SUPPORT</Text>
+        <Text style={styles.sectionTitle}>{t('help.contactSupport')}</Text>
         <View style={styles.card}>
           <TouchableOpacity style={styles.contactItem} onPress={handleEmailSupport}>
             <View style={[styles.contactIcon, { backgroundColor: '#F0FDF4' }]}>
               <Ionicons name="mail-outline" size={20} color="#22c55e" />
             </View>
             <View style={styles.contactContent}>
-              <Text style={styles.contactTitle}>Email Support</Text>
+              <Text style={styles.contactTitle}>{t('help.emailSupport')}</Text>
               <Text style={styles.contactSubtitle}>support@treasurehunt.com</Text>
             </View>
             <Ionicons name="open-outline" size={18} color="#CCC" />
@@ -140,8 +117,8 @@ export default function HelpScreen() {
               <Ionicons name="time-outline" size={20} color="#3b82f6" />
             </View>
             <View style={styles.contactContent}>
-              <Text style={styles.contactTitle}>Business Hours</Text>
-              <Text style={styles.contactSubtitle}>Mon-Fri 9:00-18:00</Text>
+              <Text style={styles.contactTitle}>{t('help.businessHours')}</Text>
+              <Text style={styles.contactSubtitle}>{t('help.businessHoursTime')}</Text>
             </View>
           </View>
         </View>
@@ -150,7 +127,7 @@ export default function HelpScreen() {
       {/* Footer */}
       <View style={styles.footerTip}>
         <Ionicons name="heart" size={14} color="#dc2626" />
-        <Text style={styles.footerText}>Thanks for playing Treasure Hunt!</Text>
+        <Text style={styles.footerText}>{t('help.thanksForPlaying')}</Text>
       </View>
     </ScrollView>
   );

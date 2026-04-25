@@ -8,22 +8,25 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const developers = [
-  { name: 'Treasure Hunt Team', role: 'Development & Maintenance' },
-  { name: 'Open Source Community', role: 'Contributors' },
-];
-
-const licenses = [
-  { name: 'React Native', license: 'MIT' },
-  { name: 'Expo', license: 'MIT' },
-  { name: 'TypeScript', license: 'Apache-2.0' },
-];
+import { useTranslation } from 'react-i18next';
 
 const APP_VERSION = '1.0.0';
 const BUILD_NUMBER = '2024.03.04.1';
 
 export default function AboutScreen() {
+  const { t } = useTranslation();
+
+  const developers = [
+    { name: t('about.devTeam'), role: t('about.devRole') },
+    { name: t('about.openSourceCommunity'), role: t('about.contributorRole') },
+  ];
+
+  const licenses = [
+    { name: 'React Native', license: t('about.licenseMIT') },
+    { name: 'Expo', license: t('about.licenseMIT') },
+    { name: 'TypeScript', license: t('about.licenseApache') },
+  ];
+
   const handleOpenGitHub = () => {
     Linking.openURL('https://github.com/your-username/treasure-hunt');
   };
@@ -41,31 +44,33 @@ export default function AboutScreen() {
             <Ionicons name="diamond" size={48} color="#D4A017" />
           </View>
         </View>
-        <Text style={styles.appName}>Treasure Hunt</Text>
-        <Text style={styles.appTagline}>Explore the world, collect treasures</Text>
+        <Text style={styles.appName}>{t('about.appName')}</Text>
+        <Text style={styles.appTagline}>{t('about.appTagline')}</Text>
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Version {APP_VERSION}</Text>
-          <Text style={styles.buildText}>Build {BUILD_NUMBER}</Text>
+          <Text style={styles.versionText}>{t('about.version')} {APP_VERSION}</Text>
+          <Text style={styles.buildText}>{t('about.build')} {BUILD_NUMBER}</Text>
         </View>
       </View>
 
       {/* About */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>ABOUT</Text>
+        <Text style={styles.sectionTitle}>{t('about.about')}</Text>
         <View style={styles.card}>
           <Text style={styles.aboutText}>
-            Treasure Hunt is a location-based item collection game inspired by Pokemon GO.
-            Players explore the real world to discover and collect virtual treasures at landmark locations.
+            {t('about.aboutDesc1')}
           </Text>
           <Text style={styles.aboutText}>
-            We believe games can make life more fun and exploration an adventure.
+            {t('about.aboutDesc2')}
+          </Text>
+          <Text style={styles.aboutText}>
+            {t('about.aboutDesc3')}
           </Text>
         </View>
       </View>
 
       {/* Team */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>TEAM</Text>
+        <Text style={styles.sectionTitle}>{t('about.team')}</Text>
         <View style={styles.card}>
           {developers.map((dev, index) => (
             <View key={index} style={[styles.devItem, index < developers.length - 1 && styles.devItemBorder]}>
@@ -83,15 +88,15 @@ export default function AboutScreen() {
 
       {/* Links */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>LINKS</Text>
+        <Text style={styles.sectionTitle}>{t('about.links')}</Text>
         <View style={styles.card}>
           <TouchableOpacity style={styles.linkItem} onPress={handleOpenGitHub}>
             <View style={[styles.linkIcon, { backgroundColor: '#F5F0E5' }]}>
               <Ionicons name="logo-github" size={20} color="#1A1A1A" />
             </View>
             <View style={styles.linkContent}>
-              <Text style={styles.linkTitle}>GitHub</Text>
-              <Text style={styles.linkSubtitle}>View source code</Text>
+              <Text style={styles.linkTitle}>{t('about.github')}</Text>
+              <Text style={styles.linkSubtitle}>{t('about.viewSource')}</Text>
             </View>
             <Ionicons name="open-outline" size={18} color="#CCC" />
           </TouchableOpacity>
@@ -101,8 +106,8 @@ export default function AboutScreen() {
               <Ionicons name="globe-outline" size={20} color="#3b82f6" />
             </View>
             <View style={styles.linkContent}>
-              <Text style={styles.linkTitle}>Website</Text>
-              <Text style={styles.linkSubtitle}>Learn more</Text>
+              <Text style={styles.linkTitle}>{t('about.website')}</Text>
+              <Text style={styles.linkSubtitle}>{t('about.learnMore')}</Text>
             </View>
             <Ionicons name="open-outline" size={18} color="#CCC" />
           </TouchableOpacity>
@@ -111,7 +116,7 @@ export default function AboutScreen() {
 
       {/* Licenses */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>OPEN SOURCE</Text>
+        <Text style={styles.sectionTitle}>{t('about.openSource')}</Text>
         <View style={styles.card}>
           {licenses.map((item, index) => (
             <View key={index}>
@@ -129,15 +134,15 @@ export default function AboutScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.copyright}>2024 Treasure Hunt Team</Text>
-        <Text style={styles.rights}>All rights reserved</Text>
+        <Text style={styles.copyright}>{t('about.copyright')}</Text>
+        <Text style={styles.rights}>{t('about.allRightsReserved')}</Text>
         <View style={styles.legalLinks}>
           <TouchableOpacity>
-            <Text style={styles.legalLink}>Privacy Policy</Text>
+            <Text style={styles.legalLink}>{t('about.privacyPolicy')}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDot}>  </Text>
           <TouchableOpacity>
-            <Text style={styles.legalLink}>Terms of Service</Text>
+            <Text style={styles.legalLink}>{t('about.termsOfService')}</Text>
           </TouchableOpacity>
         </View>
       </View>

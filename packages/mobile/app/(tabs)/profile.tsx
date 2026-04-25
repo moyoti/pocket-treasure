@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIn
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
 import { useState } from 'react';
 import { identityService } from '@/src/p2p';
@@ -15,7 +16,8 @@ interface MenuItem {
 }
 
 export default function ProfileScreen() {
-  const { identity, inventory, isLoading, updateDisplayName } = useP2P();
+  const { t } = useTranslation();
+  const { identity, inventory, isLoading, updateDisplayName, tradeHistory, areaUnlockProgress } = useP2P();
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
 
@@ -36,20 +38,20 @@ export default function ProfileScreen() {
 
   const handleResetIdentity = () => {
     Alert.alert(
-      'Reset Identity',
-      'This will delete all your collected items and create a new identity. This action cannot be undone!',
+      t('settings.resetSettings'),
+      t('settings.resetIdentityConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Reset',
+          text: t('settings.resetSettings'),
           style: 'destructive',
           onPress: async () => {
             try {
               await databaseService.clearAllData();
               await identityService.resetIdentity();
-              Alert.alert('Reset Complete', 'Your identity has been reset. The app will reload.');
+              Alert.alert(t('common.success'), t('settings.identityReset'));
             } catch (err) {
-              Alert.alert('Error', 'Failed to reset identity');
+              Alert.alert(t('common.error'), t('settings.identityResetFailed'));
             }
           },
         },
@@ -60,11 +62,11 @@ export default function ProfileScreen() {
   const handleExportPublicKey = () => {
     if (identity?.publicKey) {
       Alert.alert(
-        'Your Public Key',
+        t('profile.title'),
         identity.publicKey.slice(0, 32) + '...',
         [
-          { text: 'Close', style: 'cancel' },
-          { text: 'Copy Full Key', onPress: () => Alert.alert('Copied!', 'Public key copied to clipboard') },
+          { text: t('common.close'), style: 'cancel' },
+          { text: t('settings.copyFullKey'), onPress: () => Alert.alert(t('common.success'), t('settings.publicKeyCopied')) },
         ]
       );
     }
@@ -73,25 +75,49 @@ export default function ProfileScreen() {
   const menuItems: MenuItem[] = [
     {
       icon: 'stats-chart-outline',
-      label: 'Statistics',
-      subtitle: 'View your collection stats',
+      label: t('screens.statistics'),
+      subtitle: t('settings.viewCollectionStats'),
       onPress: () => router.push('/profile/stats'),
     },
     {
+      icon: 'map-outline',
+      label: t('exploration.title'),
+      subtitle: `${areaUnlockProgress.unlocked}/${areaUnlockProgress.total} ${t('exploration.unlockedAreas')}`,
+      onPress: () => router.push('/profile/exploration'),
+    },
+    {
+      icon: 'swap-horizontal-outline',
+      label: t('trade.tradeHistory'),
+      subtitle: `${tradeHistory.length} trades`,
+      onPress: () => {
+        if (tradeHistory.length > 0) {
+          Alert.alert(
+            t('trade.tradeHistory'),
+            tradeHistory.map(trade => 
+              `${t('trade.tradedWith')} ${trade.partnerDisplayName || 'Unknown'} - ${new Date(trade.tradedAt).toLocaleDateString()}`
+            ).join('\n'),
+            [{ text: t('common.close') }]
+          );
+        } else {
+          Alert.alert(t('trade.tradeHistory'), t('trade.noTradeHistory'));
+        }
+      },
+    },
+    {
       icon: 'settings-outline',
-      label: 'Settings',
+      label: t('screens.settings'),
       subtitle: 'App preferences',
       onPress: () => router.push('/profile/settings'),
     },
     {
       icon: 'help-circle-outline',
-      label: 'Help',
+      label: t('screens.help'),
       subtitle: 'How to play',
       onPress: () => router.push('/profile/help'),
     },
     {
       icon: 'information-circle-outline',
-      label: 'About',
+      label: t('screens.about'),
       subtitle: 'App information',
       onPress: () => router.push('/profile/about'),
     },
@@ -102,14 +128,14 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   const shortPublicKey = identity?.publicKey ? 
-    `${identity.publicKey.slice(0, 8)}...${identity.publicKey.slice(-8)}` : 'Unknown';
+    `${identity.publicKey.slice(0, 8)}...${identity.publicKey.slice(-8)}` : t('common.error');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -144,14 +170,14 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <TouchableOpacity onPress={handleEditName}>
-              <Text style={styles.username}>{identity?.displayName || 'Treasure Hunter'}</Text>
+              <Text style={styles.username}>{identity?.displayName || t('nav.profile')}</Text>
               <Ionicons name="pencil" size={12} color="#999" style={{ marginLeft: 4 }} />
             </TouchableOpacity>
           )}
 
           <TouchableOpacity style={styles.keyContainer} onPress={handleExportPublicKey}>
             <Ionicons name="finger-print-outline" size={16} color="#D4A017" />
-            <Text style={styles.keyLabel}>Identity Key:</Text>
+<Text style={styles.keyLabel}>{t('profile.title')} Key:</Text>
             <Text style={styles.keyText}>{shortPublicKey}</Text>
           </TouchableOpacity>
 
@@ -159,13 +185,13 @@ export default function ProfileScreen() {
             <View style={styles.statItem}>
               <Ionicons name="cube" size={16} color="#3b82f6" />
               <Text style={styles.statValue}>{uniqueItems}</Text>
-              <Text style={styles.statLabel}>Unique</Text>
+              <Text style={styles.statLabel}>{t('market.unique')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Ionicons name="layers" size={16} color="#D4A017" />
               <Text style={styles.statValue}>{totalItems}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+              <Text style={styles.statLabel}>{t('market.total')}</Text>
             </View>
           </View>
         </View>
@@ -201,7 +227,7 @@ export default function ProfileScreen() {
           activeOpacity={0.7}
         >
           <Ionicons name="refresh-outline" size={20} color="#dc2626" />
-          <Text style={styles.resetText}>Reset Identity</Text>
+          <Text style={styles.resetText}>{t('settings.resetSettings')}</Text>
         </TouchableOpacity>
 
         <View style={styles.p2pInfo}>

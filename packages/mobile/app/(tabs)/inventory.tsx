@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
 import { InventoryItem, ItemRarity, RARITY_COLORS } from '@/src/p2p/types';
 import { getItemById } from '@/src/p2p/data/items';
@@ -22,13 +23,6 @@ const RARITY_BG: Record<ItemRarity, string> = {
   rare: '#EBF5FF',
   epic: '#F5F0FF',
   legendary: '#FFFBEB',
-};
-
-const RARITY_NAMES: Record<ItemRarity, string> = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
 };
 
 const RARITY_ICONS: Record<ItemRarity, string> = {
@@ -53,6 +47,7 @@ interface DisplayItem {
 }
 
 export default function InventoryScreen() {
+  const { t } = useTranslation();
   const { inventory, nearbyPOIs, isLoading, refreshInventory, sellItem, getSellPrice, sellPrices, profile } = useP2P();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<DisplayItem | null>(null);
@@ -70,6 +65,10 @@ export default function InventoryScreen() {
     setSellModalVisible(true);
   };
 
+  const getRarityName = (rarity: ItemRarity): string => {
+    return t(`rarity.${rarity}`);
+  };
+
   const handleConfirmSell = async () => {
     if (!selectedItem || selling) return;
     
@@ -79,16 +78,16 @@ export default function InventoryScreen() {
       
       if (result.success) {
         Alert.alert(
-          'Sold!',
-          `You sold ${result.soldItem?.itemName} for ${result.coinsEarned} coins!`,
-          [{ text: 'OK', onPress: () => setSellModalVisible(false) }]
+          t('common.success'),
+          `You sold ${result.soldItem?.itemName} for ${result.coinsEarned} ${t('gacha.coins')}!`,
+          [{ text: t('common.confirm'), onPress: () => setSellModalVisible(false) }]
         );
         setSelectedItem(null);
       } else {
-        Alert.alert('Failed', result.error || 'Unable to sell item');
+        Alert.alert(t('common.error'), result.error || t('settings.unableToSell'));
       }
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Sell failed');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('settings.sellFailed'));
     } finally {
       setSelling(false);
     }
@@ -151,7 +150,7 @@ export default function InventoryScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>Loading backpack...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -178,10 +177,10 @@ export default function InventoryScreen() {
           <View style={styles.rarityRow}>
             <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
               <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
-                {RARITY_NAMES[rarity]}
+                {getRarityName(rarity)}
               </Text>
             </View>
-            <Text style={styles.sellPriceText}>Sell: {sellPrice} coins</Text>
+            <Text style={styles.sellPriceText}>{t('inventory.sell')}: {sellPrice} {t('gacha.coins')}</Text>
           </View>
           {item.poiName && (
             <View style={styles.locationRow}>
@@ -206,9 +205,9 @@ export default function InventoryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Backpack</Text>
-        <Text style={styles.subtitle}>Your collected treasures</Text>
+<View style={styles.header}>
+        <Text style={styles.title}>{t('nav.backpack')}</Text>
+        <Text style={styles.subtitle}>{t('inventory.empty')}</Text>
       </View>
 
       {stats && (
@@ -216,12 +215,12 @@ export default function InventoryScreen() {
           <View style={styles.statCard}>
             <Ionicons name="layers-outline" size={20} color="#D4A017" />
             <Text style={styles.statValue}>{stats.totalItems}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statLabel}>{t('market.total')}</Text>
           </View>
           <View style={styles.statCard}>
             <Ionicons name="apps-outline" size={20} color="#3b82f6" />
             <Text style={styles.statValue}>{stats.uniqueItems}</Text>
-            <Text style={styles.statLabel}>Unique</Text>
+            <Text style={styles.statLabel}>{t('market.unique')}</Text>
           </View>
           {Object.entries(stats.byRarity).map(([rarity, count]) => (
             <View key={rarity} style={styles.statCard}>
@@ -233,7 +232,7 @@ export default function InventoryScreen() {
               <Text style={[styles.statValue, { color: RARITY_COLORS[rarity as ItemRarity] }]}>
                 {count}
               </Text>
-              <Text style={styles.statLabel}>{RARITY_NAMES[rarity as ItemRarity]}</Text>
+              <Text style={styles.statLabel}>{getRarityName(rarity as ItemRarity)}</Text>
             </View>
           ))}
         </View>
@@ -257,13 +256,12 @@ export default function InventoryScreen() {
             <View style={styles.emptyIconCircle}>
               <Ionicons name="cube-outline" size={48} color="#CCC" />
             </View>
-            <Text style={styles.emptyText}>No items yet</Text>
-            <Text style={styles.emptySubtext}>Explore the map to find and collect treasures!</Text>
+            <Text style={styles.emptyText}>{t('inventory.empty')}</Text>
+<Text style={styles.emptySubtext}>{t('inventory.exploreMap')}</Text>
           </View>
         }
       />
 
-      {/* Sell Modal */}
       <Modal
         visible={sellModalVisible}
         transparent
@@ -286,7 +284,7 @@ export default function InventoryScreen() {
                     <Text style={styles.modalItemName}>{selectedItem.itemDef.nameZh || selectedItem.itemDef.name}</Text>
                     <View style={[styles.modalRarityBadge, { backgroundColor: RARITY_BG[selectedItem.itemDef.rarity] }]}>
                       <Text style={[styles.modalRarityText, { color: RARITY_COLORS[selectedItem.itemDef.rarity] }]}>
-                        {RARITY_NAMES[selectedItem.itemDef.rarity]}
+                        {getRarityName(selectedItem.itemDef.rarity)}
                       </Text>
                     </View>
                   </View>
@@ -296,22 +294,22 @@ export default function InventoryScreen() {
                 </View>
 
                 <View style={styles.modalSellInfo}>
-                  <View style={styles.sellRow}>
+<View style={styles.sellRow}>
                     <Ionicons name="cube-outline" size={20} color="#666" />
-                    <Text style={styles.sellLabel}>Quantity:</Text>
+                    <Text style={styles.sellLabel}>{t('market.quantity')}:</Text>
                     <Text style={styles.sellValue}>x{selectedItem.quantity}</Text>
                   </View>
                   <View style={styles.sellRow}>
                     <Ionicons name="cash-outline" size={20} color="#22C55E" />
-                    <Text style={styles.sellLabel}>Sell Price:</Text>
+                    <Text style={styles.sellLabel}>{t('inventory.sell')}:</Text>
                     <Text style={[styles.sellValue, { color: '#22C55E' }]}>
-                      {sellPrices[selectedItem.itemDef.rarity] * selectedItem.quantity} coins
+                      {sellPrices[selectedItem.itemDef.rarity] * selectedItem.quantity} {t('gacha.coins')}
                     </Text>
                   </View>
                   {profile && (
                     <View style={styles.sellRow}>
                       <Ionicons name="wallet-outline" size={20} color="#D4A017" />
-                      <Text style={styles.sellLabel}>Current Coins:</Text>
+                      <Text style={styles.sellLabel}>{t('shop.price')}:</Text>
                       <Text style={[styles.sellValue, { color: '#D4A017' }]}>{profile.coins}</Text>
                     </View>
                   )}
@@ -322,7 +320,7 @@ export default function InventoryScreen() {
                     style={styles.cancelButton}
                     onPress={() => setSellModalVisible(false)}
                   >
-                    <Text style={styles.cancelText}>Cancel</Text>
+                    <Text style={styles.cancelText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.confirmSellButton}
@@ -334,7 +332,7 @@ export default function InventoryScreen() {
                     ) : (
                       <>
                         <Ionicons name="cash" size={18} color="#FFF" />
-                        <Text style={styles.confirmSellText}>Sell</Text>
+                        <Text style={styles.confirmSellText}>{t('inventory.sell')}</Text>
                       </>
                     )}
                   </TouchableOpacity>

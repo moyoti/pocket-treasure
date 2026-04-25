@@ -1,15 +1,17 @@
 import { Redirect } from 'expo-router';
 import { useP2P } from '@/src/p2p/P2PContext';
 import { View, ActivityIndicator, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function Index() {
+  const { t } = useTranslation();
   const { isInitialized, isLoading, error } = useP2P();
 
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF8E7' }}>
         <ActivityIndicator size="large" color="#D4A017" />
-        <Text style={{ marginTop: 16, color: '#666' }}>Initializing...</Text>
+        <Text style={{ marginTop: 16, color: '#666' }}>{t('init.initializing')}</Text>
       </View>
     );
   }

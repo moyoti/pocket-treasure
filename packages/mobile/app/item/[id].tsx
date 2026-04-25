@@ -1,10 +1,12 @@
 import { useLocalSearchParams, router } from 'expo-router';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Switch, Alert } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
-import { ItemRarity, RARITY_COLORS } from '@/src/p2p/types';
+import { ItemRarity, RARITY_COLORS, InventoryItem } from '@/src/p2p/types';
 import { getItemById } from '@/src/p2p/data/items';
+import { databaseService } from '@/src/p2p';
 
 type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -13,13 +15,6 @@ const RARITY_BG: Record<Rarity, string> = {
   rare: '#EBF5FF',
   epic: '#F5F0FF',
   legendary: '#FFFBEB',
-};
-
-const RARITY_NAMES: Record<Rarity, string> = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
 };
 
 const RARITY_ICONS: Record<Rarity, string> = {
@@ -31,20 +26,26 @@ const RARITY_ICONS: Record<Rarity, string> = {
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { inventory, nearbyPOIs, isLoading } = useP2P();
+  const { t } = useTranslation();
+  const { inventory, nearbyPOIs, isLoading, refreshInventory } = useP2P();
+  const [invItem, setInvItem] = useState<InventoryItem | null>(null);
   const [item, setItem] = useState<{
     itemDef: { id: string; name: string; description: string; rarity: Rarity };
     quantity: number;
     poiName: string;
     collectedAt: number;
   } | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [updatingLock, setUpdatingLock] = useState(false);
 
   useEffect(() => {
     if (!isLoading && id) {
-      const invItem = inventory.find(i => i.id === id || i.itemId === id);
-      if (invItem) {
-        const itemDef = getItemById(invItem.itemId);
-        const poi = nearbyPOIs.find(p => p.id === invItem.sourcePoiId);
+      const foundInvItem = inventory.find(i => i.id === id || i.itemId === id);
+      if (foundInvItem) {
+        setInvItem(foundInvItem);
+        setIsLocked(foundInvItem.isLocked);
+        const itemDef = getItemById(foundInvItem.itemId);
+        const poi = nearbyPOIs.find(p => p.id === foundInvItem.sourcePoiId);
         setItem({
           itemDef: itemDef ? {
             id: itemDef.id,
@@ -52,25 +53,51 @@ export default function ItemDetailScreen() {
             description: itemDef.description,
             rarity: itemDef.rarity as Rarity,
           } : {
-            id: invItem.itemId,
+            id: foundInvItem.itemId,
             name: 'Unknown',
             description: '',
             rarity: 'common',
           },
-          quantity: invItem.quantity,
+          quantity: foundInvItem.quantity,
           poiName: poi?.name || 'Unknown Location',
-          collectedAt: invItem.collectedAt,
+          collectedAt: foundInvItem.collectedAt,
         });
       }
     }
   }, [id, inventory, nearbyPOIs, isLoading]);
+
+  const handleToggleLock = async (value: boolean) => {
+    if (!invItem) return;
+    
+    setUpdatingLock(true);
+    try {
+      await databaseService.setItemLocked(invItem.id, value);
+      setIsLocked(value);
+      await refreshInventory();
+      
+      Alert.alert(
+        value ? t('trade.lockItem') : t('trade.unlockItem'),
+        value ? t('trade.itemLockedDesc') : t('trade.itemUnlockedDesc'),
+        [{ text: t('common.close') }]
+      );
+    } catch (error) {
+      console.error('Failed to update lock status:', error);
+      Alert.alert(t('common.error'), t('trade.lockUpdateFailed'));
+    } finally {
+      setUpdatingLock(false);
+    }
+  };
+
+const getRarityName = (rarity: Rarity): string => {
+    return t(`rarity.${rarity}`);
+  };
 
   if (isLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       </View>
     );
@@ -83,9 +110,9 @@ export default function ItemDetailScreen() {
           <View style={styles.emptyIconCircle}>
             <Ionicons name="search-outline" size={40} color="#CCC" />
           </View>
-          <Text style={styles.emptyText}>Item not found</Text>
+          <Text style={styles.emptyText}>{t('common.error')}</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
+            <Text style={styles.backButtonText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -107,25 +134,25 @@ export default function ItemDetailScreen() {
         <Text style={styles.name}>{item.itemDef.name}</Text>
         <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
           <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
-            {RARITY_NAMES[rarity]}
+            {getRarityName(rarity)}
           </Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>DESCRIPTION</Text>
+        <Text style={styles.sectionTitle}>{t('screens.itemDetails').toUpperCase()}</Text>
         <View style={styles.sectionCard}>
           <Text style={styles.description}>{item.itemDef.description || 'A mysterious treasure waiting to be discovered.'}</Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>COLLECTION INFO</Text>
+        <Text style={styles.sectionTitle}>{t('screens.statistics').toUpperCase()}</Text>
         <View style={styles.sectionCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoIconRow}>
               <Ionicons name="location-outline" size={16} color="#AAA" />
-              <Text style={styles.infoLabel}>Location</Text>
+              <Text style={styles.infoLabel}>{t('map.title')}</Text>
             </View>
             <Text style={styles.infoValue}>{item.poiName}</Text>
           </View>
@@ -133,7 +160,7 @@ export default function ItemDetailScreen() {
           <View style={styles.infoRow}>
             <View style={styles.infoIconRow}>
               <Ionicons name="calendar-outline" size={16} color="#AAA" />
-              <Text style={styles.infoLabel}>Collected</Text>
+              <Text style={styles.infoLabel}>{t('tasks.completed')}</Text>
             </View>
             <Text style={styles.infoValue}>
               {new Date(item.collectedAt).toLocaleDateString('en-US', {
@@ -147,7 +174,7 @@ export default function ItemDetailScreen() {
           <View style={styles.infoRow}>
             <View style={styles.infoIconRow}>
               <Ionicons name="layers-outline" size={16} color="#AAA" />
-              <Text style={styles.infoLabel}>Quantity</Text>
+              <Text style={styles.infoLabel}>{t('market.quantity')}</Text>
             </View>
             <View style={styles.quantityBadge}>
               <Text style={styles.quantityText}>x{item.quantity}</Text>
@@ -156,9 +183,42 @@ export default function ItemDetailScreen() {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('trade.title').toUpperCase()}</Text>
+        <View style={styles.sectionCard}>
+          <View style={styles.tradeableRow}>
+            <View style={styles.tradeableInfo}>
+              <Ionicons 
+                name={isLocked ? 'lock-closed' : 'lock-open-outline'} 
+                size={20} 
+                color={isLocked ? '#dc2626' : '#22c55e'} 
+              />
+              <View>
+                <Text style={styles.tradeableLabel}>
+                  {isLocked ? t('trade.notTradeable') : t('trade.tradeable')}
+                </Text>
+                <Text style={styles.tradeableDesc}>
+                  {isLocked ? t('trade.lockItemDesc') : t('trade.unlockItemDesc')}
+                </Text>
+              </View>
+            </View>
+            {updatingLock ? (
+              <ActivityIndicator size="small" color="#D4A017" />
+            ) : (
+              <Switch
+                value={!isLocked}
+                onValueChange={(value) => handleToggleLock(!value)}
+                trackColor={{ false: '#dc2626', true: '#22c55e' }}
+                thumbColor="#FFF"
+              />
+            )}
+          </View>
+        </View>
+      </View>
+
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
         <Ionicons name="arrow-back" size={18} color="#1A1A1A" />
-        <Text style={styles.backButtonText}>Back to Backpack</Text>
+        <Text style={styles.backButtonText}>{t('common.back')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -280,6 +340,26 @@ const styles = StyleSheet.create({
     color: '#D4A017',
     fontWeight: '700',
     fontSize: 14,
+  },
+  tradeableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  tradeableInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  tradeableLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  tradeableDesc: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
   },
   backButton: {
     margin: 16,

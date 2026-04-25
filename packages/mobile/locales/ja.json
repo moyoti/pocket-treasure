@@ -49,7 +49,8 @@
     "achievements": "実績",
     "cosmetics": "コスメ",
     "explore": "探索",
-    "backpack": "バッグ"
+    "backpack": "バッグ",
+    "trade": "トレード"
   },
   "map": {
     "title": "トレジャーマップ",
@@ -65,6 +66,7 @@
     "title": "マイバッグ",
     "empty": "バッグは空です",
     "totalCount": "合計 {count} 個",
+    "all": "全部",
     "rarity": {
       "common": "コモン",
       "rare": "レア",
@@ -610,7 +612,15 @@
     "tradeable": "トレード可能",
     "notTradeable": "トレード不可",
     "lockItem": "アイテムロック",
-    "unlockItem": "アイテム解除"
+    "unlockItem": "アイテム解除",
+    "lockItemDesc": "ロックされたアイテムはトレード不可",
+    "unlockItemDesc": "解除されたアイテムはトレード可能",
+    "itemLockedDesc": "アイテムがロックされ、トレードで使用できません",
+    "itemUnlockedDesc": "アイテムが解除され、トレード可能です",
+    "lockUpdateFailed": "ロック状態の更新に失敗しました",
+    "selected": "選択済み",
+    "waitingForPartner": "相手のオファーを待機中...",
+    "connectionFailed": "接続失敗"
   },
   "exploration": {
     "title": "エリア探索",
@@ -636,7 +646,10 @@
     "minLevel": "最小レベル",
     "requiredItems": "必要アイテム",
     "conditionsMet": "条件達成！",
-    "conditionsPending": "条件未達成"
+    "conditionsPending": "条件未達成",
+    "notVisited": "未訪問",
+    "noAreas": "エリアなし",
+    "tryUnlock": "解放試行"
   },
   "series": {
     "title": "コレクションシリーズ",
@@ -664,7 +677,10 @@
     "hiddenSeries": "隠しシリーズ",
     "hiddenHint": "一部のシリーズは隠されています。収集で発見！",
     "partOfSeries": "シリーズの一部",
-    "seriesProgress": "{series}進捗"
+    "seriesProgress": "{series}進捗",
+    "items": "アイテム",
+    "completedSeries": "完了シリーズ",
+    "complete": "完了"
   },
   "markers": {
     "title": "マイマーカー",

@@ -46,6 +46,19 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
+        name="trade"
+        options={{
+          title: t('trade.title'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'swap-horizontal' : 'swap-horizontal-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="map"
         options={{
           title: t('nav.explore'),

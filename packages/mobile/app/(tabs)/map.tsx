@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Circle, UrlTile } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
 import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/p2p/types';
 import { getItemById } from '@/src/p2p/data/items';
@@ -29,13 +30,6 @@ const DEFAULT_REGION = {
 
 type ItemRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
-const RARITY_LABEL: Record<ItemRarity, string> = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
-};
-
 const RARITY_ICON: Record<ItemRarity, string> = {
   common: 'diamond-outline',
   rare: 'diamond',
@@ -45,6 +39,7 @@ const RARITY_ICON: Record<ItemRarity, string> = {
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { 
     isInitialized, 
     isLoading, 
@@ -63,12 +58,16 @@ export default function MapScreen() {
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
   const [refreshing, setRefreshing] = useState(false);
 
+  const getRarityName = (rarity: ItemRarity): string => {
+    return t(`rarity.${rarity}`);
+  };
+
   const requestLocation = async () => {
     console.log('[Map] Requesting location permission...');
     const { status } = await Location.requestForegroundPermissionsAsync();
     console.log('[Map] Permission status:', status);
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Location access is required to find nearby treasures.');
+      Alert.alert(t('settings.permissionNeeded'), t('map.tooFar'));
       return;
     }
 
@@ -108,7 +107,7 @@ export default function MapScreen() {
     setRefreshing(false);
   };
 
-  const handleCollect = async (spawn: SpawnedTreasure) => {
+const handleCollect = async (spawn: SpawnedTreasure) => {
     if (!location || collecting) return;
 
     setCollecting(true);
@@ -118,29 +117,19 @@ export default function MapScreen() {
       if (result.success) {
         const item = getItemById(spawn.itemId);
         Alert.alert(
-          'Collected!',
-          `You found ${item?.name || 'treasure'}!\nRarity: ${RARITY_LABEL[item?.rarity || 'common']}`,
-          [{ text: 'Awesome', onPress: () => setSelectedSpawn(null) }]
+          t('map.collectSuccess'),
+          `You found ${item?.name || 'treasure'}!\nRarity: ${getRarityName(item?.rarity || 'common')}`,
+          [{ text: t('common.confirm'), onPress: () => setSelectedSpawn(null) }]
         );
       } else {
-        Alert.alert('Failed', result.error || 'Unable to collect');
+        Alert.alert(t('common.error'), result.error || t('map.collectFailed'));
       }
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Collection failed');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('map.collectFailed'));
     } finally {
       setCollecting(false);
-    }
-  };
-
-  const getSpawnDetails = (spawn: SpawnedTreasure) => {
-    const item = getItemById(spawn.itemId);
-    const poi = nearbyPOIs.find(p => p.id === spawn.poiId);
-    return {
-      itemName: item?.name || 'Unknown Treasure',
-      itemRarity: item?.rarity || 'common',
-      poiName: poi?.name || 'Mystery Location',
-    };
-  };
+}
+  }
 
   if (isLoading || !location) {
     return (
@@ -149,7 +138,7 @@ export default function MapScreen() {
           <Ionicons name="compass-outline" size={48} color="#D4A017" />
           <ActivityIndicator size="large" color="#D4A017" style={{ marginTop: 16 }} />
           <Text style={styles.loadingText}>
-            {isLoading ? 'Initializing...' : 'Finding your location...'}
+            {isLoading ? t('common.loading') : t('settings.findingLocation')}
           </Text>
         </View>
       </View>
@@ -163,12 +152,22 @@ export default function MapScreen() {
           <Ionicons name="alert-circle-outline" size={48} color="#E91E63" />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => requestLocation()}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
+
+  const getSpawnDetails = (spawn: SpawnedTreasure) => {
+    const item = getItemById(spawn.itemId);
+    const poi = nearbyPOIs.find(p => p.id === spawn.poiId);
+    return {
+      itemName: item?.name || 'Unknown Treasure',
+      itemRarity: item?.rarity || 'common',
+      poiName: poi?.name || 'Mystery Location',
+    };
+  };
 
   const visibleSpawns = nearbySpawns.filter(s => !s.isCollected);
   console.log('[Map] Rendering map with:', { 
@@ -220,7 +219,7 @@ export default function MapScreen() {
                   longitude: poi.longitude,
                 }}
                 title={details.itemName}
-                description={`${RARITY_LABEL[details.itemRarity]} - ${details.poiName}`}
+                description={`${getRarityName(details.itemRarity)} - ${details.poiName}`}
                 onPress={() => setSelectedSpawn(spawn)}
                 pinColor={color}
               />
@@ -233,12 +232,12 @@ export default function MapScreen() {
         <View style={styles.countPill}>
           <Ionicons name="compass" size={16} color="#D4A017" />
           <Text style={styles.countText}>
-            {visibleSpawns.length} treasure{visibleSpawns.length !== 1 ? 's' : ''} nearby
+            {visibleSpawns.length} {t('map.nearbyTreasures')}
           </Text>
         </View>
         <View style={styles.inventoryPill}>
           <Ionicons name="cube" size={16} color="#3B82F6" />
-          <Text style={styles.inventoryText}>{inventory.length} items</Text>
+          <Text style={styles.inventoryText}>{inventory.length} {t('nav.inventory')}</Text>
         </View>
       </View>
 
@@ -271,7 +270,7 @@ export default function MapScreen() {
                 <Text style={styles.sheetTitle}>{getSpawnDetails(selectedSpawn).itemName}</Text>
                 <View style={[styles.sheetRarityBadge, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
                   <Text style={[styles.sheetRarityText, { color: RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity] }]}>
-                    {RARITY_LABEL[getSpawnDetails(selectedSpawn).itemRarity]}
+                    {getRarityName(getSpawnDetails(selectedSpawn).itemRarity)}
                   </Text>
                 </View>
                 <View style={styles.sheetLocationRow}>
@@ -299,7 +298,7 @@ export default function MapScreen() {
               ) : (
                 <>
                   <Ionicons name="hand-left" size={18} color="#FFF" />
-                  <Text style={styles.collectButtonText}>Collect Treasure</Text>
+                  <Text style={styles.collectButtonText}>{t('map.collectSuccess')}</Text>
                 </>
               )}
             </TouchableOpacity>

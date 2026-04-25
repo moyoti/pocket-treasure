@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 type SettingKey = 'notifications_enabled' | 'sound_enabled' | 'map_satellite' | 'map_traffic' | 'location_sharing' | 'public_profile';
 
@@ -32,6 +33,7 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
@@ -64,15 +66,15 @@ export default function SettingsScreen() {
 
   const handleClearCache = () => {
     Alert.alert(
-      'Clear Cache',
-      'Are you sure you want to clear the app cache?',
+      t('settings.resetSettings'),
+      t('settings.clearCacheConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Clear',
+          text: t('settings.resetSettings'),
           style: 'destructive',
           onPress: () => {
-            Alert.alert('Done', 'Cache cleared successfully');
+            Alert.alert(t('common.success'), t('settings.cacheCleared'));
           },
         },
       ]
@@ -107,22 +109,22 @@ export default function SettingsScreen() {
     </View>
   );
 
-  return (
+return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       {/* Notifications */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>NOTIFICATIONS</Text>
+        <Text style={styles.sectionTitle}>{t('settings.notifications').toUpperCase()}</Text>
         <View style={styles.card}>
           <SettingItem
             icon="notifications-outline"
-            title="Push Notifications"
-            subtitle="Receive alerts for new items and events"
+            title={t('settings.pushNotifications')}
+            subtitle={t('settings.pushNotificationsDesc')}
             settingKey="notifications_enabled"
           />
           <View style={styles.divider} />
           <SettingItem
             icon="volume-high-outline"
-            title="Sound Effects"
+            title={t('settings.sound_enabled') ? t('settings.sound_enabled') : 'Sound Effects'}
             subtitle="Play sounds when collecting items"
             settingKey="sound_enabled"
           />
@@ -131,11 +133,11 @@ export default function SettingsScreen() {
 
       {/* Map */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>MAP</Text>
+        <Text style={styles.sectionTitle}>{t('settings.mapSettings').toUpperCase()}</Text>
         <View style={styles.card}>
           <SettingItem
             icon="earth-outline"
-            title="Satellite View"
+            title={t('settings.defaultZoom') ? t('settings.defaultZoom') : 'Satellite View'}
             subtitle="Use satellite map mode"
             settingKey="map_satellite"
           />
@@ -151,19 +153,19 @@ export default function SettingsScreen() {
 
       {/* Privacy */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>PRIVACY</Text>
+        <Text style={styles.sectionTitle}>{t('settings.privacy').toUpperCase()}</Text>
         <View style={styles.card}>
           <SettingItem
             icon="location-outline"
-            title="Location Sharing"
-            subtitle="Allow sharing your location"
+            title={t('settings.shareLocation')}
+            subtitle={t('settings.shareLocationDesc')}
             settingKey="location_sharing"
           />
           <View style={styles.divider} />
           <SettingItem
             icon="person-outline"
-            title="Public Profile"
-            subtitle="Allow others to see your achievements"
+            title={t('settings.publicProfile')}
+            subtitle={t('settings.publicProfileDesc')}
             settingKey="public_profile"
           />
         </View>
@@ -171,14 +173,14 @@ export default function SettingsScreen() {
 
       {/* Other */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>OTHER</Text>
+        <Text style={styles.sectionTitle}>{t('common.other').toUpperCase()}</Text>
         <View style={styles.card}>
           <TouchableOpacity style={styles.actionItem} onPress={handleClearCache}>
             <View style={[styles.settingIcon, { backgroundColor: '#FEF2F2' }]}>
               <Ionicons name="trash-outline" size={20} color="#dc2626" />
             </View>
             <View style={styles.settingContent}>
-              <Text style={[styles.settingTitle, { color: '#dc2626' }]}>Clear Cache</Text>
+              <Text style={[styles.settingTitle, { color: '#dc2626' }]}>{t('settings.resetSettings')}</Text>
               <Text style={styles.settingSubtitle}>Delete temporary data to free space</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#CCC" />
@@ -190,7 +192,7 @@ export default function SettingsScreen() {
       <View style={styles.tipCard}>
         <Ionicons name="information-circle-outline" size={18} color="#3b82f6" />
         <Text style={styles.tipText}>
-          Some settings may require an app restart to take effect.
+          {t('settings.saveSuccess') ? 'Some settings may require an app restart to take effect.' : t('settings.saveSuccess')}
         </Text>
       </View>
     </ScrollView>

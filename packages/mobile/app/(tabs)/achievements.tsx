@@ -13,8 +13,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p/P2PContext';
-import { AchievementDefinition, UserAchievement, AchievementStatus } from '@/src/p2p/types';
+import { AchievementDefinition, UserAchievement, AchievementStatus, SeriesProgress } from '@/src/p2p/types';
 import { ACHIEVEMENT_DEFINITIONS, getAchievementById } from '@/src/p2p/data/achievements';
+import { SERIES_DEFINITIONS } from '@/src/p2p/data/series';
+
+type TabType = 'achievements' | 'series';
 
 interface AchievementProgress {
   achievement: AchievementDefinition;
@@ -26,9 +29,10 @@ interface AchievementProgress {
 
 export default function AchievementsScreen() {
   const { t } = useTranslation();
-  const { achievements, claimAchievement, refreshAchievements, isInitialized } = useP2P();
+  const { achievements, claimAchievement, refreshAchievements, refreshSeriesProgress, seriesProgress, claimSeriesReward, isInitialized } = useP2P();
   const [refreshing, setRefreshing] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('achievements');
 
   const achievementProgress: AchievementProgress[] = ACHIEVEMENT_DEFINITIONS.map(def => {
     const userAch = achievements.find(ua => ua.achievementId === def.id);
@@ -44,8 +48,9 @@ export default function AchievementsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshAchievements();
+    await refreshSeriesProgress();
     setRefreshing(false);
-  }, [refreshAchievements]);
+  }, [refreshAchievements, refreshSeriesProgress]);
 
   const handleClaim = async (achievementId: string) => {
     setClaimingId(achievementId);
@@ -56,6 +61,116 @@ export default function AchievementsScreen() {
     } finally {
       setClaimingId(null);
     }
+  };
+
+  const handleClaimSeries = async (seriesId: string, milestone: '25' | '50' | '75' | 'completion') => {
+    setClaimingId(`${seriesId}-${milestone}`);
+    try {
+      await claimSeriesReward(seriesId, milestone);
+    } catch (error) {
+      console.error('Failed to claim series reward:', error);
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  const categoryColors: Record<string, string> = {
+    themed: '#3b82f6',
+    rarity: '#9B59B6',
+    location: '#22c55e',
+    seasonal: '#D4A017',
+    special: '#dc2626',
+  };
+
+  const renderSeriesItem = ({ item }: { item: SeriesProgress }) => {
+    const seriesDef = SERIES_DEFINITIONS.find(s => s.id === item.seriesId);
+    const progressPercent = item.progressPercent;
+    const canClaimMilestone = (milestone: '25' | '50' | '75' | 'completion') => {
+      if (milestone === '25') return item.milestone25 && !item.rewardsClaimed.includes('25');
+      if (milestone === '50') return item.milestone50 && !item.rewardsClaimed.includes('50');
+      if (milestone === '75') return item.milestone75 && !item.rewardsClaimed.includes('75');
+      if (milestone === 'completion') return item.isCompleted && !item.rewardsClaimed.includes('completion');
+      return false;
+    };
+
+    return (
+      <View style={[styles.card, item.isCompleted && styles.completedCard]}>
+        <View style={[styles.colorBar, { backgroundColor: categoryColors[item.category] || '#8D99AE' }]} />
+        <View style={styles.cardContent}>
+          <View style={styles.titleRow}>
+            <Ionicons name="layers" size={22} color={categoryColors[item.category] || '#8D99AE'} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>{item.seriesNameZh || item.seriesName}</Text>
+              <Text style={styles.description} numberOfLines={1}>
+                {item.collectedItems.length} / {item.requiredItems.length} {t('series.items')}
+              </Text>
+            </View>
+            {item.isCompleted && (
+              <Ionicons name="checkmark-circle" size={22} color="#22c55e" />
+            )}
+          </View>
+
+          <View style={styles.progressSection}>
+            <View style={styles.progressRow}>
+              <Text style={styles.progressLabel}>{t('achievements.progress')}</Text>
+              <Text style={styles.progressValue}>{Math.round(progressPercent)}%</Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${progressPercent}%`, backgroundColor: categoryColors[item.category] || '#8D99AE' },
+                  item.isCompleted && { backgroundColor: '#22c55e' },
+                ]}
+              />
+            </View>
+          </View>
+
+          <View style={styles.milestoneRow}>
+            {item.milestone25 && (
+              <TouchableOpacity
+                style={[styles.milestoneChip, canClaimMilestone('25') && styles.milestoneClaimable]}
+                onPress={() => handleClaimSeries(item.seriesId, '25')}
+                disabled={!canClaimMilestone('25') || claimingId === `${item.seriesId}-25`}
+              >
+                <Text style={styles.milestoneText}>25%</Text>
+              </TouchableOpacity>
+            )}
+            {item.milestone50 && (
+              <TouchableOpacity
+                style={[styles.milestoneChip, canClaimMilestone('50') && styles.milestoneClaimable]}
+                onPress={() => handleClaimSeries(item.seriesId, '50')}
+                disabled={!canClaimMilestone('50') || claimingId === `${item.seriesId}-50`}
+              >
+                <Text style={styles.milestoneText}>50%</Text>
+              </TouchableOpacity>
+            )}
+            {item.milestone75 && (
+              <TouchableOpacity
+                style={[styles.milestoneChip, canClaimMilestone('75') && styles.milestoneClaimable]}
+                onPress={() => handleClaimSeries(item.seriesId, '75')}
+                disabled={!canClaimMilestone('75') || claimingId === `${item.seriesId}-75`}
+              >
+                <Text style={styles.milestoneText}>75%</Text>
+              </TouchableOpacity>
+            )}
+            {item.isCompleted && seriesDef?.rewards?.completion && (
+              <TouchableOpacity
+                style={[styles.milestoneChip, styles.milestoneCompletion, canClaimMilestone('completion') && styles.milestoneClaimable]}
+                onPress={() => handleClaimSeries(item.seriesId, 'completion')}
+                disabled={!canClaimMilestone('completion') || claimingId === `${item.seriesId}-completion`}
+              >
+                {claimingId === `${item.seriesId}-completion` ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.milestoneText}>{t('series.complete')}</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+    );
   };
 
   if (!isInitialized) {
@@ -160,51 +275,126 @@ export default function AchievementsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('achievements.title')}</Text>
-        <Text style={styles.subtitle}>
-          {t('achievements.completedCount', { count: completedCount, total: achievementProgress.length })}
-          {canClaimCount > 0 ? ` — ${t('achievements.toClaim', { count: canClaimCount })}` : ''}
-        </Text>
       </View>
 
-      <View style={styles.statsCard}>
-        <View style={styles.statsRow}>
-          <View>
-            <Text style={styles.statsLabel}>{t('achievements.overallProgress')}</Text>
-            <Text style={styles.statsValue}>{completedCount} / {achievementProgress.length}</Text>
-          </View>
-          <View style={styles.statsIconCircle}>
-            <Ionicons name="medal" size={24} color="#9B59B6" />
-          </View>
-        </View>
-        <View style={styles.progressBar}>
-          <View
-            style={[
-              styles.progressFill,
-              { backgroundColor: '#9B59B6' },
-              {
-                width: `${achievementProgress.length > 0 ? (completedCount / achievementProgress.length) * 100 : 0}%`,
-              },
-            ]}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'achievements' && styles.tabButtonActive]}
+          onPress={() => setActiveTab('achievements')}
+        >
+          <Ionicons 
+            name={activeTab === 'achievements' ? 'trophy' : 'trophy-outline'} 
+            size={18} 
+            color={activeTab === 'achievements' ? '#D4A017' : '#AAA'} 
           />
-        </View>
+          <Text style={[styles.tabText, activeTab === 'achievements' && styles.tabTextActive]}>
+            {t('achievements.title')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'series' && styles.tabButtonActive]}
+          onPress={() => setActiveTab('series')}
+        >
+          <Ionicons 
+            name={activeTab === 'series' ? 'layers' : 'layers-outline'} 
+            size={18} 
+            color={activeTab === 'series' ? '#D4A017' : '#AAA'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'series' && styles.tabTextActive]}>
+            {t('series.title')}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={achievementProgress.filter(ap => !ap.achievement.isHidden)}
-        keyExtractor={(item) => item.achievement.id}
-        renderItem={renderAchievementItem}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.centerContainer}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="medal-outline" size={40} color="#CCC" />
+      {activeTab === 'achievements' && (
+        <>
+          <View style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View>
+                <Text style={styles.statsLabel}>{t('achievements.overallProgress')}</Text>
+                <Text style={styles.statsValue}>{completedCount} / {achievementProgress.length}</Text>
+              </View>
+              <View style={styles.statsIconCircle}>
+                <Ionicons name="medal" size={24} color="#9B59B6" />
+              </View>
             </View>
-            <Text style={styles.emptyText}>{t('achievements.noAchievements')}</Text>
-            <Text style={styles.emptySubtext}>{t('achievements.startCollecting')}</Text>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { backgroundColor: '#9B59B6' },
+                  {
+                    width: `${achievementProgress.length > 0 ? (completedCount / achievementProgress.length) * 100 : 0}%`,
+                  },
+                ]}
+              />
+            </View>
           </View>
-        }
-      />
+
+          <FlatList
+            data={achievementProgress.filter(ap => !ap.achievement.isHidden)}
+            keyExtractor={(item) => item.achievement.id}
+            renderItem={renderAchievementItem}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              <View style={styles.centerContainer}>
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons name="medal-outline" size={40} color="#CCC" />
+                </View>
+                <Text style={styles.emptyText}>{t('achievements.noAchievements')}</Text>
+                <Text style={styles.emptySubtext}>{t('achievements.startCollecting')}</Text>
+              </View>
+            }
+          />
+        </>
+      )}
+
+      {activeTab === 'series' && (
+        <>
+          <View style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View>
+                <Text style={styles.statsLabel}>{t('series.completedSeries')}</Text>
+                <Text style={styles.statsValue}>
+                  {seriesProgress.filter(s => s.isCompleted).length} / {seriesProgress.length}
+                </Text>
+              </View>
+              <View style={styles.statsIconCircle}>
+                <Ionicons name="layers" size={24} color="#3b82f6" />
+              </View>
+            </View>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { backgroundColor: '#3b82f6' },
+                  {
+                    width: `${seriesProgress.length > 0 ? (seriesProgress.filter(s => s.isCompleted).length / seriesProgress.length) * 100 : 0}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          <FlatList
+            data={seriesProgress.filter(s => !SERIES_DEFINITIONS.find(d => d.id === s.seriesId)?.isHidden)}
+            keyExtractor={(item) => item.seriesId}
+            renderItem={renderSeriesItem}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              <View style={styles.centerContainer}>
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons name="layers-outline" size={40} color="#CCC" />
+                </View>
+                <Text style={styles.emptyText}>{t('series.noSeries')}</Text>
+                <Text style={styles.emptySubtext}>{t('series.startCollecting')}</Text>
+              </View>
+            }
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -411,5 +601,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#AAA',
     textAlign: 'center',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  tabButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+    gap: 6,
+  },
+  tabButtonActive: {
+    borderColor: '#D4A017',
+    backgroundColor: '#FFF8E7',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#AAA',
+  },
+  tabTextActive: {
+    color: '#D4A017',
+  },
+  completedCard: {
+    borderColor: '#22c55e',
+    borderWidth: 1.5,
+  },
+  milestoneRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  milestoneChip: {
+    backgroundColor: '#F5F0E5',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  milestoneClaimable: {
+    backgroundColor: '#D4A017',
+  },
+  milestoneCompletion: {
+    backgroundColor: '#22c55e',
+  },
+  milestoneText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#666',
   },
 });

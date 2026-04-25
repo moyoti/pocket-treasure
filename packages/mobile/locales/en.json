@@ -49,7 +49,8 @@
     "achievements": "Achievements",
     "cosmetics": "Cosmetics",
     "explore": "Explore",
-    "backpack": "Backpack"
+    "backpack": "Backpack",
+    "trade": "Trade"
   },
   "map": {
     "title": "Treasure Map",
@@ -65,6 +66,7 @@
     "title": "My Inventory",
     "empty": "Inventory is empty",
     "totalCount": "Total {count} items",
+    "all": "All",
     "rarity": {
       "common": "Common",
       "rare": "Rare",
@@ -602,7 +604,15 @@
     "tradeable": "Tradeable",
     "notTradeable": "Not Tradeable",
     "lockItem": "Lock Item",
-    "unlockItem": "Unlock Item"
+    "unlockItem": "Unlock Item",
+    "lockItemDesc": "Locked items cannot be traded",
+    "unlockItemDesc": "Unlocked items can be traded",
+    "itemLockedDesc": "Item is locked and cannot be used in trades",
+    "itemUnlockedDesc": "Item is unlocked and can be traded",
+    "lockUpdateFailed": "Failed to update lock status",
+    "selected": "Selected",
+    "waitingForPartner": "Waiting for partner's offer...",
+    "connectionFailed": "Connection failed"
   },
   "exploration": {
     "title": "Area Exploration",
@@ -628,7 +638,10 @@
     "minLevel": "Minimum Level",
     "requiredItems": "Required Items",
     "conditionsMet": "All conditions met!",
-    "conditionsPending": "Pending conditions"
+    "conditionsPending": "Pending conditions",
+    "notVisited": "Not Visited",
+    "noAreas": "No areas",
+    "tryUnlock": "Try Unlock"
   },
   "series": {
     "title": "Collection Series",
@@ -654,6 +667,10 @@
     "noSeries": "No series available",
     "startCollecting": "Start collecting to progress series",
     "hiddenSeries": "Hidden Series",
+    "items": "Items",
+    "completedSeries": "Completed Series",
+    "complete": "Complete"
+  },
     "hiddenHint": "Some series are hidden. Discover them by collecting!",
     "partOfSeries": "Part of Series",
     "seriesProgress": "{series} Progress"
