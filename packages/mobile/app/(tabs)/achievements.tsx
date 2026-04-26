@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
@@ -13,9 +12,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p/P2PContext';
-import { AchievementDefinition, UserAchievement, AchievementStatus, SeriesProgress } from '@/src/p2p/types';
+import { AchievementDefinition, UserAchievement, AchievementStatus, SeriesProgress, SeriesDefinition } from '@/src/p2p/types';
 import { ACHIEVEMENT_DEFINITIONS, getAchievementById } from '@/src/p2p/data/achievements';
 import { SERIES_DEFINITIONS } from '@/src/p2p/data/series';
+import { CelebrationAnimation } from '@/components/animations/CelebrationAnimation';
+import { TreasureSpinner } from '@/components/animations/TreasureSpinner';
 
 type TabType = 'achievements' | 'series';
 
@@ -27,12 +28,24 @@ interface AchievementProgress {
   canClaim: boolean;
 }
 
+interface ClaimedAchievement {
+  id: string;
+  name: string;
+  icon: string;
+  rewards?: {
+    coins?: number;
+    experience?: number;
+    title?: string;
+  };
+}
+
 export default function AchievementsScreen() {
   const { t } = useTranslation();
   const { achievements, claimAchievement, refreshAchievements, refreshSeriesProgress, seriesProgress, claimSeriesReward, isInitialized } = useP2P();
   const [refreshing, setRefreshing] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('achievements');
+  const [claimedAchievement, setClaimedAchievement] = useState<ClaimedAchievement | null>(null);
 
   const achievementProgress: AchievementProgress[] = ACHIEVEMENT_DEFINITIONS.map(def => {
     const userAch = achievements.find(ua => ua.achievementId === def.id);
@@ -53,9 +66,18 @@ export default function AchievementsScreen() {
   }, [refreshAchievements, refreshSeriesProgress]);
 
   const handleClaim = async (achievementId: string) => {
+    const achievement = ACHIEVEMENT_DEFINITIONS.find(a => a.id === achievementId);
     setClaimingId(achievementId);
     try {
       await claimAchievement(achievementId);
+      if (achievement) {
+        setClaimedAchievement({
+          id: achievement.id,
+          name: achievement.name,
+          icon: achievement.icon || 'trophy',
+          rewards: achievement.rewards,
+        });
+      }
     } catch (error) {
       console.error('Failed to claim achievement:', error);
     } finally {
@@ -83,7 +105,7 @@ export default function AchievementsScreen() {
   };
 
   const renderSeriesItem = ({ item }: { item: SeriesProgress }) => {
-    const seriesDef = SERIES_DEFINITIONS.find(s => s.id === item.seriesId);
+    const seriesDef = SERIES_DEFINITIONS.find((s: SeriesDefinition) => s.id === item.seriesId);
     const progressPercent = item.progressPercent;
     const canClaimMilestone = (milestone: '25' | '50' | '75' | 'completion') => {
       if (milestone === '25') return item.milestone25 && !item.rewardsClaimed.includes('25');
@@ -161,7 +183,7 @@ export default function AchievementsScreen() {
                 disabled={!canClaimMilestone('completion') || claimingId === `${item.seriesId}-completion`}
               >
                 {claimingId === `${item.seriesId}-completion` ? (
-                  <ActivityIndicator size="small" color="#FFF" />
+                  <TreasureSpinner size={16} color="#FFF" showParticles={false} />
                 ) : (
                   <Text style={styles.milestoneText}>{t('series.complete')}</Text>
                 )}
@@ -177,7 +199,7 @@ export default function AchievementsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#D4A017" />
+          <TreasureSpinner size={56} showText />
         </View>
       </SafeAreaView>
     );
@@ -206,7 +228,7 @@ export default function AchievementsScreen() {
           <View style={styles.titleRow}>
             <Text style={styles.icon}>{ach.icon}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{ach.nameZh || ach.name}</Text>
+              <Text style={styles.cardTitle}>{ach.name}</Text>
               <Text style={styles.description} numberOfLines={2}>{ach.description}</Text>
             </View>
             {isClaimed && (
@@ -258,7 +280,7 @@ export default function AchievementsScreen() {
                   disabled={claimingId === ach.id}
                 >
                   {claimingId === ach.id ? (
-                    <ActivityIndicator size="small" color="#FFF" />
+                    <TreasureSpinner size={20} color="#FFF" showParticles={false} />
                   ) : (
                     <Text style={styles.claimButtonText}>{t('achievements.claimReward')}</Text>
                   )}
@@ -378,7 +400,7 @@ export default function AchievementsScreen() {
           </View>
 
           <FlatList
-            data={seriesProgress.filter(s => !SERIES_DEFINITIONS.find(d => d.id === s.seriesId)?.isHidden)}
+            data={seriesProgress.filter(s => !SERIES_DEFINITIONS.find((d: SeriesDefinition) => d.id === s.seriesId)?.isHidden)}
             keyExtractor={(item) => item.seriesId}
             renderItem={renderSeriesItem}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
@@ -395,6 +417,14 @@ export default function AchievementsScreen() {
           />
         </>
       )}
+
+      <CelebrationAnimation
+        visible={!!claimedAchievement}
+        achievementName={claimedAchievement?.name || ''}
+        achievementIcon={claimedAchievement?.icon}
+        rewards={claimedAchievement?.rewards}
+        onClose={() => setClaimedAchievement(null)}
+      />
     </SafeAreaView>
   );
 }

@@ -111,7 +111,7 @@ export default function InventoryScreen() {
           itemDef: {
             id: itemDef.id,
             name: itemDef.name,
-            nameZh: itemDef.nameZh,
+            nameZh: itemDef.nameZh || '',
             rarity: itemDef.rarity,
           },
           quantity: invItem.quantity,
@@ -173,7 +173,7 @@ export default function InventoryScreen() {
           />
         </View>
         <View style={styles.itemInfo}>
-          <Text style={styles.itemName} numberOfLines={1}>{item.itemDef.nameZh || item.itemDef.name}</Text>
+          <Text style={styles.itemName} numberOfLines={1}>{item.itemDef.name}</Text>
           <View style={styles.rarityRow}>
             <View style={[styles.rarityBadge, { backgroundColor: RARITY_BG[rarity] }]}>
               <Text style={[styles.rarityText, { color: RARITY_COLORS[rarity] }]}>
@@ -281,7 +281,7 @@ export default function InventoryScreen() {
                     />
                   </View>
                   <View style={styles.modalItemInfo}>
-                    <Text style={styles.modalItemName}>{selectedItem.itemDef.nameZh || selectedItem.itemDef.name}</Text>
+                    <Text style={styles.modalItemName}>{selectedItem.itemDef.name}</Text>
                     <View style={[styles.modalRarityBadge, { backgroundColor: RARITY_BG[selectedItem.itemDef.rarity] }]}>
                       <Text style={[styles.modalRarityText, { color: RARITY_COLORS[selectedItem.itemDef.rarity] }]}>
                         {getRarityName(selectedItem.itemDef.rarity)}

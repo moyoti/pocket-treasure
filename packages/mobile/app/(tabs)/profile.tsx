@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -83,12 +83,12 @@ export default function ProfileScreen() {
       icon: 'map-outline',
       label: t('exploration.title'),
       subtitle: `${areaUnlockProgress.unlocked}/${areaUnlockProgress.total} ${t('exploration.unlockedAreas')}`,
-      onPress: () => router.push('/profile/exploration'),
+      onPress: () => router.push('/profile/exploration' as any),
     },
     {
       icon: 'swap-horizontal-outline',
       label: t('trade.tradeHistory'),
-      subtitle: `${tradeHistory.length} trades`,
+      subtitle: `${tradeHistory.length} ${t('profile.trades')}`,
       onPress: () => {
         if (tradeHistory.length > 0) {
           Alert.alert(
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
     {
       icon: 'pin-outline',
       label: t('markers.title'),
-      subtitle: `${userMarkers.length} markers`,
+      subtitle: `${userMarkers.length} ${t('profile.markers')}`,
       onPress: () => {
         if (userMarkers.length > 0) {
           Alert.alert(
@@ -122,19 +122,19 @@ export default function ProfileScreen() {
     {
       icon: 'settings-outline',
       label: t('screens.settings'),
-      subtitle: 'App preferences',
+      subtitle: t('profile.appPreferences'),
       onPress: () => router.push('/profile/settings'),
     },
     {
       icon: 'help-circle-outline',
       label: t('screens.help'),
-      subtitle: 'How to play',
+      subtitle: t('profile.howToPlay'),
       onPress: () => router.push('/profile/help'),
     },
     {
       icon: 'information-circle-outline',
       label: t('screens.about'),
-      subtitle: 'App information',
+      subtitle: t('profile.appInformation'),
       onPress: () => router.push('/profile/about'),
     },
   ];
@@ -249,17 +249,15 @@ export default function ProfileScreen() {
         <View style={styles.p2pInfo}>
           <Ionicons name="cloud-offline" size={16} color="#999" />
           <Text style={styles.p2pInfoText}>
-            Playing offline - all data stored locally on your device
+            {t('profile.playingOffline')}
           </Text>
         </View>
 
-        <Text style={styles.version}>Version 1.0.0 (P2P Edition)</Text>
+        <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-import { TextInput } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
   Alert,
 } from 'react-native';
@@ -12,8 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 import { useP2P } from '@/src/p2p/P2PContext';
 import { ItemRarity, GachaPoolDefinition } from '@/src/p2p/types';
+import { CelebrationAnimation } from '@/components/animations/CelebrationAnimation';
+import { TreasureSpinner } from '@/components/animations/TreasureSpinner';
+import { RarityGlow } from '@/components/animations/RarityGlow';
+import { ShimmerEffect } from '@/components/animations/ShimmerEffect';
 
 const RARITY_COLORS: Record<ItemRarity, string> = {
   common: '#8D99AE',
@@ -35,6 +39,11 @@ interface GachaResult {
   isPity: boolean;
 }
 
+interface CelebrationData {
+  itemName: string;
+  rarity: ItemRarity;
+}
+
 export default function GachaScreen() {
   const { t } = useTranslation();
   const {
@@ -48,6 +57,7 @@ export default function GachaScreen() {
   const [selectedPoolIndex, setSelectedPoolIndex] = useState(0);
   const [pulling, setPulling] = useState(false);
   const [lastResult, setLastResult] = useState<{ items: GachaResult[]; coinsSpent: number } | null>(null);
+  const [celebrationData, setCelebrationData] = useState<CelebrationData | null>(null);
 
   const selectedPool = gachaPools[selectedPoolIndex];
   const coinBalance = profile?.coins || 0;
@@ -83,10 +93,30 @@ export default function GachaScreen() {
     }
 
     setPulling(true);
+    
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      // Haptics not available
+    }
+    
     try {
       const result = await pullGacha(selectedPool.id, pullType);
       if (result.success) {
         setLastResult({ items: result.items, coinsSpent: result.coinsSpent });
+        
+        const legendaryItem = result.items.find(item => item.rarity === 'legendary');
+        if (legendaryItem) {
+          try {
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } catch {
+            // Haptics not available
+          }
+          setCelebrationData({
+            itemName: t('rarity.legendary'),
+            rarity: 'legendary',
+          });
+        }
       } else {
         Alert.alert(t('gacha.pullFailed'), result.error || t('gacha.pullError'));
       }
@@ -103,8 +133,7 @@ export default function GachaScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#D4A017" />
-          <Text style={styles.loadingText}>{t('common.loading')}</Text>
+          <TreasureSpinner size={56} showText />
         </View>
       </SafeAreaView>
     );
@@ -151,7 +180,7 @@ export default function GachaScreen() {
                   selectedPoolIndex === index && styles.poolTabTextActive,
                 ]}
               >
-                {pool.nameZh || pool.name}
+                {pool.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -161,7 +190,7 @@ export default function GachaScreen() {
       {selectedPool && (
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           <View style={styles.poolCard}>
-            <Text style={styles.poolName}>{selectedPool.nameZh || selectedPool.name}</Text>
+            <Text style={styles.poolName}>{selectedPool.name}</Text>
             <Text style={styles.poolDescription}>{selectedPool.description}</Text>
             {pityCount > 0 && (
               <View style={styles.pityRow}>
@@ -209,7 +238,7 @@ export default function GachaScreen() {
               disabled={pulling}
             >
               {pulling ? (
-                <ActivityIndicator color="#FFF" />
+                <TreasureSpinner size={24} color="#FFF" showParticles={false} />
               ) : (
                 <>
                   <Text style={styles.pullButtonTitle}>{t('gacha.singlePull')}</Text>
@@ -233,7 +262,7 @@ export default function GachaScreen() {
               disabled={pulling}
             >
               {pulling ? (
-                <ActivityIndicator color="#FFF" />
+                <TreasureSpinner size={24} color="#FFF" showParticles={false} />
               ) : (
                 <>
                   <Text style={styles.pullButtonTitle}>{t('gacha.tenPull')}</Text>
@@ -260,11 +289,13 @@ export default function GachaScreen() {
                       { borderLeftColor: RARITY_COLORS[result.rarity] },
                     ]}
                   >
-                    <View style={[styles.resultItemIcon, { backgroundColor: RARITY_BG[result.rarity] }]}>
-                      <Text style={styles.resultItemEmoji}>
-                        {result.rarity === 'legendary' ? '👑' : result.rarity === 'epic' ? '⭐' : result.rarity === 'rare' ? '💎' : '📦'}
-                      </Text>
-                    </View>
+                    <ShimmerEffect active={result.rarity === 'legendary'} duration={1200}>
+                      <View style={[styles.resultItemIcon, { backgroundColor: RARITY_BG[result.rarity] }]}>
+                        <Text style={styles.resultItemEmoji}>
+                          {result.rarity === 'legendary' ? '👑' : result.rarity === 'epic' ? '⭐' : result.rarity === 'rare' ? '💎' : '📦'}
+                        </Text>
+                      </View>
+                    </ShimmerEffect>
                     <View style={styles.resultItemInfo}>
                       <Text style={[styles.resultItemRarity, { color: RARITY_COLORS[result.rarity] }]}>
                         {getRarityName(result.rarity)} {result.isPity && `⭐ ${t('gacha.pityTriggered')}`}
@@ -287,6 +318,13 @@ export default function GachaScreen() {
           <Text style={styles.emptySubtext}>{t('common.retry')}</Text>
         </View>
       )}
+
+      <CelebrationAnimation
+        visible={!!celebrationData}
+        achievementName={celebrationData?.itemName || ''}
+        achievementIcon="diamond"
+        onClose={() => setCelebrationData(null)}
+      />
     </SafeAreaView>
   );
 }
