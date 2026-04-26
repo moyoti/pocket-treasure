@@ -13,16 +13,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p/P2PContext';
-import { DailyTaskDefinition, UserDailyTask, TaskStatus, TaskType } from '@/src/p2p/types';
+import { DailyTaskDefinition, UserDailyTask, TaskStatus, TaskType, WeeklyMissionProgress } from '@/src/p2p/types';
 import { DAILY_TASK_DEFINITIONS } from '@/src/p2p/data/dailyTasks';
+import { WEEKLY_MISSION_DEFINITIONS, WeeklyMissionDefinition, MissionType } from '@/src/p2p/data/weeklyMissions';
+import { getWeeklyMissionsProgress, claimWeeklyMissionReward } from '@/utils/weeklyMissions';
 
-type TabType = 'tasks' | 'achievements';
+type TabType = 'tasks' | 'missions' | 'achievements';
 
 const TASK_ICONS: Record<TaskType, string> = {
   login: 'key-outline',
   collect: 'diamond-outline',
   visit_poi: 'location-outline',
   collect_rarity: 'star-outline',
+};
+
+const MISSION_ICONS: Record<MissionType, string> = {
+  visit_pois: 'map-outline',
+  collect_rarity_items: 'star-outline',
+  collect_total_items: 'cube-outline',
+  explore_areas: 'compass-outline',
+  complete_daily_tasks: 'calendar-outline',
+  synthesize_items: 'construct-outline',
 };
 
 interface DailyTaskWithDefinition {
@@ -36,6 +47,7 @@ export default function TasksScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('tasks');
   const [refreshing, setRefreshing] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [weeklyMissionProgress, setWeeklyMissionProgress] = useState<WeeklyMissionProgress[]>([]);
 
   const getTaskName = (taskType: TaskType): string => {
     const key = `tasks.taskTypes.${taskType}`;
@@ -51,6 +63,8 @@ export default function TasksScreen() {
   const fetchData = useCallback(async () => {
     await refreshDailyTasks();
     await refreshAchievements();
+    const progress = await getWeeklyMissionsProgress();
+    setWeeklyMissionProgress(progress);
   }, [refreshDailyTasks, refreshAchievements]);
 
   useFocusEffect(
@@ -71,6 +85,18 @@ export default function TasksScreen() {
       await claimDailyTask(taskId);
     } catch (error) {
       console.error('Failed to claim task:', error);
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  const handleClaimMission = async (missionId: string) => {
+    setClaimingId(missionId);
+    try {
+      const progress = await claimWeeklyMissionReward(missionId);
+      setWeeklyMissionProgress(progress);
+    } catch (error) {
+      console.error('Failed to claim mission:', error);
     } finally {
       setClaimingId(null);
     }
@@ -118,7 +144,7 @@ export default function TasksScreen() {
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.taskName}>{definition.nameZh || getTaskName(definition.taskType)}</Text>
+              <Text style={styles.taskName}>{getTaskName(definition.taskType)}</Text>
               {definition.rarityRequirement && (
                 <Text style={styles.rarityRequirement}>
                   {t('tasks.rarityRequirement')}: {t(`rarity.${definition.rarityRequirement}`)}
@@ -207,6 +233,19 @@ export default function TasksScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'missions' && styles.activeTab]}
+          onPress={() => setActiveTab('missions')}
+        >
+          <Ionicons
+            name="calendar-outline"
+            size={16}
+            color={activeTab === 'missions' ? '#1A1A1A' : '#AAA'}
+          />
+          <Text style={[styles.tabText, activeTab === 'missions' && styles.activeTabText]}>
+            {t('tasks.weeklyMissions')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'achievements' && styles.activeTab]}
           onPress={() => setActiveTab('achievements')}
         >
@@ -257,6 +296,124 @@ export default function TasksScreen() {
                 </View>
                 <Text style={styles.emptyText}>{t('tasks.noTasks')}</Text>
                 <Text style={styles.emptySubtext}>{t('tasks.checkBackTomorrow')}</Text>
+              </View>
+            }
+          />
+        </>
+      ) : activeTab === 'missions' ? (
+        <>
+          <View style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View>
+                <Text style={styles.statsLabel}>{t('tasks.weeklyMissions')}</Text>
+                <Text style={styles.statsValue}>
+                  {WEEKLY_MISSION_DEFINITIONS.length}
+                </Text>
+              </View>
+              <View style={[styles.statsIconCircle, { backgroundColor: '#FFF3E0' }]}>
+                <Ionicons name="calendar" size={24} color="#F59E0B" />
+              </View>
+            </View>
+          </View>
+
+          <FlatList
+            data={WEEKLY_MISSION_DEFINITIONS}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => {
+              const missionProgress = weeklyMissionProgress.find(p => p.missionId === item.id);
+              const progressPercent = missionProgress 
+                ? Math.min((missionProgress.currentProgress / item.targetProgress) * 100, 100) 
+                : 0;
+              
+              return (
+                <View style={styles.missionCard}>
+                  <View style={styles.taskHeader}>
+                    <View style={styles.taskTitleRow}>
+                      <View style={[styles.taskIconContainer, { backgroundColor: '#FFF3E0' }]}>
+                        <Ionicons
+                          name={(MISSION_ICONS[item.missionType] || 'calendar-outline') as any}
+                          size={20}
+                          color="#F59E0B"
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.taskName}>{item.name}</Text>
+                        {item.rarityRequirement && (
+                          <Text style={styles.rarityRequirement}>
+                            {t('tasks.rarityRequirement')}: {t(`rarity.${item.rarityRequirement}`)}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+
+                  <Text style={styles.missionDesc}>
+                    {t('language') === 'ja' ? item.descriptionZh : item.description}
+                  </Text>
+
+                  <View style={styles.missionProgressRow}>
+                    <Text style={styles.progressLabel}>{t('tasks.progress')}</Text>
+                    <Text style={styles.progressValue}>
+                      {missionProgress?.currentProgress || 0} / {item.targetProgress}
+                    </Text>
+                  </View>
+                  <View style={styles.progressBar}>
+                    <View style={[
+                      styles.progressFill, 
+                      { backgroundColor: '#F59E0B', width: `${progressPercent}%` }
+                    ]} />
+                  </View>
+
+                  <View style={styles.rewardsRow}>
+                    <View style={styles.rewardsGroup}>
+                      <View style={styles.rewardChip}>
+                        <Ionicons name="cash-outline" size={14} color="#D4A017" />
+                        <Text style={styles.rewardText}>{item.rewards.coins}</Text>
+                      </View>
+                      <View style={styles.rewardChip}>
+                        <Ionicons name="star-outline" size={14} color="#9B59B6" />
+                        <Text style={styles.rewardText}>{item.rewards.experience} {t('tasks.exp')}</Text>
+                      </View>
+                      {item.rewards.chestType && (
+                        <View style={styles.rewardChip}>
+                          <Ionicons name="gift-outline" size={14} color="#22c55e" />
+                          <Text style={styles.rewardText}>{item.rewards.chestType}</Text>
+                        </View>
+                      )}
+                    </View>
+                    
+                    {missionProgress?.isCompleted && !missionProgress?.rewardsClaimed && (
+                      <TouchableOpacity
+                        style={styles.claimButton}
+                        onPress={() => handleClaimMission(item.id)}
+                        disabled={claimingId === item.id}
+                      >
+                        {claimingId === item.id ? (
+                          <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                          <Text style={styles.claimButtonText}>{t('tasks.claim')}</Text>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                    
+                    {missionProgress?.rewardsClaimed && (
+                      <View style={styles.claimedBadge}>
+                        <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
+                        <Text style={styles.claimedText}>{t('tasks.claimed')}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#D4A017" />}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              <View style={styles.centerContainer}>
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons name="calendar-outline" size={40} color="#CCC" />
+                </View>
+                <Text style={styles.emptyText}>{t('tasks.noTasks')}</Text>
               </View>
             }
           />
@@ -592,5 +749,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#AAA',
     textAlign: 'center',
+  },
+  missionCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F0E8D8',
+    overflow: 'hidden',
+  },
+  missionDesc: {
+    fontSize: 12,
+    color: '#666',
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+  },
+  missionProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    marginBottom: 6,
+  },
+  claimedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  claimedText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#22c55e',
   },
 });
