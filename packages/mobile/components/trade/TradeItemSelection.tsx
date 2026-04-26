@@ -72,7 +72,7 @@ export function TradeItemSelection({
         <View style={[styles.rarityBar, { backgroundColor: RARITY_COLORS[def?.rarity || 'common'] }]} />
 
         <View style={styles.itemInfo}>
-          <Text style={styles.itemName}>{def?.nameZh || def?.name || item.itemId.slice(0, 10)}</Text>
+          <Text style={styles.itemName}>{def?.name || item.itemId.slice(0, 10)}</Text>
           <Text style={styles.itemDesc} numberOfLines={1}>
             {def?.description || t('trade.tradeable')}
           </Text>

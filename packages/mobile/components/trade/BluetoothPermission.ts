@@ -1,5 +1,6 @@
 import { Platform, Alert, Linking } from 'react-native';
 import * as Location from 'expo-location';
+import i18n from '@/lib/i18n';
 
 export async function requestBluetoothPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
@@ -10,11 +11,11 @@ export async function requestBluetoothPermission(): Promise<boolean> {
       }
       
       Alert.alert(
-        'Bluetooth Permission Required',
-        'Please enable Bluetooth in your device settings to discover nearby traders.',
+        i18n.t('bluetooth.permissionRequired'),
+        i18n.t('bluetooth.permissionDesc'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          { text: i18n.t('bluetooth.cancel'), style: 'cancel' },
+          { text: i18n.t('bluetooth.openSettings'), onPress: () => Linking.openSettings() },
         ]
       );
       return false;
@@ -32,11 +33,11 @@ export async function requestBluetoothPermission(): Promise<boolean> {
       }
       
       Alert.alert(
-        'Bluetooth Permission Required',
-        'Please enable Bluetooth in your device settings to discover nearby traders.',
+        i18n.t('bluetooth.permissionRequired'),
+        i18n.t('bluetooth.permissionDesc'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          { text: i18n.t('bluetooth.cancel'), style: 'cancel' },
+          { text: i18n.t('bluetooth.openSettings'), onPress: () => Linking.openSettings() },
         ]
       );
       return false;
