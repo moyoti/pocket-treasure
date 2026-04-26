@@ -61,7 +61,7 @@ export class SellEngine {
       coinsEarned: sellPrice,
       soldItem: {
         itemId: item.itemId,
-        itemName: itemDef.nameZh || itemDef.name,
+        itemName: itemDef.name,
         rarity: itemDef.rarity,
         quantity: item.quantity,
       },
@@ -93,7 +93,7 @@ export class SellEngine {
 
       soldItems.push({
         itemId: item.itemId,
-        itemName: itemDef.nameZh || itemDef.name,
+        itemName: itemDef.name,
         rarity: itemDef.rarity,
         quantity: item.quantity,
       });

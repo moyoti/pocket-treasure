@@ -149,6 +149,8 @@ export const COLLECTION_SERIES: SeriesDefinition[] = [
   },
 ];
 
+export const SERIES_DEFINITIONS = COLLECTION_SERIES;
+
 export const getSeriesByCategory = (category: SeriesCategory): SeriesDefinition[] => {
   return COLLECTION_SERIES.filter(series => series.category === category);
 };

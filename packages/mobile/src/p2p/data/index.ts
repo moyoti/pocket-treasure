@@ -6,3 +6,5 @@ export { COSMETIC_DEFINITIONS, COSMETIC_VERSION, getCosmeticById, getCosmeticsBy
 export { DAILY_TASK_DEFINITIONS, DAILY_TASK_VERSION, getDailyTaskById, getDailyTasksByType, getAvailableDailyTasks, generateDailyTaskInstances } from './dailyTasks';
 export { ACHIEVEMENT_DEFINITIONS, ACHIEVEMENT_VERSION, getAchievementById, getAchievementsByType, getVisibleAchievements, getHiddenAchievements, getNextTierAchievement } from './achievements';
 export { STATIC_POI_DEFINITIONS, getStaticPOIsNearby } from './staticPOIs';
+export { SYNTHESIS_RECIPES, SYNTHESIS_VERSION, getRandomItemOfRarity, getRecipeById, getRecipeForRarityUpgrade } from './synthesis';
+export { WEEKLY_MISSION_DEFINITIONS, WEEKLY_MISSION_VERSION, getWeeklyMissionById, getWeeklyMissionsByType } from './weeklyMissions';

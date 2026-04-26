@@ -546,3 +546,14 @@ export const BLE_CHARACTERISTIC_SIGNATURE = 'signature-data';
 export const BLE_SCAN_TIMEOUT_MS = 30000;        // 30 seconds
 export const BLE_CONNECTION_TIMEOUT_MS = 30000;  // 30 seconds
 export const BLE_MAX_RANGE_METERS = 10;         // ~10m BLE range
+
+export interface WeeklyMissionProgress {
+  missionId: string;
+  currentProgress: number;
+  targetProgress: number;
+  isCompleted: boolean;
+  rewardsClaimed: boolean;
+  weekStartedAt: number;
+}
+
+export type WeeklyMissionStatus = 'in_progress' | 'completed' | 'claimed';
