@@ -11,6 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
+import { SupportedLanguage, saveLanguage, SUPPORTED_LANGUAGES } from '@/lib/i18n';
 
 type SettingKey = 'notifications_enabled' | 'sound_enabled' | 'map_satellite' | 'map_traffic' | 'location_sharing' | 'public_profile';
 
@@ -21,6 +23,7 @@ interface Settings {
   map_traffic: boolean;
   location_sharing: boolean;
   public_profile: boolean;
+  language: SupportedLanguage;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -30,6 +33,7 @@ const DEFAULT_SETTINGS: Settings = {
   map_traffic: false,
   location_sharing: false,
   public_profile: true,
+  language: 'en',
 };
 
 export default function SettingsScreen() {
@@ -45,7 +49,8 @@ export default function SettingsScreen() {
     try {
       const stored = await AsyncStorage.getItem('user_settings');
       if (stored) {
-        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(stored) });
+        const parsed = JSON.parse(stored);
+        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -61,6 +66,18 @@ export default function SettingsScreen() {
       await AsyncStorage.setItem('user_settings', JSON.stringify(newSettings));
     } catch (error) {
       console.error('Failed to save setting:', error);
+    }
+  };
+
+  const handleLanguageChange = async (language: SupportedLanguage) => {
+    const newSettings = { ...settings, language };
+    setSettings(newSettings);
+    try {
+      await i18n.changeLanguage(language);
+      await saveLanguage(language);
+      await AsyncStorage.setItem('user_settings', JSON.stringify(newSettings));
+    } catch (error) {
+      console.error('Failed to change language:', error);
     }
   };
 
@@ -109,9 +126,51 @@ export default function SettingsScreen() {
     </View>
   );
 
-return (
+  const LanguageSelector = () => (
+    <View style={styles.languageSection}>
+      <View style={styles.settingItem}>
+        <View style={styles.settingIcon}>
+          <Ionicons name="language-outline" size={20} color="#D4A017" />
+        </View>
+        <View style={styles.settingContent}>
+          <Text style={styles.settingTitle}>{t('settings.languageSection')}</Text>
+          <Text style={styles.settingSubtitle}>{t('settings.languageDesc')}</Text>
+        </View>
+      </View>
+      <View style={styles.languageButtons}>
+        {SUPPORTED_LANGUAGES.map((lang) => (
+          <TouchableOpacity
+            key={lang}
+            style={[
+              styles.languageButton,
+              settings.language === lang && styles.languageButtonActive,
+            ]}
+            onPress={() => handleLanguageChange(lang)}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.languageButtonText,
+                settings.language === lang && styles.languageButtonTextActive,
+              ]}
+            >
+              {lang === 'en' ? t('settings.english') : t('settings.japanese')}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
+  return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      {/* Notifications */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('settings.languageSection').toUpperCase()}</Text>
+        <View style={styles.card}>
+          <LanguageSelector />
+        </View>
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('settings.notifications').toUpperCase()}</Text>
         <View style={styles.card}>
@@ -124,34 +183,32 @@ return (
           <View style={styles.divider} />
           <SettingItem
             icon="volume-high-outline"
-            title={t('settings.sound_enabled') ? t('settings.sound_enabled') : 'Sound Effects'}
-            subtitle="Play sounds when collecting items"
+            title={t('settings.soundEffects')}
+            subtitle={t('settings.soundEffectsDesc')}
             settingKey="sound_enabled"
           />
         </View>
       </View>
 
-      {/* Map */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('settings.mapSettings').toUpperCase()}</Text>
         <View style={styles.card}>
           <SettingItem
             icon="earth-outline"
-            title={t('settings.defaultZoom') ? t('settings.defaultZoom') : 'Satellite View'}
-            subtitle="Use satellite map mode"
+            title={t('settings.satelliteView')}
+            subtitle={t('settings.satelliteViewDesc')}
             settingKey="map_satellite"
           />
           <View style={styles.divider} />
           <SettingItem
             icon="car-outline"
-            title="Traffic Layer"
-            subtitle="Show real-time traffic info"
+            title={t('settings.trafficLayer')}
+            subtitle={t('settings.trafficLayerDesc')}
             settingKey="map_traffic"
           />
         </View>
       </View>
 
-      {/* Privacy */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('settings.privacy').toUpperCase()}</Text>
         <View style={styles.card}>
@@ -171,7 +228,6 @@ return (
         </View>
       </View>
 
-      {/* Other */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('common.other').toUpperCase()}</Text>
         <View style={styles.card}>
@@ -181,18 +237,17 @@ return (
             </View>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, { color: '#dc2626' }]}>{t('settings.resetSettings')}</Text>
-              <Text style={styles.settingSubtitle}>Delete temporary data to free space</Text>
+              <Text style={styles.settingSubtitle}>{t('settings.clearCacheDesc')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#CCC" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Tip */}
       <View style={styles.tipCard}>
         <Ionicons name="information-circle-outline" size={18} color="#3b82f6" />
         <Text style={styles.tipText}>
-          {t('settings.saveSuccess') ? 'Some settings may require an app restart to take effect.' : t('settings.saveSuccess')}
+          {t('settings.restartTip')}
         </Text>
       </View>
     </ScrollView>
@@ -262,6 +317,37 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F5F0E5',
     marginLeft: 62,
+  },
+  languageSection: {
+    padding: 14,
+  },
+  languageButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+    paddingHorizontal: 4,
+  },
+  languageButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#FFF8E7',
+    borderWidth: 1,
+    borderColor: '#E0D5C0',
+    alignItems: 'center',
+  },
+  languageButtonActive: {
+    backgroundColor: '#D4A017',
+    borderColor: '#D4A017',
+  },
+  languageButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  languageButtonTextActive: {
+    color: '#FFF',
   },
   tipCard: {
     flexDirection: 'row',

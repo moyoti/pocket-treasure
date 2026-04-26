@@ -103,7 +103,7 @@ export default function ExplorationScreen() {
               color={status.unlocked ? '#22c55e' : '#3b82f6'} 
             />
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{item.nameZh || item.name}</Text>
+              <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.description} numberOfLines={1}>
                 {status.unlocked ? t('exploration.areaUnlocked') : 
                   status.visited ? `${t('exploration.visitCount')}: ${status.visitCount}` : 

@@ -18,11 +18,11 @@ interface MarkerCalloutProps {
   onDelete?: () => void;
 }
 
-const ICON_MAP: Record<MarkerIconType, string> = {
+const ICON_MAP: Record<MarkerIconType, keyof typeof Ionicons.glyphMap> = {
   star: 'star',
   flag: 'flag',
   treasure: 'diamond',
-  camp: 'tent',
+  camp: 'bonfire' as keyof typeof Ionicons.glyphMap,
   note: 'document-text',
   camera: 'camera',
   heart: 'heart',

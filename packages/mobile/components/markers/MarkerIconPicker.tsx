@@ -20,11 +20,11 @@ interface MarkerIconPickerProps {
 
 const ICON_TYPES: MarkerIconType[] = ['star', 'flag', 'treasure', 'camp', 'note', 'camera', 'heart', 'pin'];
 
-const ICON_MAP: Record<MarkerIconType, string> = {
+const ICON_MAP: Record<MarkerIconType, keyof typeof Ionicons.glyphMap> = {
   star: 'star',
   flag: 'flag',
   treasure: 'diamond',
-  camp: 'tent',
+  camp: 'bonfire' as keyof typeof Ionicons.glyphMap,
   note: 'document-text',
   camera: 'camera',
   heart: 'heart',
