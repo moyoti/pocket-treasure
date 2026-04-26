@@ -10,7 +10,8 @@
     "success": "成功",
     "error": "エラー",
     "retry": "再試行",
-    "close": "閉じる"
+    "close": "閉じる",
+    "other": "その他"
   },
   "recharge": {
     "title": "チャージセンター",
@@ -50,7 +51,8 @@
     "cosmetics": "コスメ",
     "explore": "探索",
     "backpack": "バッグ",
-    "trade": "トレード"
+    "trade": "トレード",
+    "synthesis": "融合"
   },
   "map": {
     "title": "トレジャーマップ",
@@ -60,7 +62,10 @@
     "collectFailed": "収集失敗",
     "tooFar": "遠すぎます、近づいてください",
     "refreshing": "更新中...",
-    "myLocation": "現在地"
+    "myLocation": "現在地",
+    "foundTreasure": "{{name}}を発見しました！",
+    "unknownTreasure": "不明な宝物",
+    "mysteryLocation": "謎の場所"
   },
   "inventory": {
     "title": "マイバッグ",
@@ -159,6 +164,13 @@
     "settings": "設定",
     "achievements": "実績",
     "friends": "フレンド",
+    "trades": "トレード",
+    "markers": "マーカー",
+    "appPreferences": "アプリ設定",
+    "howToPlay": "遊び方",
+    "appInformation": "アプリ情報",
+    "playingOffline": "オフラインでプレイ中 - すべてのデータはデバイスに保存されます",
+    "version": "バージョン {{version}} (P2P Edition)",
     "stats": {
       "level": "レベル",
       "coins": "コイン",
@@ -202,6 +214,18 @@
     "reducedMotion": "モーション軽減",
     "reducedMotionDesc": "不要なアニメーションを無効化",
     "language": "言語設定",
+    "soundEffects": "サウンド効果",
+    "soundEffectsDesc": "アイテム収集時にサウンドを再生",
+    "satelliteView": "衛星ビュー",
+    "satelliteViewDesc": "衛星マップモードを使用",
+    "trafficLayer": "交通情報",
+    "trafficLayerDesc": "リアルタイム交通情報を表示",
+    "clearCacheDesc": "一時データを削除して容量を解放",
+    "restartTip": "一部の設定はアプリの再起動後に有効になります。",
+    "languageSection": "言語",
+    "languageDesc": "優先する言語を選択",
+    "english": "英語",
+    "japanese": "日本語",
     "saveSuccess": "設定を保存しました！",
     "saveFailed": "設定の保存に失敗しました",
     "resetSettings": "すべての設定をリセット",
@@ -414,12 +438,26 @@
     "noMessages": "メッセージがありません",
     "noConversations": "会話がありません"
   },
-  "tasks": {
-    "title": "デイリータスク",
-    "completed": "完了",
-    "claimReward": "報酬を受け取る",
-    "refresh": "タスク更新",
-    "noTasks": "タスクがありません"
+"tasks": {
+    "title": "タスクとミッション",
+    "dailyTasks": "毎日タスク",
+    "weeklyMissions": "週間ミッション",
+    "progress": "進捗",
+    "inProgress": "進行中",
+    "claim": "受取",
+    "claimed": "受取済み",
+    "claiming": "受取中...",
+    "exp": "EXP",
+    "rarityRequirement": "レアリティ",
+    "taskTypes": {
+      "login": "毎日ログイン",
+      "collect": "アイテム収集",
+      "visit_poi": "POI訪問",
+      "collect_rarity": "レアリティ収集"
+    },
+    "todayProgress": "今日の進捗",
+    "noTasks": "タスクなし",
+    "checkBackTomorrow": "明日新しいタスクを確認"
   },
   "about": {
     "title": "アプリについて",
@@ -515,6 +553,8 @@
     "equipFailed": "装備に失敗しました",
     "unequipTitle": "解除",
     "unequipConfirm": "このコスメを解除しますか？",
+    "unequipSuccess": "{{name}}を解除しました",
+    "unequipFailed": "解除に失敗しました",
     "noCosmetics": "コスメがありません",
     "comingSoon": "今後さらにコスメが追加されます"
   },
@@ -730,9 +770,6 @@
     "shared": "共有済み",
     "create": "作成"
   },
-    "myMarkers": "マイマーカー",
-    "shared": "共有済み"
-  },
   "mapbox": {
     "offlineMaps": "オフラインマップ",
     "downloadMap": "マップダウンロード",
@@ -754,6 +791,12 @@
     "searchResults": "検索結果",
     "noResults": "結果なし"
   },
+  "bluetooth": {
+    "permissionRequired": "Bluetooth許可が必要",
+    "permissionDesc": "近くのトレーダーを発見するためにBluetoothを設定で有効化してください。",
+    "cancel": "キャンセル",
+    "openSettings": "設定を開く"
+  },
   "recharge": {
     "title": "チャージ",
     "firstChargeBonus": "初回チャージボーナス",
@@ -763,5 +806,45 @@
     "purchaseComplete": "購入完了",
     "rechargeFailed": "チャージに失敗しました",
     "tryAgainLater": "後でもう一度お試しください"
+  },
+  "animation": {
+    "collected": "収集完了！",
+    "legendaryFind": "レジェンダリー発見！",
+    "epicFind": "エピック発見！",
+    "achievementUnlock": "実績解除！",
+    "tapToContinue": "タップして続行",
+    "loadingTreasures": "宝物を読み込み中..."
+  },
+  "onboarding": {
+    "welcomeTitle": "トレジャーハントへようこそ！",
+    "welcomeDesc": "世界を探索して素晴らしい宝物を集めよう",
+    "mapTitle": "マップを探索",
+    "mapDesc": "移動して近くの宝物を見つけよう",
+    "collectTitle": "宝物を収集",
+    "collectDesc": "宝物に近づいてタップで収集",
+    "rarityTitle": "レアリティシステム",
+    "rarityDesc": "コモン、レア、エピック、レジェンダリー - 最もレアなものを見つけよう！",
+    "progressTitle": "実績と報酬",
+    "progressDesc": "目標を達成してコインと称号を獲得",
+    "startTitle": "冒険の準備はできましたか？",
+    "startDesc": "あなたの冒険が今始まります！",
+    "skip": "スキップ",
+    "next": "次へ",
+    "start": "冒険を始める"
+  },
+  "synthesis": {
+    "title": "アイテム融合",
+    "selectRecipe": "レシピを選択",
+    "selectItems": "アイテムを選択",
+    "availableItems": "利用可能なアイテム",
+    "available": "利用可能",
+    "fuse": "融合",
+    "success": "融合成功！",
+    "failed": "融合失敗",
+    "tryAgain": "融合が失敗しました。再試行してください！",
+    "successRate": "成功率",
+    "noItems": "このレアリティのアイテムはありません",
+    "noItemsAvailable": "融合できるアイテムがありません",
+    "insufficientCoins": "融合に必要なコインが不足しています"
   }
 }

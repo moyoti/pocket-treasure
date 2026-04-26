@@ -10,7 +10,8 @@
     "success": "Success",
     "error": "Error",
     "retry": "Retry",
-    "close": "Close"
+    "close": "Close",
+    "other": "Other"
   },
   "recharge": {
     "title": "Recharge Center",
@@ -50,7 +51,8 @@
     "cosmetics": "Cosmetics",
     "explore": "Explore",
     "backpack": "Backpack",
-    "trade": "Trade"
+    "trade": "Trade",
+    "synthesis": "Fusion"
   },
   "map": {
     "title": "Treasure Map",
@@ -60,7 +62,10 @@
     "collectFailed": "Collection failed",
     "tooFar": "Too far, please get closer",
     "refreshing": "Refreshing...",
-    "myLocation": "My Location"
+    "myLocation": "My Location",
+    "foundTreasure": "You found {{name}}!",
+    "unknownTreasure": "Unknown Treasure",
+    "mysteryLocation": "Mystery Location"
   },
   "inventory": {
     "title": "My Inventory",
@@ -151,6 +156,13 @@
     "settings": "Settings",
     "achievements": "Achievements",
     "friends": "Friends",
+    "trades": "trades",
+    "markers": "markers",
+    "appPreferences": "App preferences",
+    "howToPlay": "How to play",
+    "appInformation": "App information",
+    "playingOffline": "Playing offline - all data stored locally on your device",
+    "version": "Version {{version}} (P2P Edition)",
     "stats": {
       "level": "Level",
       "coins": "Coins",
@@ -194,6 +206,18 @@
     "reducedMotion": "Reduced Motion",
     "reducedMotionDesc": "Disable non-essential animations",
     "language": "Language",
+    "soundEffects": "Sound Effects",
+    "soundEffectsDesc": "Play sounds when collecting items",
+    "satelliteView": "Satellite View",
+    "satelliteViewDesc": "Use satellite map mode",
+    "trafficLayer": "Traffic Layer",
+    "trafficLayerDesc": "Show real-time traffic info",
+    "clearCacheDesc": "Delete temporary data to free space",
+    "restartTip": "Some settings may require an app restart to take effect.",
+    "languageSection": "Language",
+    "languageDesc": "Choose your preferred language",
+    "english": "English",
+    "japanese": "Japanese",
     "saveSuccess": "Settings saved!",
     "saveFailed": "Failed to save settings, please try again",
     "resetSettings": "Reset All Settings",
@@ -406,12 +430,26 @@
     "noMessages": "No messages yet",
     "noConversations": "No conversations"
   },
-  "tasks": {
-    "title": "Daily Tasks",
-    "completed": "Completed",
-    "claimReward": "Claim Reward",
-    "refresh": "Refresh Tasks",
-    "noTasks": "No tasks available"
+"tasks": {
+    "title": "Tasks & Missions",
+    "dailyTasks": "Daily Tasks",
+    "weeklyMissions": "Weekly Missions",
+    "progress": "Progress",
+    "inProgress": "In Progress",
+    "claim": "Claim",
+    "claimed": "Claimed",
+    "claiming": "Claiming...",
+    "exp": "EXP",
+    "rarityRequirement": "Rarity",
+    "taskTypes": {
+      "login": "Daily Login",
+      "collect": "Collect Items",
+      "visit_poi": "Visit POI",
+      "collect_rarity": "Collect Rarity"
+    },
+    "todayProgress": "Today's Progress",
+    "noTasks": "No tasks available",
+    "checkBackTomorrow": "Check back tomorrow for new tasks"
   },
   "about": {
     "title": "About",
@@ -507,6 +545,8 @@
     "equipFailed": "Equip failed",
     "unequipTitle": "Unequip",
     "unequipConfirm": "Unequip this cosmetic?",
+    "unequipSuccess": "{{name}} unequipped successfully",
+    "unequipFailed": "Unequip failed",
     "noCosmetics": "No cosmetics available",
     "comingSoon": "More cosmetics coming soon"
   },
@@ -669,8 +709,7 @@
     "hiddenSeries": "Hidden Series",
     "items": "Items",
     "completedSeries": "Completed Series",
-    "complete": "Complete"
-  },
+    "complete": "Complete",
     "hiddenHint": "Some series are hidden. Discover them by collecting!",
     "partOfSeries": "Part of Series",
     "seriesProgress": "{series} Progress"
@@ -743,5 +782,51 @@
     "searchPlaceholder": "Search for places...",
     "searchResults": "Search Results",
     "noResults": "No results found"
+  },
+  "bluetooth": {
+    "permissionRequired": "Bluetooth Permission Required",
+    "permissionDesc": "Please enable Bluetooth in your device settings to discover nearby traders.",
+    "cancel": "Cancel",
+    "openSettings": "Open Settings"
+  },
+  "animation": {
+    "collected": "Collected!",
+    "legendaryFind": "Legendary Find!",
+    "epicFind": "Epic Discovery!",
+    "achievementUnlock": "Achievement Unlocked!",
+    "tapToContinue": "Tap to continue",
+    "loadingTreasures": "Loading treasures..."
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to Treasure Hunt!",
+    "welcomeDesc": "Explore the world and collect amazing treasures",
+    "mapTitle": "Explore the Map",
+    "mapDesc": "Move around to find treasures near you",
+    "collectTitle": "Collect Treasures",
+    "collectDesc": "Get close to treasures and tap to collect",
+    "rarityTitle": "Rarity System",
+    "rarityDesc": "Common, Rare, Epic, Legendary - find the rarest!",
+    "progressTitle": "Achievements & Rewards",
+    "progressDesc": "Complete goals to earn coins and titles",
+    "startTitle": "Ready to Explore?",
+    "startDesc": "Your adventure begins now!",
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Start Adventure"
+  },
+  "synthesis": {
+    "title": "Item Fusion",
+    "selectRecipe": "Select a Recipe",
+    "selectItems": "Select Items",
+    "availableItems": "Available Items",
+    "available": "Available",
+    "fuse": "Fuse",
+    "success": "Fusion Successful!",
+    "failed": "Fusion Failed",
+    "tryAgain": "The fusion didn't work. Try again!",
+    "successRate": "Success Rate",
+    "noItems": "No items of this rarity",
+    "noItemsAvailable": "No items available for fusion",
+    "insufficientCoins": "Not enough coins for fusion"
   }
 }

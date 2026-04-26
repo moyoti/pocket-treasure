@@ -13,6 +13,9 @@ import { useTranslation } from 'react-i18next';
 const APP_VERSION = '1.0.0';
 const BUILD_NUMBER = '2024.03.04.1';
 
+const PRIVACY_POLICY_URL = 'https://treasurehunt.com/privacy';
+const TERMS_OF_SERVICE_URL = 'https://treasurehunt.com/terms';
+
 export default function AboutScreen() {
   const { t } = useTranslation();
 
@@ -137,11 +140,11 @@ export default function AboutScreen() {
         <Text style={styles.copyright}>{t('about.copyright')}</Text>
         <Text style={styles.rights}>{t('about.allRightsReserved')}</Text>
         <View style={styles.legalLinks}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
             <Text style={styles.legalLink}>{t('about.privacyPolicy')}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDot}>  </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL(TERMS_OF_SERVICE_URL)}>
             <Text style={styles.legalLink}>{t('about.termsOfService')}</Text>
           </TouchableOpacity>
         </View>

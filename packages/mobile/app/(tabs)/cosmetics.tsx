@@ -57,6 +57,7 @@ export default function CosmeticsScreen() {
     userCosmetics,
     purchaseCosmetic,
     equipCosmetic,
+    unequipCosmetic,
     refreshProfile,
   } = useP2P();
 
@@ -99,7 +100,9 @@ export default function CosmeticsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-    }, [])
+      // Refresh profile data when tab is focused to ensure coin balance and cosmetics are up-to-date
+      refreshProfile();
+    }, [refreshProfile])
   );
 
   const handleCosmeticPress = (item: CosmeticDefinition) => {
@@ -109,7 +112,7 @@ export default function CosmeticsScreen() {
     if (isOwned) {
       if (isEquipped) {
         Alert.alert(
-          item.nameZh || item.name,
+          item.name,
           t('cosmetics.equipped'),
           [
             { text: t('common.cancel'), style: 'cancel' },
@@ -118,7 +121,7 @@ export default function CosmeticsScreen() {
         );
       } else {
         Alert.alert(
-          item.nameZh || item.name,
+          item.name,
           t('cosmetics.unequipConfirm'),
           [
             { text: t('common.cancel'), style: 'cancel' },
@@ -145,7 +148,7 @@ export default function CosmeticsScreen() {
 
     Alert.alert(
       t('common.confirm'),
-      t('shop.buySuccessDetail', { quantity: 1, name: item.nameZh || item.name }),
+      t('shop.buySuccessDetail', { quantity: 1, name: item.name }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -156,7 +159,7 @@ export default function CosmeticsScreen() {
               const result = await purchaseCosmetic(item.id);
               if (result.success) {
                 setPurchaseModal({ isOpen: false, item: null, loading: false });
-                Alert.alert(t('common.success'), t('cosmetics.purchaseSuccess', { name: item.nameZh || item.name }));
+                Alert.alert(t('common.success'), t('cosmetics.purchaseSuccess', { name: item.name }));
               } else {
                 Alert.alert(t('cosmetics.purchaseFailed'), result.error || t('common.error'));
                 setPurchaseModal((prev) => ({ ...prev, loading: false }));
@@ -175,7 +178,7 @@ export default function CosmeticsScreen() {
     try {
       const result = await equipCosmetic(item.id);
       if (result.success) {
-        Alert.alert(t('common.success'), t('cosmetics.equipSuccess', { name: item.nameZh || item.name }));
+        Alert.alert(t('common.success'), t('cosmetics.equipSuccess', { name: item.name }));
       } else {
         Alert.alert(t('cosmetics.equipFailed'), result.error || t('common.error'));
       }
@@ -185,7 +188,12 @@ export default function CosmeticsScreen() {
   };
 
   const handleUnequip = async (item: CosmeticDefinition) => {
-    Alert.alert(t('common.success'), t('cosmetics.unequipTitle'));
+    const result = await unequipCosmetic(item.type);
+    if (result.success) {
+      Alert.alert(t('common.success'), t('cosmetics.unequipSuccess', { name: item.name }));
+    } else {
+      Alert.alert(t('common.error'), result.error || t('cosmetics.unequipFailed'));
+    }
   };
 
   const filteredCosmetics = activeFilter === 'all'
@@ -230,7 +238,7 @@ export default function CosmeticsScreen() {
         </View>
 
         <Text style={styles.cosmeticName} numberOfLines={1}>
-          {item.nameZh || item.name}
+          {item.name}
         </Text>
 
         {!isOwned ? (
@@ -368,7 +376,7 @@ export default function CosmeticsScreen() {
                   </View>
                   <View style={styles.itemPreviewInfo}>
                     <Text style={styles.itemPreviewName}>
-                      {purchaseModal.item.nameZh || purchaseModal.item.name}
+                      {purchaseModal.item.name}
                     </Text>
                     <Text style={styles.itemPreviewDescription}>
                       {purchaseModal.item.description}

@@ -47,7 +47,11 @@ import {
   COSMETIC_DEFINITIONS,
   DAILY_TASK_DEFINITIONS,
   ACHIEVEMENT_DEFINITIONS,
+  SYNTHESIS_RECIPES,
+  getItemById,
 } from '../p2p/data';
+import { getRandomItemOfRarity } from '../p2p/data/synthesis';
+import { updateMissionProgress } from '../../utils/weeklyMissions';
 
 interface GachaPullResult {
   success: boolean;
@@ -97,6 +101,7 @@ interface P2PContextValue {
   openChest: (chestId: string) => Promise<ChestOpenResult>;
   purchaseCosmetic: (cosmeticId: string) => Promise<{ success: boolean; error?: string }>;
   equipCosmetic: (cosmeticId: string) => Promise<{ success: boolean; error?: string }>;
+  unequipCosmetic: (cosmeticType: string) => Promise<{ success: boolean; error?: string }>;
   claimDailyTask: (taskDefinitionId: string) => Promise<{ success: boolean; error?: string; rewards?: any }>;
   claimAchievement: (achievementId: string) => Promise<{ success: boolean; error?: string; rewards?: any }>;
   refreshProfile: () => Promise<void>;
@@ -136,6 +141,8 @@ interface P2PContextValue {
   updateMarker: (id: string, updates: Partial<UserMarker>) => Promise<UserMarker | null>;
   deleteMarker: (id: string) => Promise<void>;
   refreshMarkers: () => Promise<void>;
+
+  synthesizeItems: (inventoryItemIds: string[], recipeId: string) => Promise<{ success: boolean; error?: string; newItemId?: string; newItemRarity?: ItemRarity }>;
 }
 
 const P2PContext = createContext<P2PContextValue | null>(null);
@@ -348,6 +355,24 @@ export function P2PProvider({ children }: { children: ReactNode }) {
         await refreshAchievements();
         await refreshSeriesProgress();
       }
+
+      try {
+        updateMissionProgress('weekly_collect_20_total', 1).catch(e => 
+          console.log('Failed to update collection mission progress:', e)
+        );
+        const itemDef = getItemById(spawn.itemId);
+        if (itemDef) {
+          if (itemDef.rarity === 'common') {
+            updateMissionProgress('weekly_collect_10_common', 1).catch(() => {});
+          } else if (itemDef.rarity === 'rare') {
+            updateMissionProgress('weekly_collect_5_rare', 1).catch(() => {});
+          } else if (itemDef.rarity === 'epic') {
+            updateMissionProgress('weekly_collect_3_epic', 1).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.log('Failed to update collection mission progress:', e);
+      }
     }
 
     return result;
@@ -451,6 +476,18 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     }
 
     return result;
+  }
+
+  async function unequipCosmetic(cosmeticType: string): Promise<{ success: boolean; error?: string }> {
+    if (!cosmeticEngine) {
+      return { success: false, error: 'Cosmetic engine not initialized' };
+    }
+
+    await cosmeticEngine.unequipCosmetic(cosmeticType as any);
+    const cosmetics = await databaseService.getUserCosmetics();
+    setUserCosmetics(cosmetics);
+
+    return { success: true };
   }
 
   async function refreshDailyTasks() {
@@ -726,6 +763,62 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     setUserMarkers(markers);
   }
 
+  async function synthesizeItems(
+    inventoryItemIds: string[],
+    recipeId: string
+  ): Promise<{ success: boolean; error?: string; newItemId?: string; newItemRarity?: ItemRarity }> {
+    const recipe = SYNTHESIS_RECIPES.find(r => r.id === recipeId);
+    if (!recipe) {
+      return { success: false, error: 'Invalid recipe' };
+    }
+
+    if (inventoryItemIds.length !== recipe.inputCount) {
+      return { success: false, error: `Need exactly ${recipe.inputCount} items` };
+    }
+
+    if (!profile || profile.coins < recipe.coinCost) {
+      return { success: false, error: 'Insufficient coins' };
+    }
+
+    const isSuccess = Math.random() < recipe.successRate;
+
+    await databaseService.updateUserProfile({ coins: profile.coins - recipe.coinCost });
+
+    for (const itemId of inventoryItemIds) {
+      await databaseService.removeInventoryItem(itemId);
+    }
+
+    if (isSuccess) {
+      const newItemDef = getRandomItemOfRarity(recipe.outputRarity);
+      if (!newItemDef) {
+        return { success: false, error: 'No items available for output rarity' };
+      }
+
+      const newInventoryItem: InventoryItem = {
+        id: `synth_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        itemId: newItemDef.id,
+        quantity: 1,
+        sourceSignature: `synthesis_${Date.now()}`,
+        collectedAt: Date.now(),
+        isLocked: false,
+      };
+
+      await databaseService.addInventoryItem(newInventoryItem);
+      await refreshInventory();
+      await refreshProfile();
+
+      updateMissionProgress('weekly_synthesize_3', 1).catch(e => 
+        console.log('Failed to update synthesis mission progress:', e)
+      );
+
+      return { success: true, newItemId: newItemDef.id, newItemRarity: newItemDef.rarity };
+    } else {
+      await refreshInventory();
+      await refreshProfile();
+      return { success: false };
+    }
+  }
+
   const value: P2PContextValue = {
     isInitialized,
     isLoading,
@@ -752,6 +845,7 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     openChest,
     purchaseCosmetic,
     equipCosmetic,
+    unequipCosmetic,
     claimDailyTask,
     claimAchievement,
     refreshProfile,
@@ -791,6 +885,8 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     updateMarker,
     deleteMarker,
     refreshMarkers,
+
+    synthesizeItems,
   };
 
   return (

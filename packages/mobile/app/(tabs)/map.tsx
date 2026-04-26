@@ -8,6 +8,7 @@ import {
   Text,
   ActivityIndicator,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,8 +19,8 @@ import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
 import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/p2p/types';
 import { getItemById } from '@/src/p2p/data/items';
-
-const { width, height } = Dimensions.get('window');
+import { CollectionAnimationModal } from '@/components/animations/CollectionAnimationModal';
+import { success as hapticSuccess } from '@/utils/haptics';
 
 const DEFAULT_REGION = {
   latitude: 51.5074,
@@ -39,6 +40,7 @@ const RARITY_ICON: Record<ItemRarity, string> = {
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const { t } = useTranslation();
   const { 
     isInitialized, 
@@ -57,6 +59,8 @@ export default function MapScreen() {
   const [collecting, setCollecting] = useState(false);
   const [mapRegion, setMapRegion] = useState(DEFAULT_REGION);
   const [refreshing, setRefreshing] = useState(false);
+  const [animationVisible, setAnimationVisible] = useState(false);
+  const [collectedItem, setCollectedItem] = useState<{ name: string; rarity: ItemRarity } | null>(null);
 
   const getRarityName = (rarity: ItemRarity): string => {
     return t(`rarity.${rarity}`);
@@ -116,11 +120,15 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
 
       if (result.success) {
         const item = getItemById(spawn.itemId);
-        Alert.alert(
-          t('map.collectSuccess'),
-          `You found ${item?.name || 'treasure'}!\nRarity: ${getRarityName(item?.rarity || 'common')}`,
-          [{ text: t('common.confirm'), onPress: () => setSelectedSpawn(null) }]
-        );
+        
+        await hapticSuccess();
+        
+        setCollectedItem({
+          name: item?.name || t('map.unknownTreasure'),
+          rarity: item?.rarity || 'common',
+        });
+        setAnimationVisible(true);
+        setSelectedSpawn(null);
       } else {
         Alert.alert(t('common.error'), result.error || t('map.collectFailed'));
       }
@@ -163,9 +171,9 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
     const item = getItemById(spawn.itemId);
     const poi = nearbyPOIs.find(p => p.id === spawn.poiId);
     return {
-      itemName: item?.name || 'Unknown Treasure',
+      itemName: item?.name || t('map.unknownTreasure'),
       itemRarity: item?.rarity || 'common',
-      poiName: poi?.name || 'Mystery Location',
+      poiName: poi?.name || t('map.mysteryLocation'),
     };
   };
 
@@ -181,7 +189,7 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
   return (
     <View style={styles.container}>
       <MapView
-        style={styles.map}
+        style={[styles.map, { width, height }]}
         initialRegion={mapRegion}
         showsUserLocation={true}
         showsCompass={true}
@@ -305,6 +313,14 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
           </View>
         </View>
       )}
+
+      <CollectionAnimationModal
+        visible={animationVisible}
+        itemName={collectedItem?.name || ''}
+        rarity={collectedItem?.rarity || 'common'}
+        onClose={() => setAnimationVisible(false)}
+        autoDismissDelay={2500}
+      />
     </View>
   );
 }
@@ -348,8 +364,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   map: {
-    width: width,
-    height: height,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
   },
   topOverlay: {
     position: 'absolute',

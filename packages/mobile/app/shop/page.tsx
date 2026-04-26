@@ -92,7 +92,9 @@ export default function ShopScreen() {
 
   useFocusEffect(
     useCallback(() => {
-    }, [])
+      // Refresh profile data when tab is focused to ensure coin balance is up-to-date
+      refreshProfile();
+    }, [refreshProfile])
   );
 
   const handlePurchase = async () => {
@@ -109,7 +111,7 @@ export default function ShopScreen() {
         setPurchaseModal({ isOpen: false, item: null, quantity: 1, loading: false });
         setSuccessModal({
           isOpen: true,
-          message: t('shop.buySuccessDetail', { quantity: purchaseModal.quantity, name: purchaseModal.item.nameZh || purchaseModal.item.name }),
+          message: t('shop.buySuccessDetail', { quantity: purchaseModal.quantity, name: purchaseModal.item.name }),
         });
       } else {
         Alert.alert(t('shop.buyFailed'), result.error || t('shop.buyError'));
@@ -169,7 +171,7 @@ export default function ShopScreen() {
           </View>
           <View style={styles.itemInfo}>
             <Text style={styles.itemName} numberOfLines={1}>
-              {shopItem.nameZh || shopItem.name}
+              {shopItem.name}
             </Text>
             <Text style={[styles.itemCategory, { color: RARITY_COLORS[itemRarity] }]}>
               {shopItem.category}
@@ -282,7 +284,7 @@ export default function ShopScreen() {
                   </View>
                   <View style={styles.itemPreviewInfo}>
                     <Text style={styles.itemPreviewName}>
-                      {purchaseModal.item.nameZh || purchaseModal.item.name}
+                      {purchaseModal.item.name}
                     </Text>
                     <Text style={styles.itemPreviewCategory}>{purchaseModal.item.category}</Text>
                   </View>
