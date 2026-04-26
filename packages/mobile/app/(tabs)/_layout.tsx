@@ -137,6 +137,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="synthesis"
+        options={{
+          title: t('nav.synthesis'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'construct' : 'construct-outline'}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: t('nav.profile'),
