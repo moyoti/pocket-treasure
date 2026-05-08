@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, Circle, UrlTile } from 'react-native-maps';
+import MapboxGL from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,8 @@ import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/
 import { getItemById } from '@/src/p2p/data/items';
 import { CollectionAnimationModal } from '@/components/animations/CollectionAnimationModal';
 import { success as hapticSuccess } from '@/utils/haptics';
+
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 const DEFAULT_REGION = {
   latitude: 51.5074,
@@ -188,20 +190,27 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
 
   return (
     <View style={styles.container}>
-      <MapView
-        style={[styles.map, { width, height }]}
-        initialRegion={mapRegion}
-        showsUserLocation={true}
-        showsCompass={true}
-        showsScale={true}
-        onRegionChangeComplete={(region) => setMapRegion(region)}
+      <MapboxGL.MapView
+        style={{ flex: 1 }}
+        styleURL="mapbox://styles/mapbox/streets-v12"
+        compassEnabled={true}
+        onRegionDidChange={(feature) => {
+          if (feature.properties?.center) {
+            setMapRegion({
+              latitude: feature.properties.center[1],
+              longitude: feature.properties.center[0],
+              latitudeDelta: 0.02,
+              longitudeDelta: 0.02,
+            });
+          }
+        }}
       >
-        <UrlTile
-          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maximumZ={19}
-          flipY={false}
+        <MapboxGL.Camera
+          zoomLevel={15}
+          centerCoordinate={[location.coords.longitude, location.coords.latitude]}
+          animationMode="none"
         />
-
+        <MapboxGL.UserLocation visible={true} />
         {visibleSpawns.map((spawn) => {
           const poi = nearbyPOIs.find(p => p.id === spawn.poiId);
           if (!poi) return null;
@@ -210,31 +219,36 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
           const color = RARITY_COLORS[details.itemRarity];
 
           return (
-            <React.Fragment key={spawn.poiId}>
-              <Circle
-                center={{
-                  latitude: poi.latitude,
-                  longitude: poi.longitude,
-                }}
-                radius={COLLECTION_RADIUS_METERS}
-                strokeWidth={2}
-                strokeColor={`${color}80`}
-                fillColor={`${color}26`}
-              />
-              <Marker
-                coordinate={{
-                  latitude: poi.latitude,
-                  longitude: poi.longitude,
-                }}
-                title={details.itemName}
-                description={`${getRarityName(details.itemRarity)} - ${details.poiName}`}
-                onPress={() => setSelectedSpawn(spawn)}
-                pinColor={color}
-              />
-            </React.Fragment>
+            <MapboxGL.PointAnnotation
+              key={spawn.poiId}
+              id={`marker-${spawn.poiId}`}
+              coordinate={[poi.longitude, poi.latitude]}
+              title={details.itemName}
+              snippet={`${getRarityName(details.itemRarity)} - ${details.poiName}`}
+              onSelected={() => setSelectedSpawn(spawn)}
+            >
+              <View style={{
+                backgroundColor: color,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 3,
+                borderColor: '#FFF',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
+              }}>
+                <Ionicons name="diamond" size={18} color="#FFF" />
+              </View>
+              <MapboxGL.Callout title={details.itemName} />
+            </MapboxGL.PointAnnotation>
           );
         })}
-      </MapView>
+      </MapboxGL.MapView>
 
       <View style={[styles.topOverlay, { top: insets.top + 12 }]}>
         <View style={styles.countPill}>
@@ -362,13 +376,6 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#FFF',
     fontWeight: '600',
-  },
-  map: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
   },
   topOverlay: {
     position: 'absolute',
