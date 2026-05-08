@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.leaflet-container {
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  user-select: none;
+}
+
+.leaflet-tile::selection {
+  background: transparent;
+}
+
+.leaflet-safari .leaflet-tile {
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.leaflet-safari .leaflet-tile-container {
+  width: 1600px;
+  height: 1600px;
+  -webkit-transform-origin: 0 0;
+}
+
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  display: block;
+}
+
+.leaflet-container .leaflet-overlay-pane svg {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+  width: auto;
+  padding: 0;
+}
+
+.leaflet-container img.leaflet-tile {
+  mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+  touch-action: pan-x pan-y;
+}
+
+.leaflet-container.leaflet-touch-drag {
+  touch-action: none;
+  touch-action: pinch-zoom;
+}
+
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+  touch-action: none;
+}
+
+:root {
+  --background: #FFF8E7;
+  --foreground: #1A1A1A;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-card border border-border p-4;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity;
+  }
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 14px;
+}
+
+.treasure-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.user-location-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.poi-marker {
+  background: transparent !important;
+  border: none !important;
+}
