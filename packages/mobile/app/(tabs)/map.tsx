@@ -252,6 +252,12 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
         style={{ flex: 1 }}
         styleURL="mapbox://styles/mapbox/streets-v12"
         compassEnabled={true}
+        contentInset={{
+          top: insets.top,
+          left: 0,
+          bottom: insets.bottom,
+          right: 0,
+        }}
         onRegionDidChange={(feature) => {
           if (feature.properties?.center) {
             setMapRegion({
@@ -322,7 +328,7 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
       </View>
 
       <TouchableOpacity
-        style={[styles.refreshButton, { bottom: Platform.OS === 'ios' ? 108 : 80 }]}
+        style={[styles.refreshButton, { bottom: insets.bottom + 16 }]}
         onPress={handleRefresh}
         activeOpacity={0.8}
         disabled={refreshing}
@@ -523,7 +529,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
   },
   backdropTouchable: {
     ...StyleSheet.absoluteFillObject,
@@ -543,6 +548,7 @@ const styles = StyleSheet.create({
   },
   sheetContent: {
     paddingHorizontal: 20,
+    paddingBottom: 16,
   },
   sheetHeader: {
     flexDirection: 'row',
