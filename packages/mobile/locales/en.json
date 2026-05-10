@@ -781,5 +781,24 @@
     "noItems": "No items of this rarity",
     "noItemsAvailable": "No items available for fusion",
     "insufficientCoins": "Not enough coins for fusion"
+  },
+  "backup": {
+    "backupIdentity": "Backup Identity",
+    "recoverIdentity": "Recover Identity",
+    "createBackup": "Create Backup",
+    "warning": "Write down these 12 words in order and store them in a safe place. Do NOT screenshot or store online!",
+    "instructions": "These 12 words can restore your identity and all game data. Keep them safe!",
+    "confirmBackup": "I have written down all 12 words",
+    "createSuccess": "Backup created successfully! Your identity and data are now protected.",
+    "createFailed": "Failed to create backup. Please try again.",
+    "loadFailed": "Failed to load mnemonic. Please try again.",
+    "enterAllWords": "Please enter all 12 words",
+    "recoverSuccess": "Identity and data recovered successfully!",
+    "identityRecovered": "Identity recovered. No data backup was found.",
+    "recoverFailed": "Recovery failed. Please check your mnemonic.",
+    "recoverInstructions": "Enter your 12 backup words in order. This will restore your identity and any backed-up data.",
+    "recoverWarning": "This will replace your current identity and data",
+    "notBackedUp": "Not backed up",
+    "backedUp": "Backed up"
   }
 }

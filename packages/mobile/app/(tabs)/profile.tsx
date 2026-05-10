@@ -4,9 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useP2P } from '@/src/p2p';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { identityService } from '@/src/p2p';
 import { databaseService } from '@/src/p2p';
+import { BackupMnemonicModal } from '@/components/backup/BackupMnemonicModal';
 
 interface MenuItem {
   icon: string;
@@ -20,6 +21,29 @@ export default function ProfileScreen() {
   const { identity, inventory, isLoading, updateDisplayName, tradeHistory, areaUnlockProgress, userMarkers, achievements } = useP2P();
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [isBackedUp, setIsBackedUp] = useState(false);
+
+  useEffect(() => {
+    checkBackupStatus();
+  }, []);
+
+  const checkBackupStatus = async () => {
+    try {
+      const backedUp = await identityService.isMnemonicBackedUp();
+      setIsBackedUp(backedUp);
+    } catch (error) {
+      console.error('Failed to check backup status:', error);
+    }
+  };
+
+  const handleBackup = () => {
+    setShowBackupModal(true);
+  };
+
+  const handleRecover = () => {
+    router.push('/recover' as any);
+  };
 
   const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
   const uniqueItems = inventory.length;
@@ -130,6 +154,18 @@ export default function ProfileScreen() {
       label: t('screens.settings'),
       subtitle: t('profile.appPreferences'),
       onPress: () => router.push('/profile/settings'),
+    },
+    {
+      icon: isBackedUp ? 'shield-checkmark' : 'shield-outline',
+      label: t('backup.backupIdentity'),
+      subtitle: isBackedUp ? t('backup.backedUp') : t('backup.notBackedUp'),
+      onPress: handleBackup,
+    },
+    {
+      icon: 'download-outline',
+      label: t('backup.recoverIdentity'),
+      subtitle: t('backup.recoverInstructions'),
+      onPress: handleRecover,
     },
     {
       icon: 'help-circle-outline',
@@ -255,6 +291,15 @@ export default function ProfileScreen() {
 
         <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
       </ScrollView>
+      
+      <BackupMnemonicModal
+        visible={showBackupModal}
+        onClose={() => setShowBackupModal(false)}
+        onComplete={() => {
+          setShowBackupModal(false);
+          checkBackupStatus();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -474,3 +519,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 });
+
+function BackupModalWrapper() {
+  return null;
+}

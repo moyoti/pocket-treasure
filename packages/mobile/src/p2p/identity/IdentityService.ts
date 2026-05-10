@@ -2,6 +2,7 @@ import * as ed from '@noble/ed25519';
 import { sha256, sha512 } from '@noble/hashes/sha2';
 import * as SecureStore from 'expo-secure-store';
 import { LocalIdentity, KeyPair } from '../types';
+import { mnemonicService } from './MnemonicService';
 
 ed.hashes.sha512 = sha512;
 
@@ -9,6 +10,7 @@ const PRIVATE_KEY_KEY = 'treasure_hunt_private_key';
 const PUBLIC_KEY_KEY = 'treasure_hunt_public_key';
 const DISPLAY_NAME_KEY = 'treasure_hunt_display_name';
 const CREATED_AT_KEY = 'treasure_hunt_created_at';
+const MNEMONIC_BACKED_UP_KEY = 'treasure_hunt_mnemonic_backed_up';
 
 export class IdentityService {
   private privateKey: Uint8Array | null = null;
@@ -233,6 +235,79 @@ export class IdentityService {
     this.identity = null;
 
     return await this.createNewIdentity();
+  }
+
+  /**
+   * Create identity from mnemonic
+   * @param mnemonic - 12-word mnemonic phrase
+   */
+  async createIdentityFromMnemonic(mnemonic: string): Promise<LocalIdentity> {
+    // 1. Validate mnemonic
+    if (!mnemonicService.validateMnemonic(mnemonic)) {
+      throw new Error('Invalid mnemonic phrase');
+    }
+
+    // 2. Derive seed and private key
+    const { privateKey } = await mnemonicService.mnemonicToEd25519Key(mnemonic);
+
+    // 3. Generate public key
+    const publicKey = ed.getPublicKey(privateKey);
+
+    // 4. Store to SecureStore
+    const privateKeyHex = this.bytesToHex(privateKey);
+    const publicKeyHex = this.bytesToHex(publicKey);
+
+    await SecureStore.setItemAsync(PRIVATE_KEY_KEY, privateKeyHex);
+    await SecureStore.setItemAsync(PUBLIC_KEY_KEY, publicKeyHex);
+    await SecureStore.setItemAsync(DISPLAY_NAME_KEY, 'Explorer');
+    await SecureStore.setItemAsync(CREATED_AT_KEY, Date.now().toString());
+
+    // 5. Update local state
+    this.privateKey = privateKey;
+    this.publicKey = publicKey;
+    this.identity = {
+      publicKey: publicKeyHex,
+      displayName: 'Explorer',
+      createdAt: Date.now(),
+    };
+
+    return this.identity;
+  }
+
+  /**
+   * Generate and save new mnemonic
+   * @returns The generated mnemonic phrase
+   */
+  async generateAndSaveMnemonic(): Promise<string> {
+    const mnemonic = mnemonicService.generateMnemonic();
+    await mnemonicService.saveMnemonic(mnemonic);
+    return mnemonic;
+  }
+
+  /**
+   * Check if mnemonic is backed up
+   */
+  async isMnemonicBackedUp(): Promise<boolean> {
+    try {
+      const backedUp = await SecureStore.getItemAsync(MNEMONIC_BACKED_UP_KEY);
+      return backedUp === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Mark mnemonic as backed up
+   */
+  async markMnemonicBackedUp(): Promise<void> {
+    await SecureStore.setItemAsync(MNEMONIC_BACKED_UP_KEY, 'true');
+  }
+
+  /**
+   * Get stored mnemonic (for backup purposes)
+   */
+  async getStoredMnemonic(): Promise<string | null> {
+    return await mnemonicService.getMnemonic();
   }
 }
 
