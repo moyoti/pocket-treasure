@@ -1,6 +1,8 @@
-import { POI, PoiType, POI_TYPE_WEIGHTS } from '../types';
+import { POI, PoiType } from '../types';
 import { databaseService } from '../database';
 import { getStaticPOIsNearby } from '../data';
+import { getDynamicPOIConfig } from './dynamicConfig';
+import { proceduralPOIGenerator } from './ProceduralPOIGenerator';
 
 const OVERPASS_INSTANCES = [
   {
@@ -113,10 +115,8 @@ export class POIService {
       return [];
     }
 
-    const query = POI_QUERY_TAGS
-      .replace('{lat}', latitude.toString())
-      .replace('{lng}', longitude.toString())
-      .replace('{radius}', radiusMeters.toString());
+    const config = getDynamicPOIConfig(latitude, longitude, now);
+    const query = this.buildDynamicQuery(latitude, longitude, radiusMeters, config.tags);
 
     const availableInstances = this.instanceStatuses
       .filter(inst => inst.cooldownUntil <= now)
@@ -151,12 +151,21 @@ export class POIService {
         }
 
         const data = await response.json();
-        const pois = this.parseOverpassResponse(data.elements);
+        const pois = this.parseOverpassResponse(data.elements, config.weights);
 
         const statusIndex = this.instanceStatuses.findIndex(i => i.name === instance.name);
         if (statusIndex >= 0) {
           this.instanceStatuses[statusIndex].isAvailable = true;
         }
+        
+        if (pois.length < 5) {
+          const procedural = proceduralPOIGenerator.generate(latitude, longitude, radiusKm, 5);
+          const merged = this.mergePOIs(pois, procedural);
+          await databaseService.cachePOIs(merged);
+          this.lastFetchTime = now;
+          return merged;
+        }
+        
         await databaseService.cachePOIs(pois);
         this.lastFetchTime = now;
 
@@ -180,7 +189,7 @@ export class POIService {
     }
   }
 
-  private parseOverpassResponse(elements: any[]): POI[] {
+  private parseOverpassResponse(elements: any[], weights: Record<PoiType, number>): POI[] {
     const results: POI[] = [];
 
     for (const el of elements) {
@@ -192,7 +201,7 @@ export class POIService {
       if (lat === 0 || lng === 0) continue;
 
       const poiType = this.determinePoiType(el.tags);
-      const spawnWeight = POI_TYPE_WEIGHTS[poiType] || 1.0;
+      const spawnWeight = weights[poiType] || 1.0;
 
       results.push({
         id: `${el.type}/${el.id}`,
@@ -208,6 +217,69 @@ export class POIService {
     }
 
     return results;
+  }
+
+  private buildDynamicQuery(
+    lat: number,
+    lng: number,
+    radius: number,
+    tags: string[]
+  ): string {
+    const tagFilters = tags.map(tag => {
+      const [key, ...valueParts] = tag.split('=');
+      const value = valueParts.join('=');
+      
+      if (value.includes('|')) {
+        return `  node["${key}"~"${value}"](around:{radius},{lat},{lng});`;
+      } else {
+        return `  node["${key}"="${value}"](around:{radius},{lat},{lng});`;
+      }
+    }).join('\n');
+
+    const wayFilters = tags
+      .filter(tag => {
+        const [key] = tag.split('=');
+        return ['tourism', 'leisure', 'historic', 'building', 'amenity', 'natural'].includes(key);
+      })
+      .map(tag => {
+        const [key, ...valueParts] = tag.split('=');
+        const value = valueParts.join('=');
+        
+        if (value.includes('|')) {
+          return `  way["${key}"~"${value}"](around:{radius},{lat},{lng});`;
+        } else {
+          return `  way["${key}"="${value}"](around:{radius},{lat},{lng});`;
+        }
+      }).join('\n');
+
+    return `
+      [out:json][timeout:60];
+      (
+${tagFilters}
+${wayFilters}
+      );
+      out center tags;
+    `.replace('{lat}', lat.toString()).replace('{lng}', lng.toString()).replace('{radius}', radius.toString());
+  }
+
+  private mergePOIs(osmPOIs: POI[], proceduralPOIs: POI[]): POI[] {
+    const merged = [...osmPOIs];
+    
+    for (const procPOI of proceduralPOIs) {
+      const isDuplicate = osmPOIs.some(osmPOI => {
+        const dist = this.calculateDistance(
+          procPOI.latitude, procPOI.longitude,
+          osmPOI.latitude, osmPOI.longitude
+        );
+        return dist < 100;
+      });
+      
+      if (!isDuplicate) {
+        merged.push(procPOI);
+      }
+    }
+    
+    return merged;
   }
 
   private determinePoiType(tags: Record<string, string>): PoiType {

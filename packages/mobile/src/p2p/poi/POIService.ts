@@ -3,9 +3,11 @@
  * Uses Overpass API with fallback instances for reliability
  */
 
-import { POI, PoiType, POI_TYPE_WEIGHTS } from '../types';
+import { POI, PoiType } from '../types';
 import { databaseService } from '../database';
 import { getStaticPOIsNearby } from '../data';
+import { getDynamicPOIConfig } from './dynamicConfig';
+import { proceduralPOIGenerator } from './ProceduralPOIGenerator';
 
 // Overpass API instances with different rate limits
 const OVERPASS_INSTANCES = [
@@ -43,20 +45,6 @@ interface InstanceStatus {
   consecutiveFailures: number;
   cooldownUntil: number;
 }
-
-const POI_QUERY_TAGS = `
-  (
-    node["tourism"~"attraction|museum|artwork|viewpoint|castle|monument"](around:{radius},{lat},{lng});
-    node["amenity"~"museum|arts_centre|library|theatre"](around:{radius},{lat},{lng});
-    node["leisure"~"park|garden|nature_reserve|playground"](around:{radius},{lat},{lng});
-    node["historic"~"monument|castle|building|church|ruins"](around:{radius},{lat},{lng});
-    node["building"~"church|temple|mosque|cathedral|shrine"](around:{radius},{lat},{lng});
-    way["tourism"~"attraction|museum|park"](around:{radius},{lat},{lng});
-    way["leisure"~"park|garden|nature_reserve"](around:{radius},{lat},{lng});
-    way["historic"~"monument|castle"](around:{radius},{lat},{lng});
-  );
-  out center tags;
-`;
 
 const OSM_TYPE_MAP: Record<string, PoiType> = {
   'attraction': 'tourism',
@@ -197,10 +185,7 @@ export class POIService {
       return await databaseService.getPOIsNearby(latitude, longitude, radiusMeters / 1000);
     }
 
-    const query = POI_QUERY_TAGS
-      .replace('{lat}', latitude.toString())
-      .replace('{lng}', longitude.toString())
-      .replace('{radius}', radiusMeters.toString());
+    const query = this.buildDynamicQuery(latitude, longitude, radiusMeters);
 
     // Try each available instance
     const triedInstances: string[] = [];
@@ -240,10 +225,20 @@ export class POIService {
         }
 
         const data = await response.json();
-        const pois = this.parseOverpassResponse(data.elements);
+        const config = getDynamicPOIConfig(latitude, longitude, now);
+        const pois = this.parseOverpassResponse(data.elements, config.weights);
 
-        // Success!
         this.markInstanceSuccess(instance);
+        
+        if (pois.length < 5) {
+          const procedural = proceduralPOIGenerator.generate(latitude, longitude, radiusMeters / 1000, 5);
+          const merged = this.mergePOIs(pois, procedural);
+          await databaseService.cachePOIs(merged);
+          this.lastFetchTime = now;
+          console.log(`[POIService] Fetched ${pois.length} OSM + ${procedural.length} procedural = ${merged.length} total POIs`);
+          return merged;
+        }
+        
         await databaseService.cachePOIs(pois);
         this.lastFetchTime = now;
 
@@ -306,7 +301,7 @@ export class POIService {
     return result;
   }
 
-  private parseOverpassResponse(elements: any[]): POI[] {
+  private parseOverpassResponse(elements: any[], weights: Record<PoiType, number>): POI[] {
     const results: POI[] = [];
 
     for (const el of elements) {
@@ -318,7 +313,7 @@ export class POIService {
       if (lat === 0 || lng === 0) continue;
 
       const poiType = this.determinePoiType(el.tags);
-      const spawnWeight = POI_TYPE_WEIGHTS[poiType] || 1.0;
+      const spawnWeight = weights[poiType] || 1.0;
 
       results.push({
         id: `${el.type}/${el.id}`,
@@ -334,6 +329,49 @@ export class POIService {
     }
 
     return results;
+  }
+
+  private buildDynamicQuery(
+    lat: number,
+    lng: number,
+    radius: number
+  ): string {
+    const config = getDynamicPOIConfig(lat, lng, Date.now());
+    const tags = config.tags;
+
+    const tagFilters = tags.map(tag => {
+      const [key, ...valueParts] = tag.split('=');
+      const value = valueParts.join('=');
+      
+      if (value.includes('|')) {
+        return `    node["${key}"~"${value}"](around:${radius},${lat},${lng});`;
+      } else {
+        return `    node["${key}"="${value}"](around:${radius},${lat},${lng});`;
+      }
+    }).join('\n');
+
+    const wayFilters = tags
+      .filter(tag => {
+        const [key] = tag.split('=');
+        return ['tourism', 'leisure', 'historic', 'building', 'amenity', 'natural'].includes(key);
+      })
+      .map(tag => {
+        const [key, ...valueParts] = tag.split('=');
+        const value = valueParts.join('=');
+        
+        if (value.includes('|')) {
+          return `    way["${key}"~"${value}"](around:${radius},${lat},${lng});`;
+        } else {
+          return `    way["${key}"="${value}"](around:${radius},${lat},${lng});`;
+        }
+      }).join('\n');
+
+    return `[out:json][timeout:60];
+(
+${tagFilters}
+${wayFilters}
+  );
+out center tags;`;
   }
 
   private determinePoiType(tags: Record<string, string>): PoiType {
@@ -386,6 +424,26 @@ export class POIService {
 
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  private mergePOIs(osmPOIs: POI[], proceduralPOIs: POI[]): POI[] {
+    const merged = [...osmPOIs];
+    
+    for (const procPOI of proceduralPOIs) {
+      const isDuplicate = osmPOIs.some(osmPOI => {
+        const dist = this.calculateDistance(
+          procPOI.latitude, procPOI.longitude,
+          osmPOI.latitude, osmPOI.longitude
+        );
+        return dist < 100;
+      });
+      
+      if (!isDuplicate) {
+        merged.push(procPOI);
+      }
+    }
+    
+    return merged;
   }
 
   isWithinRadius(

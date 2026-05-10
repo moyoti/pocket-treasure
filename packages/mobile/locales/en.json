@@ -163,6 +163,7 @@
     "appInformation": "App information",
     "playingOffline": "Playing offline - all data stored locally on your device",
     "version": "Version {{version}} (P2P Edition)",
+    "unlocked": "unlocked",
     "stats": {
       "level": "Level",
       "coins": "Coins",
@@ -511,12 +512,13 @@
     "initializing": "Initializing..."
   },
   "items": {
-"screens": {
+  "screens": {
     "itemDetails": "Item Details",
     "statistics": "Statistics",
     "settings": "Settings",
     "help": "Help",
-    "about": "About"
+    "about": "About",
+    "achievements": "Achievements"
   },
   "rarity": {
     "common": "Common",

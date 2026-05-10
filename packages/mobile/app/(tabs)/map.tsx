@@ -16,6 +16,18 @@ import MapboxGL from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withSequence,
+  withDelay,
+  interpolate,
+  Easing,
+  FadeIn,
+  FadeInDown,
+} from 'react-native-reanimated';
 import { useP2P } from '@/src/p2p';
 import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/p2p/types';
 import { getItemById } from '@/src/p2p/data/items';
@@ -63,6 +75,52 @@ export default function MapScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [animationVisible, setAnimationVisible] = useState(false);
   const [collectedItem, setCollectedItem] = useState<{ name: string; rarity: ItemRarity } | null>(null);
+
+  const sheetTranslateY = useSharedValue(300);
+  const sheetOpacity = useSharedValue(0);
+  const backdropOpacity = useSharedValue(0);
+
+  const closeSpawnSheet = useCallback(() => {
+    'worklet';
+    backdropOpacity.value = withTiming(0, { duration: 200 });
+    sheetOpacity.value = withTiming(0, { duration: 200 });
+    sheetTranslateY.value = withTiming(300, { duration: 250 });
+  }, []);
+
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleCloseSpawn = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    backdropOpacity.value = withTiming(0, { duration: 200 });
+    sheetOpacity.value = withTiming(0, { duration: 200 });
+    sheetTranslateY.value = withTiming(300, { duration: 250 });
+    setTimeout(() => {
+      setSelectedSpawn(null);
+      setIsClosing(false);
+    }, 250);
+  }, [isClosing]);
+
+  useEffect(() => {
+    if (selectedSpawn && !isClosing) {
+      backdropOpacity.value = withTiming(0.4, { duration: 200 });
+      sheetOpacity.value = withTiming(1, { duration: 200 });
+      sheetTranslateY.value = withSpring(0, {
+        damping: 20,
+        stiffness: 100,
+        mass: 0.8,
+      });
+    }
+  }, [selectedSpawn, isClosing]);
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  const sheetAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: sheetOpacity.value,
+    transform: [{ translateY: sheetTranslateY.value }],
+  }));
 
   const getRarityName = (rarity: ItemRarity): string => {
     return t(`rarity.${rarity}`);
@@ -277,55 +335,69 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
       </TouchableOpacity>
 
       {selectedSpawn && (
-        <View style={styles.bottomSheet}>
-          <View style={styles.sheetHandle} />
-          <View style={styles.sheetContent}>
-            <View style={styles.sheetHeader}>
-              <View style={[styles.sheetIcon, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
-                <Ionicons
-                  name={RARITY_ICON[getSpawnDetails(selectedSpawn).itemRarity] as any}
-                  size={28}
-                  color={RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}
-                />
-              </View>
-              <View style={styles.sheetInfo}>
-                <Text style={styles.sheetTitle}>{getSpawnDetails(selectedSpawn).itemName}</Text>
-                <View style={[styles.sheetRarityBadge, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
-                  <Text style={[styles.sheetRarityText, { color: RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity] }]}>
-                    {getRarityName(getSpawnDetails(selectedSpawn).itemRarity)}
-                  </Text>
-                </View>
-                <View style={styles.sheetLocationRow}>
-                  <Ionicons name="location-outline" size={13} color="#999" />
-                  <Text style={styles.sheetLocation}>{getSpawnDetails(selectedSpawn).poiName}</Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setSelectedSpawn(null)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        <>
+          <TouchableOpacity 
+            activeOpacity={1} 
+            style={styles.backdropTouchable} 
+            onPress={handleCloseSpawn}
+          >
+            <Animated.View style={[styles.backdrop, backdropStyle]} />
+          </TouchableOpacity>
+          <Animated.View style={[styles.bottomSheet, sheetAnimatedStyle]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetContent}>
+              <Animated.View
+                entering={FadeInDown.delay(100).springify().damping(15)}
+                style={styles.sheetHeader}
               >
-                <Ionicons name="close" size={20} color="#999" />
-              </TouchableOpacity>
-            </View>
+                <View style={[styles.sheetIcon, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
+                  <Ionicons
+                    name={RARITY_ICON[getSpawnDetails(selectedSpawn).itemRarity] as any}
+                    size={28}
+                    color={RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}
+                  />
+                </View>
+                <View style={styles.sheetInfo}>
+                  <Text style={styles.sheetTitle}>{getSpawnDetails(selectedSpawn).itemName}</Text>
+                  <View style={[styles.sheetRarityBadge, { backgroundColor: `${RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity]}20` }]}>
+                    <Text style={[styles.sheetRarityText, { color: RARITY_COLORS[getSpawnDetails(selectedSpawn).itemRarity] }]}>
+                      {getRarityName(getSpawnDetails(selectedSpawn).itemRarity)}
+                    </Text>
+                  </View>
+                  <View style={styles.sheetLocationRow}>
+                    <Ionicons name="location-outline" size={13} color="#999" />
+                    <Text style={styles.sheetLocation}>{getSpawnDetails(selectedSpawn).poiName}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleCloseSpawn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Ionicons name="close" size={20} color="#999" />
+                </TouchableOpacity>
+              </Animated.View>
 
-            <TouchableOpacity
-              style={styles.collectButton}
-              onPress={() => handleCollect(selectedSpawn)}
-              disabled={collecting}
-              activeOpacity={0.8}
-            >
-              {collecting ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <>
-                  <Ionicons name="hand-left" size={18} color="#FFF" />
-                  <Text style={styles.collectButtonText}>{t('map.collectSuccess')}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+              <Animated.View entering={FadeInDown.delay(200).springify().damping(15)}>
+                <TouchableOpacity
+                  style={styles.collectButton}
+                  onPress={() => handleCollect(selectedSpawn)}
+                  disabled={collecting}
+                  activeOpacity={0.8}
+                >
+                  {collecting ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="hand-left" size={18} color="#FFF" />
+                      <Text style={styles.collectButtonText}>{t('map.collectSuccess')}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </Animated.View>
+        </>
       )}
 
       <CollectionAnimationModal
@@ -448,10 +520,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 12,
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+  },
+  backdropTouchable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000',
   },
   sheetHandle: {
     width: 36,

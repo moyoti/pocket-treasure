@@ -154,7 +154,7 @@ export default function SettingsScreen() {
                 settings.language === lang && styles.languageButtonTextActive,
               ]}
             >
-              {lang === 'en' ? t('settings.english') : t('settings.japanese')}
+              {lang === 'en' ? t('settings.english') : lang === 'zh' ? t('settings.chinese') : t('settings.japanese')}
             </Text>
           </TouchableOpacity>
         ))}

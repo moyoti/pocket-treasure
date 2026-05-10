@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   Pressable,
   StatusBar,
   useWindowDimensions,
+  Dimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,8 +14,10 @@ import Animated, {
   withTiming,
   withSpring,
   withSequence,
+  withRepeat,
   interpolate,
   Extrapolation,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import {
   GestureHandlerRootView,
@@ -24,7 +27,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TutorialStep } from './TutorialStep';
 import { setOnboardingComplete } from '@/utils/onboarding';
 import { COLORS, SPACING, FONT_SIZE } from '@/constants/theme';
 
@@ -35,7 +37,7 @@ interface OnboardingTutorialProps {
 interface TutorialStepData {
   titleKey: string;
   descriptionKey: string;
-  iconName: string;
+  iconName: any;
   iconColor: string;
 }
 
@@ -44,56 +46,84 @@ const TUTORIAL_STEPS: TutorialStepData[] = [
     titleKey: 'onboarding.welcomeTitle',
     descriptionKey: 'onboarding.welcomeDesc',
     iconName: 'compass',
-    iconColor: COLORS.primary,
+    iconColor: '#FFD700',
   },
   {
     titleKey: 'onboarding.mapTitle',
     descriptionKey: 'onboarding.mapDesc',
     iconName: 'map',
-    iconColor: '#4ECDC4',
+    iconColor: '#FFFFFF',
   },
   {
     titleKey: 'onboarding.collectTitle',
     descriptionKey: 'onboarding.collectDesc',
     iconName: 'hand-left',
-    iconColor: '#FF6B6B',
+    iconColor: '#FFFFFF',
   },
   {
     titleKey: 'onboarding.rarityTitle',
     descriptionKey: 'onboarding.rarityDesc',
     iconName: 'diamond',
-    iconColor: COLORS.rarity.legendary,
+    iconColor: '#FFD700',
   },
   {
     titleKey: 'onboarding.startTitle',
     descriptionKey: 'onboarding.startDesc',
     iconName: 'rocket',
-    iconColor: COLORS.primary,
+    iconColor: '#FFFFFF',
   },
 ];
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-function ProgressIndicator({
-  currentStep,
-  totalSteps,
-}: {
-  currentStep: number;
-  totalSteps: number;
-}) {
+function BouncingIcon({ iconName, color }: { iconName: any; color: string }) {
+  const bounce = useSharedValue(0);
+
+  useEffect(() => {
+    bounce.value = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 400 }),
+        withTiming(0, { duration: 400 })
+      ),
+      -1,
+      true
+    );
+
+    return () => {
+      cancelAnimation(bounce);
+      bounce.value = 0;
+    };
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: bounce.value }],
+  }));
+
   return (
-    <View style={styles.progressContainer}>
-      {Array.from({ length: totalSteps }).map((_, index) => (
-        <View
-          key={index}
-          style={[
-            styles.progressDot,
-            index === currentStep && styles.progressDotActive,
-            index < currentStep && styles.progressDotCompleted,
-          ]}
-        />
-      ))}
-    </View>
+    <Animated.View style={[styles.iconContainer, animatedStyle]}>
+      <Ionicons name={iconName} size={100} color={color} />
+    </Animated.View>
+  );
+}
+
+function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
+  return useMemo(
+    () => (
+      <View style={styles.progressContainer}>
+        {Array.from({ length: totalSteps }).map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.progressDot,
+              index === currentStep && styles.progressDotActive,
+              index < currentStep && styles.progressDotCompleted,
+            ]}
+          />
+        ))}
+      </View>
+    ),
+    [currentStep, totalSteps]
   );
 }
 
@@ -102,7 +132,9 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [currentStep, setCurrentStep] = useState(0);
-
+  
+  const titleOpacity = useSharedValue(1);
+  const descOpacity = useSharedValue(1);
   const translateX = useSharedValue(0);
   const buttonScale = useSharedValue(1);
 
@@ -113,13 +145,26 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
     onComplete();
   }, [onComplete]);
 
+  const handleStepChange = useCallback((newStep: number) => {
+    titleOpacity.value = withTiming(0, { duration: 150 });
+    descOpacity.value = withTiming(0, { duration: 150 });
+    
+    requestAnimationFrame(() => {
+      setCurrentStep(newStep);
+      requestAnimationFrame(() => {
+        titleOpacity.value = withTiming(1, { duration: 200 });
+        descOpacity.value = withTiming(1, { duration: 200, delay: 50 });
+      });
+    });
+  }, []);
+
   const handleNext = useCallback(() => {
     if (isLastStep) {
       handleComplete();
     } else {
-      setCurrentStep((prev) => Math.min(prev + 1, TUTORIAL_STEPS.length - 1));
+      handleStepChange(currentStep + 1);
     }
-  }, [isLastStep, handleComplete]);
+  }, [isLastStep, handleComplete, currentStep]);
 
   const handleSkip = useCallback(() => {
     handleComplete();
@@ -131,16 +176,19 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
     })
     .onEnd((event) => {
       const threshold = width * 0.25;
+      
       if (event.translationX < -threshold && currentStep < TUTORIAL_STEPS.length - 1) {
-        translateX.value = withTiming(-width, { duration: 200 });
-        setCurrentStep((prev) => prev + 1);
-        translateX.value = withTiming(0, { duration: 0 });
+        translateX.value = withTiming(-width, { duration: 200 }, () => {
+          handleStepChange(currentStep + 1);
+          translateX.value = 0;
+        });
       } else if (event.translationX > threshold && currentStep > 0) {
-        translateX.value = withTiming(width, { duration: 200 });
-        setCurrentStep((prev) => prev - 1);
-        translateX.value = withTiming(0, { duration: 0 });
+        translateX.value = withTiming(width, { duration: 200 }, () => {
+          handleStepChange(currentStep - 1);
+          translateX.value = 0;
+        });
       } else {
-        translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
       }
     });
 
@@ -148,10 +196,20 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
     transform: [{ translateX: translateX.value }],
     opacity: interpolate(
       Math.abs(translateX.value),
-      [0, width * 0.5],
+      [0, width * 0.3],
       [1, 0.5],
       Extrapolation.CLAMP
     ),
+  }));
+
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleOpacity.value === 1 ? 0 : 15 }],
+  }));
+
+  const descAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: descOpacity.value,
+    transform: [{ translateY: descOpacity.value === 1 ? 0 : 15 }],
   }));
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
@@ -159,22 +217,22 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
   }));
 
   const handlePressIn = () => {
-    buttonScale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+    buttonScale.value = withSpring(0.96, { damping: 18, stiffness: 300 });
   };
 
   const handlePressOut = () => {
-    buttonScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    buttonScale.value = withSpring(1, { damping: 18, stiffness: 300 });
   };
+
+  const currentStepData = useMemo(() => TUTORIAL_STEPS[currentStep], [currentStep]);
+  const titleText = t(currentStepData.titleKey);
+  const descText = t(currentStepData.descriptionKey);
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      <View style={styles.backgroundGradient}>
-        <View style={styles.decorativeCircle1} />
-        <View style={styles.decorativeCircle2} />
-        <View style={styles.decorativeCircle3} />
-      </View>
+      <View style={styles.background} />
 
       <View style={[styles.header, { paddingTop: insets.top + SPACING.lg }]}>
         <Pressable onPress={handleSkip} style={styles.skipButton}>
@@ -184,37 +242,50 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
 
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.contentContainer, animatedCardStyle]}>
-          <TutorialStep
-            stepIndex={currentStep}
-            titleKey={TUTORIAL_STEPS[currentStep].titleKey}
-            descriptionKey={TUTORIAL_STEPS[currentStep].descriptionKey}
-            iconName={TUTORIAL_STEPS[currentStep].iconName}
-            iconColor={TUTORIAL_STEPS[currentStep].iconColor}
-          />
+          <View style={styles.iconWrapper}>
+            <BouncingIcon
+              iconName={currentStepData.iconName}
+              color={currentStepData.iconColor}
+            />
+          </View>
+
+          <Animated.Text style={[styles.title, titleAnimatedStyle]}>
+            {titleText}
+          </Animated.Text>
+
+          <Animated.Text style={[styles.description, descAnimatedStyle]}>
+            {descText}
+          </Animated.Text>
         </Animated.View>
       </GestureDetector>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + SPACING.xl }]}>
+      <View style={[styles.footer, { paddingBottom: SPACING.xl + insets.bottom }]}>
         <ProgressIndicator
           currentStep={currentStep}
           totalSteps={TUTORIAL_STEPS.length}
         />
 
         <AnimatedPressable
-          style={[styles.actionButton, buttonAnimatedStyle]}
           onPress={handleNext}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
+          style={[styles.button, buttonAnimatedStyle]}
         >
-          <Text style={styles.actionButtonText}>
+          <Text style={styles.buttonText}>
             {isLastStep ? t('onboarding.start') : t('onboarding.next')}
           </Text>
           <Ionicons
-            name={isLastStep ? 'play' : 'arrow-forward'}
+            name={isLastStep ? 'rocket' : 'arrow-forward'}
             size={20}
-            color={COLORS.background}
+            color={COLORS.primary}
+            style={styles.buttonIcon}
           />
         </AnimatedPressable>
+
+        <View style={styles.hintContainer}>
+          <Ionicons name="swap-horizontal" size={20} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.hintText}>{t('onboarding.swipeHint')}</Text>
+        </View>
       </View>
     </GestureHandlerRootView>
   );
@@ -225,91 +296,117 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  backgroundGradient: {
+  background: {
     ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-  decorativeCircle1: {
-    position: 'absolute',
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: `${COLORS.primary}08`,
-    top: -100,
-    right: -100,
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: `${COLORS.rarity.legendary}06`,
-    bottom: 200,
-    left: -100,
-  },
-  decorativeCircle3: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: `${COLORS.rarity.epic}08`,
-    bottom: -50,
-    right: -50,
+    backgroundColor: COLORS.background,
   },
   header: {
-    paddingHorizontal: SPACING.xl,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: SPACING.lg,
   },
   skipButton: {
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
   },
   skipText: {
+    color: 'rgba(255,255,255,0.9)',
     fontSize: FONT_SIZE.md,
-    color: COLORS.textSecondary,
     fontWeight: '600',
   },
   contentContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+  },
+  iconWrapper: {
+    marginBottom: SPACING.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    width: 140,
+    height: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 70,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  description: {
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.95)',
+    textAlign: 'center',
+    lineHeight: 28,
+    paddingHorizontal: SPACING.md,
   },
   footer: {
-    paddingHorizontal: SPACING.xxl,
-    alignItems: 'center',
-    gap: SPACING.xl,
+    paddingHorizontal: SPACING.xl,
   },
   progressContainer: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
   },
   progressDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.border,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 4,
   },
   progressDotActive: {
-    backgroundColor: COLORS.primary,
     width: 24,
+    backgroundColor: 'white',
   },
   progressDotCompleted: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(255,255,255,0.6)',
   },
-  actionButton: {
+  button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.xxl,
+    backgroundColor: 'white',
+    paddingVertical: SPACING.md + 4,
+    paddingHorizontal: SPACING.xl,
     borderRadius: 30,
-    gap: SPACING.sm,
-    minWidth: 180,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  actionButtonText: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: '700',
-    color: COLORS.background,
+  buttonText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.lg,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  hintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  hintText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: FONT_SIZE.sm,
   },
 });

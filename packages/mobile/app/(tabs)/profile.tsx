@@ -17,7 +17,7 @@ interface MenuItem {
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { identity, inventory, isLoading, updateDisplayName, tradeHistory, areaUnlockProgress, userMarkers } = useP2P();
+  const { identity, inventory, isLoading, updateDisplayName, tradeHistory, areaUnlockProgress, userMarkers, achievements } = useP2P();
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
 
@@ -73,6 +73,12 @@ export default function ProfileScreen() {
   };
 
   const menuItems: MenuItem[] = [
+    {
+      icon: 'trophy-outline',
+      label: t('screens.achievements'),
+      subtitle: `${achievements.filter(a => a.unlockedAt).length} ${t('profile.unlocked')}`,
+      onPress: () => router.push('/achievements' as any),
+    },
     {
       icon: 'stats-chart-outline',
       label: t('screens.statistics'),
@@ -130,12 +136,6 @@ export default function ProfileScreen() {
       label: t('screens.help'),
       subtitle: t('profile.howToPlay'),
       onPress: () => router.push('/profile/help'),
-    },
-    {
-      icon: 'information-circle-outline',
-      label: t('screens.about'),
-      subtitle: t('profile.appInformation'),
-      onPress: () => router.push('/profile/about'),
     },
   ];
 

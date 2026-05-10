@@ -171,6 +171,7 @@
     "appInformation": "アプリ情報",
     "playingOffline": "オフラインでプレイ中 - すべてのデータはデバイスに保存されます",
     "version": "バージョン {{version}} (P2P Edition)",
+    "unlocked": "解除済み",
     "stats": {
       "level": "レベル",
       "coins": "コイン",
@@ -524,7 +525,8 @@
     "statistics": "統計",
     "settings": "設定",
     "help": "ヘルプ",
-    "about": "アプリについて"
+    "about": "アプリについて",
+    "achievements": "実績"
   },
   "rarity": {
     "common": "コモン",

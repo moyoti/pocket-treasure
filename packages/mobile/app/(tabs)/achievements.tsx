@@ -215,6 +215,40 @@ export default function AchievementsScreen() {
     4: '#D4A017',
   };
 
+  // Map achievement icon names to Ionicons
+  const getAchievementIcon = (iconName: string): keyof typeof Ionicons.glyphMap => {
+    const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+      // Collection tier icons
+      'collection_tier1': 'diamond-outline',
+      'collection_tier2': 'diamond',
+      'collection_tier3': 'cube-outline',
+      'collection_tier4': 'cube',
+      'collection_tier5': 'trophy',
+      // Rare collection icons
+      'rare_first': 'sparkles-outline',
+      'rare_hunter': 'sparkles',
+      // Epic collection icons
+      'epic_first': 'star-outline',
+      'epic_hunter': 'star',
+      // Legendary collection icons
+      'legendary_first': 'flame-outline',
+      'legendary_hunter': 'flame',
+      // Streak icons
+      'streak_week': 'calendar-outline',
+      'streak_month': 'calendar',
+      'streak_100': 'infinite',
+      // Distance icons
+      'distance_tier1': 'walk-outline',
+      'distance_tier2': 'walk',
+      'distance_tier3': 'bicycle-outline',
+      'distance_tier4': 'bicycle',
+      // Special icons
+      'special_night': 'moon-outline',
+      'special_lucky': 'luck-outline',
+    };
+    return iconMap[iconName] || 'trophy-outline';
+  };
+
   const renderAchievementItem = ({ item }: { item: AchievementProgress }) => {
     const { achievement: ach, progress, requirement, status, canClaim } = item;
     const progressPercent = Math.min((progress / requirement) * 100, 100);
@@ -226,7 +260,7 @@ export default function AchievementsScreen() {
         <View style={[styles.colorBar, { backgroundColor: tierColors[ach.tier] || '#8D99AE' }]} />
         <View style={styles.cardContent}>
           <View style={styles.titleRow}>
-            <Text style={styles.icon}>{ach.icon}</Text>
+            <Ionicons name={getAchievementIcon(ach.icon)} size={28} color={tierColors[ach.tier] || '#8D99AE'} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>{ach.name}</Text>
               <Text style={styles.description} numberOfLines={2}>{ach.description}</Text>
