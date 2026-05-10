@@ -258,7 +258,8 @@ export class AreaService {
 
 TaskManager.defineTask(GEOFENCE_TASK, async (body: TaskManager.TaskManagerTaskBody<{ eventType: number; region: Location.LocationRegion } | undefined>) => {
   if (body.error) {
-    console.error('Geofence task error:', body.error.message);
+    const errorMessage = body.error instanceof Error ? body.error.message : String(body.error);
+    console.error('Geofence task error:', errorMessage);
     return;
   }
 

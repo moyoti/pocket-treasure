@@ -4,18 +4,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import en from '../locales/en.json';
 import ja from '../locales/ja.json';
+import zh from '../locales/zh.json';
 
 const LANGUAGE_KEY = 'user_language';
 
-export const SUPPORTED_LANGUAGES = ['en', 'ja'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'ja', 'zh'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
 const resources = {
   en: { translation: en },
   ja: { translation: ja },
+  zh: { translation: zh },
 };
 
-// Get saved language from AsyncStorage
 export const getSavedLanguage = async (): Promise<SupportedLanguage | null> => {
   try {
     const savedLang = await AsyncStorage.getItem(LANGUAGE_KEY);
@@ -29,7 +30,6 @@ export const getSavedLanguage = async (): Promise<SupportedLanguage | null> => {
   }
 };
 
-// Save language preference to AsyncStorage
 export const saveLanguage = async (language: SupportedLanguage): Promise<void> => {
   try {
     await AsyncStorage.setItem(LANGUAGE_KEY, language);
@@ -38,7 +38,6 @@ export const saveLanguage = async (language: SupportedLanguage): Promise<void> =
   }
 };
 
-// Initialize i18n with saved language or default to 'en'
 const initI18n = async () => {
   const savedLanguage = await getSavedLanguage();
   
