@@ -4,17 +4,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import en from '../locales/en.json';
 import ja from '../locales/ja.json';
-import zh from '../locales/zh.json';
 
 const LANGUAGE_KEY = 'user_language';
 
-export const SUPPORTED_LANGUAGES = ['en', 'ja', 'zh'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'ja'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
 const resources = {
   en: { translation: en },
   ja: { translation: ja },
-  zh: { translation: zh },
 };
 
 export const getSavedLanguage = async (): Promise<SupportedLanguage | null> => {
