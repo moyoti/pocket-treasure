@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "寻宝记",
+    "name": "Treasure Hunt",
     "slug": "treasure-hunt",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,10 +18,10 @@
       "bundleIdentifier": "com.treasurehunt.app",
       "buildNumber": "1",
       "infoPlist": {
-        "CFBundleDisplayName": "寻宝记",
-        "NSLocationWhenInUseUsageDescription": "寻宝记需要您的位置来显示附近的宝藏。",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "寻宝记需要您的位置来检测附近的宝藏。",
-        "NSLocationAlwaysUsageDescription": "寻宝记需要您的位置来检测附近的宝藏。",
+        "CFBundleDisplayName": "宝探し",
+        "NSLocationWhenInUseUsageDescription": "近くの宝を表示するには位置情報が必要です。",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "近くの宝を検出するには位置情報が必要です。",
+        "NSLocationAlwaysUsageDescription": "近くの宝を検出するには位置情報が必要です。",
         "UIUserInterfaceStyle": "Light"
       }
     },
@@ -48,7 +48,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "寻宝记需要您的位置来检测附近的宝藏。"
+          "locationAlwaysAndWhenInUsePermission": "近くの宝を検出するには位置情報が必要です。"
         }
       ],
       "expo-sqlite",
