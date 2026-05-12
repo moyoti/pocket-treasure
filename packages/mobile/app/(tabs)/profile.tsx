@@ -399,13 +399,13 @@ export default function ProfileScreen() {
       />
       
       {/* QR Code Display Modal */}
-      {showQRDisplay && identity?.publicKey && (
-        <QRCodeDisplay
-          value={identity.publicKey}
-          title={t('profile.profileKey')}
-          size={220}
-        />
-      )}
+      <QRCodeDisplay
+        visible={showQRDisplay}
+        onClose={() => setShowQRDisplay(false)}
+        value={identity?.publicKey || ''}
+        title={t('profile.profileKey')}
+        size={220}
+      />
       
       {/* QR Code Scanner Modal */}
       <QRCodeScanner
