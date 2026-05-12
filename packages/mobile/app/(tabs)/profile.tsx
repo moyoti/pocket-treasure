@@ -8,6 +8,9 @@ import { useState, useEffect } from 'react';
 import { identityService } from '@/src/p2p';
 import { databaseService } from '@/src/p2p';
 import { BackupMnemonicModal } from '@/components/backup/BackupMnemonicModal';
+import { QRCodeDisplay, QRCodeScanner } from '@/components/qr';
+import { Share } from 'react-native';
+import * as Linking from 'expo-linking';
 
 interface MenuItem {
   icon: string;
@@ -23,6 +26,8 @@ export default function ProfileScreen() {
   const [tempName, setTempName] = useState('');
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [isBackedUp, setIsBackedUp] = useState(false);
+  const [showQRDisplay, setShowQRDisplay] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   useEffect(() => {
     checkBackupStatus();
@@ -43,6 +48,73 @@ export default function ProfileScreen() {
 
   const handleRecover = () => {
     router.push('/recover' as any);
+  };
+
+  const handleShowQR = () => {
+    setShowQRDisplay(true);
+  };
+
+  const handleScanQR = () => {
+    setShowQRScanner(true);
+  };
+
+  const handleQRScanned = async (data: string) => {
+    setShowQRScanner(false);
+    
+    // Validate that it's a valid public key (64 character hex string)
+    const isValidKey = /^[a-f0-9]{64}$/.test(data.toLowerCase());
+    
+    if (!isValidKey) {
+      Alert.alert(
+        t('scanner.invalidQR'),
+        t('scanner.invalidProfileKey'),
+        [{ text: t('common.close') }]
+      );
+      return;
+    }
+    
+    // Add friend or start trade
+    Alert.alert(
+      t('friends.addFriend'),
+      `${t('friends.scanProfileKey')}: ${data.slice(0, 16)}...${data.slice(-16)}`,
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('friends.addFriend'), onPress: () => handleAddFriend(data) },
+        { text: t('trade.startTrade'), onPress: () => handleTradeWithKey(data) },
+      ]
+    );
+  };
+
+  const handleAddFriend = async (publicKey: string) => {
+    // TODO: Implement friend addition logic
+    Alert.alert(
+      t('common.success'),
+      `${t('friends.friendAdded')} ${publicKey.slice(0, 8)}...`
+    );
+  };
+
+  const handleTradeWithKey = async (publicKey: string) => {
+    // Navigate to trade screen with public key
+    router.push({
+      pathname: '/trade' as any,
+      params: { targetPublicKey: publicKey },
+    });
+  };
+
+  const handleShareProfile = async () => {
+    if (!identity?.publicKey) return;
+    
+    const shareUrl = Linking.createURL(`/profile/${identity.publicKey}`);
+    
+    try {
+      await Share.share({
+        message: `${t('profile.checkOutMyProfile')} ${shareUrl}`,
+        url: shareUrl,
+        title: t('profile.shareProfile'),
+      });
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
   };
 
   const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
@@ -229,9 +301,34 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.keyContainer} onPress={handleExportPublicKey}>
             <Ionicons name="finger-print-outline" size={16} color="#D4A017" />
-<Text style={styles.keyLabel}>{t('profile.title')} Key:</Text>
+            <Text style={styles.keyLabel}>{t('profile.title')} Key:</Text>
             <Text style={styles.keyText}>{shortPublicKey}</Text>
           </TouchableOpacity>
+
+          {/* QR Code Actions */}
+          <View style={styles.qrActions}>
+            <TouchableOpacity
+              style={styles.qrButton}
+              onPress={handleShowQR}
+            >
+              <Ionicons name="qr-code-outline" size={20} color="#D4A017" />
+              <Text style={styles.qrButtonText}>{t('profile.showQR')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.qrButton}
+              onPress={handleScanQR}
+            >
+              <Ionicons name="scan-outline" size={20} color="#D4A017" />
+              <Text style={styles.qrButtonText}>{t('profile.scanQR')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.qrButton}
+              onPress={handleShareProfile}
+            >
+              <Ionicons name="share-outline" size={20} color="#D4A017" />
+              <Text style={styles.qrButtonText}>{t('profile.share')}</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -299,6 +396,23 @@ export default function ProfileScreen() {
           setShowBackupModal(false);
           checkBackupStatus();
         }}
+      />
+      
+      {/* QR Code Display Modal */}
+      {showQRDisplay && identity?.publicKey && (
+        <QRCodeDisplay
+          value={identity.publicKey}
+          title={t('profile.profileKey')}
+          size={220}
+        />
+      )}
+      
+      {/* QR Code Scanner Modal */}
+      <QRCodeScanner
+        visible={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={handleQRScanned}
+        title={t('profile.scanToConnect')}
       />
     </SafeAreaView>
   );
@@ -409,6 +523,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#D4A017',
     fontWeight: '700',
+  },
+  qrActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  qrButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E0D5C0',
+  },
+  qrButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#D4A017',
   },
   statsRow: {
     flexDirection: 'row',

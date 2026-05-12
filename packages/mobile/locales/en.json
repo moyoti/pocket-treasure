@@ -250,7 +250,18 @@
       "collections": "Collections",
       "streak": "Login Streak"
     },
-    "editProfile": "Edit Profile"
+    "editProfile": "Edit Profile",
+    "profileKey": "Profile Key",
+    "showQR": "Show QR",
+    "scanQR": "Scan QR",
+    "share": "Share",
+    "shareQR": "Share QR Code",
+    "scanningNotAvailable": "Scanning not available on this device",
+    "sharingNotAvailable": "Sharing not available on this device",
+    "scanToConnect": "Scan to Connect",
+    "addFriendByQR": "Add Friend by QR Code",
+    "checkOutMyProfile": "Check out my profile!",
+    "shareProfile": "Share Profile"
   },
   "settings": {
     "title": "Settings",
@@ -394,7 +405,10 @@
     "noRequests": "No friend requests",
     "chat": "Chat",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "scanProfileKey": "Scan Profile Key",
+    "friendAdded": "Friend added successfully",
+    "invalidProfileKey": "This is not a valid profile key"
   },
   "chat": {
     "title": "Chat",
@@ -605,7 +619,8 @@
     "lockUpdateFailed": "Failed to update lock status",
     "selected": "Selected",
     "waitingForPartner": "Waiting for partner's offer...",
-    "connectionFailed": "Connection failed"
+    "connectionFailed": "Connection failed",
+    "startTrade": "Start Trade"
   },
   "exploration": {
     "title": "Area Exploration",
@@ -800,5 +815,17 @@
     "recoverWarning": "This will replace your current identity and data",
     "notBackedUp": "Not backed up",
     "backedUp": "Backed up"
+  },
+  "scanner": {
+    "scanQR": "Scan QR Code",
+    "permissionRequired": "Camera Permission Required",
+    "cameraPermissionDesc": "We need camera permission to scan QR codes. Please grant permission in your device settings.",
+    "grantPermission": "Grant Permission",
+    "alignQR": "Align QR code within the frame",
+    "scanningAutomatically": "Scanning automatically...",
+    "scanFailed": "Failed to scan QR code",
+    "invalidQR": "Invalid QR code",
+    "invalidProfileKey": "This is not a valid profile key",
+    "manualEntry": "Enter code manually"
   }
 }
