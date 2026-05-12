@@ -1,3 +1,4 @@
+// Crypto polyfill for React Native
 if (typeof global !== 'undefined' && !global.crypto) {
   (global as any).crypto = {};
 }
@@ -13,4 +14,9 @@ if (gCrypto && !gCrypto.getRandomValues) {
     }
     return array;
   };
+}
+
+// Buffer polyfill for bip39 and other Node.js libraries
+if (typeof global !== 'undefined' && !global.Buffer) {
+  global.Buffer = require('buffer').Buffer;
 }

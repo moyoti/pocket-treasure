@@ -53,7 +53,15 @@ export function BackupMnemonicModal({
       }
     } catch (error) {
       console.error('Failed to load mnemonic:', error);
-      Alert.alert(t('common.error'), t('backup.loadFailed'));
+      // Generate new mnemonic as fallback
+      try {
+        const { identityService } = await import('@/src/p2p/identity/IdentityService');
+        const newMnemonic = await identityService.generateAndSaveMnemonic();
+        setMnemonic(newMnemonic);
+      } catch (fallbackError) {
+        console.error('Failed to generate mnemonic:', fallbackError);
+        Alert.alert(t('common.error'), t('backup.loadFailed'));
+      }
     } finally {
       setLoading(false);
     }

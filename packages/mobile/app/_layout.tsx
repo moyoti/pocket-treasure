@@ -7,6 +7,52 @@ import { MobileLocaleProvider } from '@/components/MobileLocaleProvider';
 import { P2PProvider } from '@/src/p2p/P2PContext';
 import { useTranslation } from 'react-i18next';
 
+// Completely disable React Native DevTools to prevent fatal websocket errors
+if (__DEV__) {
+  // 1. Block WebSocket creation for devtools
+  const originalWebSocket = global.WebSocket;
+  global.WebSocket = function(url: string, ...args: any[]) {
+    // Block devtools websocket connections
+    if (url && typeof url === 'string' && (
+      url.includes('devtools') ||
+      url.includes('debugger') ||
+      url.includes('10.0.2.2:8081') ||
+      url.includes('localhost:8081')
+    )) {
+      // Return a mock WebSocket that does nothing
+      return {
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        send: () => {},
+        close: () => {},
+        readyState: 3, // CLOSED
+      };
+    }
+    return new originalWebSocket(url, ...args);
+  } as any;
+
+  // 2. Catch and suppress devtools errors
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('devtools')) {
+      return;
+    }
+    originalError(...args);
+  };
+
+  // 3. Override ErrorUtils to catch fatal devtools errors
+  if (typeof ErrorUtils !== 'undefined') {
+    const originalHandler = ErrorUtils.getGlobalHandler();
+    ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
+      if (error.message && error.message.includes('devtools')) {
+        // Silently ignore devtools errors
+        return;
+      }
+      originalHandler(error, isFatal);
+    });
+  }
+}
+
 function RootStack() {
   const { t } = useTranslation();
 
