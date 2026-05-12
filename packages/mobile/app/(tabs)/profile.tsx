@@ -99,13 +99,13 @@ export default function ProfileScreen() {
   const menuItems: MenuItem[] = [
     {
       icon: 'trophy-outline',
-      label: t('screens.achievements'),
+      label: t('items.screens.achievements'),
       subtitle: `${achievements.filter(a => a.unlockedAt).length} ${t('profile.unlocked')}`,
       onPress: () => router.push('/achievements' as any),
     },
     {
       icon: 'stats-chart-outline',
-      label: t('screens.statistics'),
+      label: t('items.screens.statistics'),
       subtitle: t('settings.viewCollectionStats'),
       onPress: () => router.push('/profile/stats'),
     },
@@ -151,7 +151,7 @@ export default function ProfileScreen() {
     },
     {
       icon: 'settings-outline',
-      label: t('screens.settings'),
+      label: t('items.screens.settings'),
       subtitle: t('profile.appPreferences'),
       onPress: () => router.push('/profile/settings'),
     },
@@ -169,7 +169,7 @@ export default function ProfileScreen() {
     },
     {
       icon: 'help-circle-outline',
-      label: t('screens.help'),
+      label: t('items.screens.help'),
       subtitle: t('profile.howToPlay'),
       onPress: () => router.push('/profile/help'),
     },
