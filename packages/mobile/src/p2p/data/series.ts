@@ -4,7 +4,7 @@ export const COLLECTION_SERIES: SeriesDefinition[] = [
   {
     id: 'series-legendary-collection',
     name: 'Legendary Collection',
-    nameZh: '传说收藏',
+    nameKey: 'series.names.legendary_collection',
     category: 'rarity',
     requiredItems: [
       'legendary-dragon-scale',
@@ -24,7 +24,7 @@ export const COLLECTION_SERIES: SeriesDefinition[] = [
   {
     id: 'series-epic-collection',
     name: 'Epic Collection',
-    nameZh: '史诗收藏',
+    nameKey: 'series.names.epic_collection',
     category: 'rarity',
     requiredItems: [
       'epic-crystal-shard',
@@ -44,50 +44,11 @@ export const COLLECTION_SERIES: SeriesDefinition[] = [
     },
     isHidden: false,
   },
-  {
-    id: 'series-shanghai-landmarks',
-    name: 'Shanghai Landmarks',
-    nameZh: '上海地标',
-    category: 'location',
-    requiredItems: [
-      'shanghai-bund-token',
-      'shanghai-nanjing-road-token',
-      'shanghai-oriental-pearl-token',
-      'shanghai-disney-token',
-      'shanghai-yuyuan-token',
-    ],
-    rewards: {
-      milestone25: { coins: 100, experience: 25 },
-      milestone50: { coins: 200, experience: 50 },
-      milestone75: { coins: 400, experience: 100 },
-      completion: { coins: 800, experience: 200, title: 'Shanghai Explorer' },
-    },
-    isHidden: false,
-  },
-  {
-    id: 'series-beijing-landmarks',
-    name: 'Beijing Landmarks',
-    nameZh: '北京地标',
-    category: 'location',
-    requiredItems: [
-      'beijing-tiananmen-token',
-      'beijing-forbidden-city-token',
-      'beijing-temple-of-heaven-token',
-      'beijing-great-wall-token',
-      'beijing-summer-palace-token',
-    ],
-    rewards: {
-      milestone25: { coins: 100, experience: 25 },
-      milestone50: { coins: 200, experience: 50 },
-      milestone75: { coins: 400, experience: 100 },
-      completion: { coins: 800, experience: 200, title: 'Beijing Explorer' },
-    },
-    isHidden: false,
-  },
+
   {
     id: 'series-spring-festival',
     name: 'Spring Festival Collection',
-    nameZh: '春节收藏',
+    nameKey: 'series.names.spring_festival',
     category: 'seasonal',
     requiredItems: [
       'spring-festival-red-envelope',
@@ -107,7 +68,7 @@ export const COLLECTION_SERIES: SeriesDefinition[] = [
   {
     id: 'series-ancient-artifacts',
     name: 'Ancient Artifacts',
-    nameZh: '古代遗物',
+    nameKey: 'series.names.ancient_artifacts',
     category: 'themed',
     requiredItems: [
       'ancient-bronze-vessel',
@@ -128,7 +89,7 @@ export const COLLECTION_SERIES: SeriesDefinition[] = [
   {
     id: 'series-nature-collection',
     name: 'Nature Collection',
-    nameZh: '自然收藏',
+    nameKey: 'series.names.nature_collection',
     category: 'themed',
     requiredItems: [
       'nature-rare-flower',

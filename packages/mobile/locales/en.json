@@ -681,7 +681,14 @@
     "complete": "Complete",
     "hiddenHint": "Some series are hidden. Discover them by collecting!",
     "partOfSeries": "Part of Series",
-    "seriesProgress": "{series} Progress"
+    "seriesProgress": "{series} Progress",
+    "names": {
+      "legendary_collection": "Legendary Collection",
+      "epic_collection": "Epic Collection",
+      "spring_festival": "Spring Festival Collection",
+      "ancient_artifacts": "Ancient Artifacts",
+      "nature_collection": "Nature Collection"
+    }
   },
   "markers": {
     "title": "My Markers",

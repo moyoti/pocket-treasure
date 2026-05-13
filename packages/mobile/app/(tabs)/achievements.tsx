@@ -107,6 +107,7 @@ export default function AchievementsScreen() {
   const renderSeriesItem = ({ item }: { item: SeriesProgress }) => {
     const seriesDef = SERIES_DEFINITIONS.find((s: SeriesDefinition) => s.id === item.seriesId);
     const progressPercent = item.progressPercent;
+    const seriesName = seriesDef?.nameKey ? t(seriesDef.nameKey) : (item.seriesNameZh || item.seriesName);
     const canClaimMilestone = (milestone: '25' | '50' | '75' | 'completion') => {
       if (milestone === '25') return item.milestone25 && !item.rewardsClaimed.includes('25');
       if (milestone === '50') return item.milestone50 && !item.rewardsClaimed.includes('50');

@@ -141,6 +141,7 @@ interface P2PContextValue {
   updateMarker: (id: string, updates: Partial<UserMarker>) => Promise<UserMarker | null>;
   deleteMarker: (id: string) => Promise<void>;
   refreshMarkers: () => Promise<void>;
+  getCurrentLocation: () => Promise<{ latitude: number; longitude: number }>;
 
   synthesizeItems: (inventoryItemIds: string[], recipeId: string) => Promise<{ success: boolean; error?: string; newItemId?: string; newItemRarity?: ItemRarity }>;
 }
@@ -763,6 +764,28 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     setUserMarkers(markers);
   }
 
+  async function getCurrentLocation(): Promise<{ latitude: number; longitude: number }> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error('Get location failed:', error);
+          reject(new Error('Failed to get current location. Please enable GPS.'));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+        }
+      );
+    });
+  }
+
   async function synthesizeItems(
     inventoryItemIds: string[],
     recipeId: string
@@ -885,6 +908,7 @@ export function P2PProvider({ children }: { children: ReactNode }) {
     updateMarker,
     deleteMarker,
     refreshMarkers,
+    getCurrentLocation,
 
     synthesizeItems,
   };

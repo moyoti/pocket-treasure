@@ -7,6 +7,9 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -86,68 +89,69 @@ export function RecoverMnemonicScreen({
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onCancel}>
-          <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-        </TouchableOpacity>
-        <Text style={styles.title}>{t('backup.recoverIdentity')}</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      {/* Instructions */}
-      <View style={styles.instructions}>
-        <Ionicons name="information-circle" size={20} color="#D4A017" />
-        <Text style={styles.instructionsText}>
-          {t('backup.recoverInstructions')}
-        </Text>
-      </View>
-
-      {/* Word Inputs */}
-      <View style={styles.wordInputs}>
-        {words.map((word, index) => (
-          <View key={index} style={styles.inputContainer}>
-            <Text style={styles.inputNumber}>{index + 1}</Text>
-            <TextInput
-              id={`word-${index}`}
-              style={styles.input}
-              value={word}
-              onChangeText={(value) => handleWordChange(index, value)}
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              selectTextOnFocus
-            />
-          </View>
-        ))}
-      </View>
-
-      {/* Action Button */}
-      <TouchableOpacity
-        style={[
-          styles.button,
-          recovering && styles.buttonDisabled,
-        ]}
-        onPress={handleRecover}
-        disabled={recovering}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
-        {recovering ? (
-          <ActivityIndicator size="small" color="#FFF" />
-        ) : (
-          <>
-            <Ionicons name="download-outline" size={20} color="#FFF" />
-            <Text style={styles.buttonText}>{t('backup.recoverIdentity')}</Text>
-          </>
-        )}
-      </TouchableOpacity>
+        {/* Instructions */}
+        <View style={styles.instructions}>
+          <Ionicons name="information-circle" size={20} color="#D4A017" />
+          <Text style={styles.instructionsText}>
+            {t('backup.recoverInstructions')}
+          </Text>
+        </View>
 
-      {/* Warning */}
-      <View style={styles.warning}>
-        <Ionicons name="warning" size={16} color="#999" />
-        <Text style={styles.warningText}>{t('backup.recoverWarning')}</Text>
-      </View>
-    </View>
+        {/* Word Inputs */}
+        <View style={styles.wordInputs}>
+          {words.map((word, index) => (
+            <View key={index} style={styles.inputContainer}>
+              <Text style={styles.inputNumber}>{index + 1}</Text>
+              <TextInput
+                id={`word-${index}`}
+                style={styles.input}
+                value={word}
+                onChangeText={(value) => handleWordChange(index, value)}
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                selectTextOnFocus
+                returnKeyType={index < 11 ? 'next' : 'done'}
+                onSubmitEditing={() => {}}
+              />
+            </View>
+          ))}
+        </View>
+
+        {/* Action Button */}
+        <TouchableOpacity
+          style={[
+            styles.button,
+            recovering && styles.buttonDisabled,
+          ]}
+          onPress={handleRecover}
+          disabled={recovering}
+        >
+          {recovering ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <>
+              <Ionicons name="download-outline" size={20} color="#FFF" />
+              <Text style={styles.buttonText}>{t('backup.recoverIdentity')}</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* Warning */}
+        <View style={styles.warning}>
+          <Ionicons name="warning" size={16} color="#999" />
+          <Text style={styles.warningText}>{t('backup.recoverWarning')}</Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -155,27 +159,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF8E7',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1A1A1A',
+    paddingBottom: 40,
   },
   instructions: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: '#FEF3C7',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     marginBottom: 20,
-    gap: 8,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
   instructionsText: {
     flex: 1,
@@ -184,30 +185,35 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   wordInputs: {
-    flex: 1,
+    marginBottom: 20,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E8DCC4',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
   inputNumber: {
-    width: 30,
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'right',
-    marginRight: 8,
+    width: 28,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#D4A017',
+    textAlign: 'center',
+    marginRight: 10,
+    backgroundColor: '#FFF8E7',
+    borderRadius: 6,
+    paddingVertical: 6,
   },
   input: {
     flex: 1,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E0D5C0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
     fontSize: 15,
     color: '#1A1A1A',
+    paddingVertical: 8,
   },
   button: {
     flexDirection: 'row',
@@ -217,7 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
-    marginTop: 20,
+    marginBottom: 16,
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -231,7 +237,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
     gap: 6,
   },
   warningText: {

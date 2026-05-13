@@ -666,7 +666,14 @@
     "seriesProgress": "{series}進捗",
     "items": "アイテム",
     "completedSeries": "完了シリーズ",
-    "complete": "完了"
+    "complete": "完了",
+    "names": {
+      "legendary_collection": "伝説のコレクション",
+      "epic_collection": "エピックコレクション",
+      "spring_festival": "春節コレクション",
+      "ancient_artifacts": "古代の遺物",
+      "nature_collection": "自然コレクション"
+    }
   },
   "markers": {
     "title": "マイマーカー",

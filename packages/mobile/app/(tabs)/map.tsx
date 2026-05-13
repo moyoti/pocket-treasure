@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Platform,
   useWindowDimensions,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +35,7 @@ import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/
 import { getItemById } from '@/src/p2p/data/items';
 import { CollectionAnimationModal } from '@/components/animations/CollectionAnimationModal';
 import { success as hapticSuccess } from '@/utils/haptics';
+import { MarkerIconType } from '@/src/p2p/types';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
@@ -64,8 +67,12 @@ export default function MapScreen() {
     nearbySpawns, 
     userLocation,
     inventory,
+    userMarkers,
     refreshNearby, 
-    collectTreasure 
+    collectTreasure,
+    createMarker,
+    updateMarker,
+    deleteMarker 
   } = useP2P();
   
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -75,6 +82,14 @@ export default function MapScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [animationVisible, setAnimationVisible] = useState(false);
   const [collectedItem, setCollectedItem] = useState<{ name: string; rarity: ItemRarity } | null>(null);
+  const [showCreateMarker, setShowCreateMarker] = useState(false);
+  const [longPressLocation, setLongPressLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [markerName, setMarkerName] = useState('');
+  const [creatingMarker, setCreatingMarker] = useState(false);
+  const [editingMarker, setEditingMarker] = useState<UserMarker | null>(null);
+  const [showEditMarker, setShowEditMarker] = useState(false);
+  const [editMarkerName, setEditMarkerName] = useState('');
+  const [editMarkerDescription, setEditMarkerDescription] = useState('');
 
   const sheetTranslateY = useSharedValue(300);
   const sheetOpacity = useSharedValue(0);
@@ -100,6 +115,108 @@ export default function MapScreen() {
       setIsClosing(false);
     }, 250);
   }, [isClosing]);
+
+  const handleLongPress = useCallback((event: any) => {
+    console.log('[Map] Long press event:', JSON.stringify(event));
+    const coordinates = event.geometry?.coordinates;
+    if (!coordinates || coordinates.length < 2) {
+      console.error('[Map] Invalid coordinates from long press');
+      return;
+    }
+    const [longitude, latitude] = coordinates;
+    setLongPressLocation({ latitude, longitude });
+    setMarkerName('');
+    setShowCreateMarker(true);
+  }, []);
+
+  const handleCreateMarker = async () => {
+    if (!markerName.trim() || !longPressLocation) {
+      Alert.alert(t('common.error'), t('markers.nameRequired'));
+      return;
+    }
+
+    setCreatingMarker(true);
+    try {
+      await createMarker(
+        markerName.trim(),
+        longPressLocation.latitude,
+        longPressLocation.longitude,
+        'pin',
+        '#FFD700',
+        'Created from map long press'
+      );
+      
+      Alert.alert(
+        t('common.success'),
+        t('markers.markerCreated'),
+        [{ text: t('common.ok'), onPress: () => setShowCreateMarker(false) }]
+      );
+    } catch (error) {
+      console.error('Create marker failed:', error);
+      Alert.alert(t('common.error'), t('markers.createFailed'));
+    } finally {
+      setCreatingMarker(false);
+    }
+  };
+
+  const handleMarkerPress = (marker: UserMarker) => {
+    setEditingMarker(marker);
+    setEditMarkerName(marker.name);
+    setEditMarkerDescription(marker.description || '');
+    setShowEditMarker(true);
+  };
+
+  const handleUpdateMarker = async () => {
+    if (!editMarkerName.trim() || !editingMarker) {
+      Alert.alert(t('common.error'), t('markers.nameRequired'));
+      return;
+    }
+
+    setCreatingMarker(true);
+    try {
+      await updateMarker(editingMarker.id, {
+        name: editMarkerName.trim(),
+        description: editMarkerDescription.trim() || undefined,
+      });
+      
+      Alert.alert(
+        t('common.success'),
+        t('common.success'),
+        [{ text: t('common.ok'), onPress: () => setShowEditMarker(false) }]
+      );
+    } catch (error) {
+      console.error('Update marker failed:', error);
+      Alert.alert(t('common.error'), 'Failed to update marker');
+    } finally {
+      setCreatingMarker(false);
+    }
+  };
+
+  const handleDeleteMarker = async () => {
+    if (!editingMarker) return;
+    
+    Alert.alert(
+      t('markers.deleteMarker'),
+      t('markers.deleteConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('markers.deleteMarker'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteMarker(editingMarker.id);
+              setShowEditMarker(false);
+              Alert.alert(t('common.success'), t('common.success'));
+            } catch (error) {
+              console.error('Delete marker failed:', error);
+              Alert.alert(t('common.error'), t('markers.deleteFailed'));
+            }
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     if (selectedSpawn && !isClosing) {
@@ -237,6 +354,20 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
     };
   };
 
+  const getMarkerIconName = (iconType: string): string => {
+    const iconMap: Record<string, string> = {
+      star: 'star',
+      flag: 'flag',
+      treasure: 'diamond',
+      camp: 'boat',
+      note: 'document-text',
+      camera: 'camera',
+      heart: 'heart',
+      pin: 'location',
+    };
+    return iconMap[iconType] || 'location';
+  };
+
   const visibleSpawns = nearbySpawns.filter(s => !s.isCollected);
   console.log('[Map] Rendering map with:', { 
     nearbyPOIs: nearbyPOIs.length, 
@@ -252,6 +383,7 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
         style={{ flex: 1 }}
         styleURL="mapbox://styles/mapbox/streets-v12"
         compassEnabled={true}
+        onLongPress={handleLongPress}
         contentInset={{
           top: insets.top,
           left: 0,
@@ -312,6 +444,40 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
             </MapboxGL.PointAnnotation>
           );
         })}
+
+        {/* User Markers */}
+        {userMarkers.map((marker) => (
+          <MapboxGL.PointAnnotation
+            key={marker.id}
+            id={`user-marker-${marker.id}`}
+            coordinate={[marker.longitude, marker.latitude]}
+            title={marker.name}
+            snippet={marker.description || 'User Marker'}
+            onSelected={() => handleMarkerPress(marker)}
+          >
+            <View style={{
+              backgroundColor: marker.color,
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderWidth: 2,
+              borderColor: '#FFF',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 3,
+              elevation: 4,
+            }}>
+              <Ionicons 
+                name={getMarkerIconName(marker.iconType)} 
+                size={16} 
+                color="#FFF" 
+              />
+            </View>
+          </MapboxGL.PointAnnotation>
+        ))}
       </MapboxGL.MapView>
 
       <View style={[styles.topOverlay, { top: insets.top + 12 }]}>
@@ -413,6 +579,137 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
         onClose={() => setAnimationVisible(false)}
         autoDismissDelay={2500}
       />
+
+      {/* Create Marker Modal */}
+      <Modal
+        visible={showCreateMarker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreateMarker(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="location" size={24} color="#D4A017" />
+              <Text style={styles.modalTitle}>{t('markers.createMarker')}</Text>
+            </View>
+
+            <Text style={styles.modalLabel}>{t('markers.markerName')}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={markerName}
+              onChangeText={setMarkerName}
+              placeholder={t('markers.namePlaceholder')}
+              placeholderTextColor="#999"
+              autoFocus
+              maxLength={50}
+            />
+
+            {longPressLocation && (
+              <View style={styles.locationInfo}>
+                <Ionicons name="map-outline" size={16} color="#666" />
+                <Text style={styles.locationText}>
+                  {longPressLocation.latitude.toFixed(4)}, {longPressLocation.longitude.toFixed(4)}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowCreateMarker(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCreate, creatingMarker && styles.modalButtonDisabled]}
+                onPress={handleCreateMarker}
+                disabled={creatingMarker || !markerName.trim()}
+              >
+                {creatingMarker ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.modalButtonTextCreate}>{t('markers.create')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Marker Modal */}
+      <Modal
+        visible={showEditMarker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditMarker(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="create-outline" size={24} color="#D4A017" />
+              <Text style={styles.modalTitle}>{t('markers.editMarker')}</Text>
+            </View>
+
+            <Text style={styles.modalLabel}>{t('markers.markerName')}</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editMarkerName}
+              onChangeText={setEditMarkerName}
+              placeholder={t('markers.namePlaceholder')}
+              placeholderTextColor="#999"
+              autoFocus
+              maxLength={50}
+            />
+
+            <Text style={styles.modalLabel}>{t('markers.markerDescription')}</Text>
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea]}
+              value={editMarkerDescription}
+              onChangeText={setEditMarkerDescription}
+              placeholder={t('markers.descriptionPlaceholder')}
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={styles.locationInfo}>
+              <Ionicons name="map-outline" size={16} color="#666" />
+              <Text style={styles.locationText}>
+                {editingMarker?.latitude.toFixed(4)}, {editingMarker?.longitude.toFixed(4)}
+              </Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDelete]}
+                onPress={handleDeleteMarker}
+              >
+                <Ionicons name="trash-outline" size={18} color="#dc2626" />
+                <Text style={styles.modalButtonTextDelete}>{t('markers.deleteMarker')}</Text>
+              </TouchableOpacity>
+              <View style={styles.modalButtonSpacer} />
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowEditMarker(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonUpdate, creatingMarker && styles.modalButtonDisabled]}
+                onPress={handleUpdateMarker}
+                disabled={creatingMarker || !editMarkerName.trim()}
+              >
+                {creatingMarker ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.modalButtonTextUpdate}>{t('common.save')}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -549,6 +846,118 @@ const styles = StyleSheet.create({
   sheetContent: {
     paddingHorizontal: 20,
     paddingBottom: 16,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '85%',
+    maxWidth: 340,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#1A1A1A',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginBottom: 12,
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F0E5',
+    borderRadius: 8,
+    padding: 10,
+    gap: 6,
+    marginBottom: 16,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#F0F0F0',
+  },
+  modalButtonCreate: {
+    backgroundColor: '#D4A017',
+  },
+  modalButtonDisabled: {
+    opacity: 0.5,
+  },
+  modalButtonTextCancel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  modalButtonTextCreate: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  modalTextArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  modalButtonDelete: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 12,
+  },
+  modalButtonTextDelete: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#dc2626',
+  },
+  modalButtonSpacer: {
+    flex: 0.5,
+  },
+  modalButtonUpdate: {
+    backgroundColor: '#D4A017',
+  },
+  modalButtonTextUpdate: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFF',
   },
   sheetHeader: {
     flexDirection: 'row',

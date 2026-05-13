@@ -1,6 +1,6 @@
 import React from 'react';
 import { RecoverMnemonicScreen } from '@/components/backup/RecoverMnemonicScreen';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 
 export default function RecoverScreen() {
   const router = useRouter();
@@ -14,9 +14,17 @@ export default function RecoverScreen() {
   };
 
   return (
-    <RecoverMnemonicScreen
-      onRecoverComplete={handleRecoverComplete}
-      onCancel={handleCancel}
-    />
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Recover Identity',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <RecoverMnemonicScreen
+        onRecoverComplete={handleRecoverComplete}
+        onCancel={handleCancel}
+      />
+    </>
   );
 }

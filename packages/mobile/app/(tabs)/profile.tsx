@@ -209,17 +209,7 @@ export default function ProfileScreen() {
       icon: 'pin-outline',
       label: t('markers.title'),
       subtitle: `${userMarkers.length} ${t('profile.markers')}`,
-      onPress: () => {
-        if (userMarkers.length > 0) {
-          Alert.alert(
-            t('markers.myMarkers'),
-            userMarkers.map(m => `${m.name} - ${m.iconType}`).join('\n'),
-            [{ text: t('common.close') }]
-          );
-        } else {
-          Alert.alert(t('markers.noMarkers'), t('markers.createFirst'));
-        }
-      },
+      onPress: () => router.push('/markers' as any),
     },
     {
       icon: 'settings-outline',
