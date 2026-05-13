@@ -123,7 +123,7 @@ export default function MapScreen() {
   }));
 
   const getRarityName = (rarity: ItemRarity): string => {
-    return t(`rarity.${rarity}`);
+    return t(`items.rarity.${rarity}`);
   };
 
   const requestLocation = async () => {

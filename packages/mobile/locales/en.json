@@ -58,7 +58,7 @@
     "title": "Treasure Map",
     "nearbyTreasures": "Nearby Treasures",
     "noTreasures": "No treasures nearby",
-    "collectSuccess": "Collected successfully!",
+    "collectSuccess": "✨ You got it!",
     "collectFailed": "Collection failed",
     "tooFar": "Too far, please get closer",
     "refreshing": "Refreshing...",
