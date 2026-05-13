@@ -396,7 +396,7 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
                   ) : (
                     <>
                       <Ionicons name="hand-left" size={18} color="#FFF" />
-                      <Text style={styles.collectButtonText}>{t('map.collectSuccess')}</Text>
+                      <Text style={styles.collectButtonText}>{t('map.collect')}</Text>
                     </>
                   )}
                 </TouchableOpacity>
