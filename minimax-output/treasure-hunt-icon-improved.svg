@@ -1,0 +1,63 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chestGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D4A017;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="226" fill="url(#bgGrad)"/>
+  
+  <!-- Compass Circle -->
+  <circle cx="512" cy="512" r="380" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+  
+  <!-- Compass Rose - North -->
+  <polygon points="512,180 532,240 512,220 492,240" fill="white" opacity="0.8"/>
+  <!-- Compass Rose - South -->
+  <polygon points="512,844 532,784 512,804 492,784" fill="white" opacity="0.8"/>
+  <!-- Compass Rose - East -->
+  <polygon points="844,512 784,492 804,512 784,532" fill="white" opacity="0.8"/>
+  <!-- Compass Rose - West -->
+  <polygon points="180,512 240,492 220,512 240,532" fill="white" opacity="0.8"/>
+  
+  <!-- Map Grid Lines (subtle) -->
+  <line x1="200" y1="300" x2="824" y2="300" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <line x1="200" y1="512" x2="824" y2="512" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <line x1="200" y1="724" x2="824" y2="724" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <line x1="300" y1="200" x2="300" y2="824" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <line x1="512" y1="200" x2="512" y2="824" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <line x1="724" y1="200" x2="724" y2="824" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  
+  <!-- Treasure Chest (simplified but recognizable) -->
+  <g filter="url(#shadow)">
+    <!-- Chest Body -->
+    <rect x="362" y="412" width="300" height="200" rx="20" fill="url(#chestGrad)"/>
+    <!-- Chest Lid -->
+    <path d="M362 412 L362 462 Q512 362 662 462 L662 412 Q512 312 362 412" fill="url(#chestGrad)"/>
+    <!-- Lock Detail -->
+    <circle cx="512" cy="512" r="30" fill="#FFA500"/>
+    <rect x="502" y="502" width="20" height="30" rx="4" fill="#1E3A8A"/>
+    <!-- Metallic Bands -->
+    <rect x="362" y="450" width="300" height="20" fill="#FFA500" opacity="0.6"/>
+    <rect x="362" y="554" width="300" height="20" fill="#FFA500" opacity="0.6"/>
+  </g>
+  
+  <!-- Sparkles -->
+  <circle cx="280" cy="320" r="8" fill="white" opacity="0.9"/>
+  <circle cx="290" cy="310" r="4" fill="white" opacity="0.7"/>
+  <circle cx="744" cy="280" r="10" fill="white" opacity="0.9"/>
+  <circle cx="754" cy="270" r="5" fill="white" opacity="0.7"/>
+  <circle cx="320" cy="760" r="6" fill="white" opacity="0.8"/>
+  
+  <!-- Golden Border Ring -->
+  <rect x="20" y="20" width="984" height="984" rx="206" fill="none" stroke="#FFD700" stroke-width="8" opacity="0.6"/>
+</svg>
