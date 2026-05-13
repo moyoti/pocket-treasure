@@ -97,33 +97,6 @@ export default function HelpScreen() {
         </View>
       </View>
 
-      {/* Contact */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('help.contactSupport')}</Text>
-        <View style={styles.card}>
-          <TouchableOpacity style={styles.contactItem} onPress={handleEmailSupport}>
-            <View style={[styles.contactIcon, { backgroundColor: '#F0FDF4' }]}>
-              <Ionicons name="mail-outline" size={20} color="#22c55e" />
-            </View>
-            <View style={styles.contactContent}>
-              <Text style={styles.contactTitle}>{t('help.emailSupport')}</Text>
-              <Text style={styles.contactSubtitle}>support@treasurehunt.com</Text>
-            </View>
-            <Ionicons name="open-outline" size={18} color="#CCC" />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <View style={styles.contactItem}>
-            <View style={[styles.contactIcon, { backgroundColor: '#EBF5FF' }]}>
-              <Ionicons name="time-outline" size={20} color="#3b82f6" />
-            </View>
-            <View style={styles.contactContent}>
-              <Text style={styles.contactTitle}>{t('help.businessHours')}</Text>
-              <Text style={styles.contactSubtitle}>{t('help.businessHoursTime')}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
       {/* Footer */}
       <View style={styles.footerTip}>
         <Ionicons name="heart" size={14} color="#dc2626" />
