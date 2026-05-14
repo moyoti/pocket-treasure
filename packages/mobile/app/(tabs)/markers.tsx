@@ -53,9 +53,22 @@ export default function MarkersScreen() {
     router.push('/markers/create' as any);
   };
 
+  const handleViewOnMap = (marker: UserMarker) => {
+    router.push({
+      pathname: '/(tabs)/map' as any,
+      params: {
+        focusMarkerId: marker.id,
+        focusLat: marker.latitude.toString(),
+        focusLng: marker.longitude.toString(),
+        focusName: marker.name,
+      },
+    });
+  };
+
   const renderMarker = ({ item }: { item: UserMarker }) => (
     <TouchableOpacity
       style={styles.card}
+      onPress={() => handleViewOnMap(item)}
       onLongPress={() => handleDelete(item)}
     >
       <View style={[styles.iconContainer, { backgroundColor: getItemColor(item.icon, item.color) }]}>

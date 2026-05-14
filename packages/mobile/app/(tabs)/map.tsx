@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MapboxGL from '@rnmapbox/maps';
 import * as Location from 'expo-location';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -75,6 +75,11 @@ export default function MapScreen() {
     deleteMarker 
   } = useP2P();
   
+  const params = useLocalSearchParams();
+  const [focusMarkerId, setFocusMarkerId] = useState<string | null>(null);
+  const [cameraCenter, setCameraCenter] = useState<[number, number] | null>(null);
+  const [cameraZoom, setCameraZoom] = useState<number>(15);
+  
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [selectedSpawn, setSelectedSpawn] = useState<SpawnedTreasure | null>(null);
   const [collecting, setCollecting] = useState(false);
@@ -115,6 +120,29 @@ export default function MapScreen() {
       setIsClosing(false);
     }, 250);
   }, [isClosing]);
+
+  useEffect(() => {
+    if (params.focusMarkerId && params.focusLat && params.focusLng) {
+      const lat = parseFloat(params.focusLat as string);
+      const lng = parseFloat(params.focusLng as string);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setCameraCenter([lng, lat]);
+        setCameraZoom(16);
+        setFocusMarkerId(params.focusMarkerId as string);
+      }
+    }
+  }, [params]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setFocusMarkerId(null);
+        setCameraCenter(null);
+        setCameraZoom(15);
+      };
+    }, [])
+  );
 
   const handleLongPress = useCallback((event: any) => {
     console.log('[Map] Long press event:', JSON.stringify(event));
@@ -402,9 +430,10 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
         }}
       >
         <MapboxGL.Camera
-          zoomLevel={15}
-          centerCoordinate={[location.coords.longitude, location.coords.latitude]}
-          animationMode="none"
+          centerCoordinate={cameraCenter || [location.coords.longitude, location.coords.latitude]}
+          zoomLevel={cameraZoom}
+          animationMode="easeTo"
+          animationDuration={1000}
         />
         <MapboxGL.UserLocation visible={true} />
         {visibleSpawns.map((spawn) => {

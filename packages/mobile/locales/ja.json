@@ -721,7 +721,8 @@
     "nearbyMarkers": "近くのマーカー",
     "myMarkers": "マイマーカー",
     "shared": "共有済み",
-    "create": "作成"
+    "create": "作成",
+    "locationShown": "の位置をマップに表示しました"
   },
   "mapbox": {
     "offlineMaps": "オフラインマップ",

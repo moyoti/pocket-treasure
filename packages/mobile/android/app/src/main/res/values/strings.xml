@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">Treasure Hunt</string>
+  <string name="app_name">Treasure Cat</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
   <string name="mapbox_access_token" translatable="false">pk.eyJ1IjoiYm91c2gxMTExMSIsImEiOiJjbW5scjhuOHMxZWRwMnJxNHJuYTl0MnZwIn0.VLL5LCZt91GK8ZAOr96cnA</string>

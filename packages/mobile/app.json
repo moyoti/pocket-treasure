@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Treasure Hunt",
-    "slug": "treasure-hunt",
+    "name": "Treasure Cat",
+    "slug": "treasure-cat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "treasurehunt",
+    "scheme": "treasurecat",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.treasurehunt.app",
+      "bundleIdentifier": "com.treasurecat.app",
       "buildNumber": "1",
       "infoPlist": {
-        "CFBundleDisplayName": "宝探し",
+        "CFBundleDisplayName": "宝探し猫",
         "NSLocationWhenInUseUsageDescription": "近くの宝を表示するには位置情報が必要です。",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "近くの宝を検出するには位置情報が必要です。",
         "NSLocationAlwaysUsageDescription": "近くの宝を検出するには位置情報が必要です。",
@@ -30,7 +30,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFF8E7"
       },
-      "package": "com.treasurehunt.app",
+      "package": "com.treasurecat.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",

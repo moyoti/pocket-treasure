@@ -736,7 +736,8 @@
     "nearbyMarkers": "Nearby Markers",
     "myMarkers": "My Markers",
     "shared": "Shared",
-    "create": "Create"
+    "create": "Create",
+    "locationShown": "location shown on map"
   },
   "mapbox": {
     "offlineMaps": "Offline Maps",
