@@ -1,4 +1,4 @@
-package com.treasurehunt.app
+package com.treasurecat.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

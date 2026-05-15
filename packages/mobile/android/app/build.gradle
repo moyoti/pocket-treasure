@@ -94,9 +94,9 @@ packagingOptions {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.treasurehunt.app'
+    namespace 'com.treasurecat.app'
     defaultConfig {
-        applicationId 'com.treasurehunt.app'
+        applicationId 'com.treasurecat.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

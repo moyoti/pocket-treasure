@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = '寻宝记'
+rootProject.name = 'Treasure Cat'
 
 dependencyResolutionManagement {
   versionCatalogs {
