@@ -24,7 +24,7 @@ export class SpawnService {
   async getNearbySpawns(
     latitude: number,
     longitude: number,
-    radiusMeters: number = 2000
+    radiusMeters: number = 5000
   ): Promise<SpawnedTreasure[]> {
     console.log('[SpawnService] getNearbySpawns called:', latitude, longitude, radiusMeters);
     const pois = await databaseService.getPOIsNearby(latitude, longitude, radiusMeters / 1000);

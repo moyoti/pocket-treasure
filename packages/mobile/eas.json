@@ -35,11 +35,11 @@
       "extends": "base",
       "ios": {
         "buildConfiguration": "Release",
-        "bundleIdentifier": "com.treasurehunt.app"
+        "bundleIdentifier": "com.treasurecat.app"
       },
       "android": {
         "buildType": "app-bundle",
-        "applicationId": "com.treasurehunt.app"
+        "applicationId": "com.treasurecat.app"
       }
     }
   },

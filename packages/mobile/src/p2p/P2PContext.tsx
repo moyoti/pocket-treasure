@@ -316,12 +316,12 @@ export function P2PProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log('[P2PContext] Fetching nearby POIs...');
-      const pois = await poiService.fetchNearbyPOIs(lat, lng, 2000);
+      const pois = await poiService.fetchNearbyPOIs(lat, lng, 5000);
       console.log('[P2PContext] Found POIs:', pois.length);
       setNearbyPOIs(pois);
 
       console.log('[P2PContext] Getting nearby spawns...');
-      const spawns = await spawnService.getNearbySpawns(lat, lng, 2000);
+      const spawns = await spawnService.getNearbySpawns(lat, lng, 5000);
       console.log('[P2PContext] Found spawns:', spawns.length, spawns.map(s => ({ poiId: s.poiId, itemId: s.itemId, isCollected: s.isCollected })));
       setNearbySpawns(spawns);
     } catch (err) {

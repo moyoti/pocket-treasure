@@ -6,6 +6,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MobileLocaleProvider } from '@/components/MobileLocaleProvider';
 import { P2PProvider } from '@/src/p2p/P2PContext';
 import { useTranslation } from 'react-i18next';
+import MapboxGL from '@rnmapbox/maps';
+
+// Initialize Mapbox access token
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+if (MAPBOX_TOKEN) {
+  MapboxGL.setAccessToken(MAPBOX_TOKEN);
+} else {
+  console.error('[Mapbox] Access token not found!');
+}
 
 // Completely disable React Native DevTools to prevent fatal websocket errors
 if (__DEV__) {

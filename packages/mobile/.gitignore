@@ -4,3 +4,10 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+# Google Play Store deployment
+*.p12
+*-key.json
+play-store-*.json
+service-account-*.json
+.google/

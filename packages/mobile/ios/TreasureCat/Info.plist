@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>寻宝记</string>
+    <string>宝探し猫</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>treasurehunt</string>
-          <string>com.treasurehunt.app</string>
+          <string>treasurecat</string>
+          <string>com.treasurecat.app</string>
         </array>
       </dict>
     </array>
@@ -45,14 +45,16 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>寻宝记需要您的位置来检测附近的宝藏。</string>
+    <string>近くの宝を検出するには位置情報が必要です。</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>寻宝记需要您的位置来检测附近的宝藏。</string>
+    <string>近くの宝を検出するには位置情報が必要です。</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>寻宝记需要您的位置来显示附近的宝藏。</string>
+    <string>近くの宝を表示するには位置情報が必要です。</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSUserActivityTypes</key>

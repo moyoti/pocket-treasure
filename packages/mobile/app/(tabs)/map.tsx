@@ -358,25 +358,28 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
 }
   }
 
-  if (isLoading) {
+  // Show loading spinner while fetching location
+  if (isLoading || (!location && !permissionDenied)) {
     return (
       <View style={styles.loadingContainer}>
         <View style={styles.loadingContent}>
-          <Ionicons name="compass-outline" size={48} color="#D4A017" />
-          <ActivityIndicator size="large" color="#D4A017" style={{ marginTop: 16 }} />
-          <Text style={styles.loadingText}>{t('common.loading')}</Text>
+          <ActivityIndicator size="large" color="#D4A017" />
+          <Text style={[styles.loadingText, { marginTop: 16, color: '#999' }]}>
+            {t('settings.findingLocation')}
+          </Text>
         </View>
       </View>
     );
   }
 
-  if (permissionDenied || !location) {
+  // Show permission denied screen with buttons
+  if (permissionDenied) {
     return (
       <View style={styles.loadingContainer}>
         <View style={styles.loadingContent}>
           <Ionicons name="alert-circle-outline" size={48} color="#E91E63" />
           <Text style={[styles.loadingText, { color: '#999', marginTop: 12, textAlign: 'center', paddingHorizontal: 40 }]}>
-            {permissionDenied ? t('permissions.locationDenied') : t('settings.findingLocation')}
+            {t('permissions.locationDenied')}
           </Text>
           <View style={styles.buttonColumn}>
             <TouchableOpacity 
@@ -567,16 +570,19 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
         ))}
       </MapboxGL.MapView>
 
-      <View style={[styles.topOverlay, { top: insets.top + 12 }]}>
-        <View style={styles.countPill}>
-          <Ionicons name="compass" size={16} color="#D4A017" />
-          <Text style={styles.countText}>
-            {visibleSpawns.length} {t('map.nearbyTreasures')}
-          </Text>
-        </View>
-        <View style={styles.inventoryPill}>
-          <Ionicons name="cube" size={16} color="#3B82F6" />
-          <Text style={styles.inventoryText}>{inventory.length} {t('nav.inventory')}</Text>
+      {/* Bottom Left - Treasure Count + Inventory */}
+      <View style={[styles.bottomLeftOverlay, { bottom: insets.bottom + 16, left: 16 }]}>
+        <View style={styles.bottomPillsContainer}>
+          <View style={styles.countPill}>
+            <Ionicons name="compass" size={16} color="#D4A017" />
+            <Text style={styles.countText}>
+              {visibleSpawns.length} {t('map.nearbyTreasures')}
+            </Text>
+          </View>
+          <View style={styles.inventoryPill}>
+            <Ionicons name="cube" size={16} color="#3B82F6" />
+            <Text style={styles.inventoryText}>{inventory.length} {t('nav.inventory')}</Text>
+          </View>
         </View>
       </View>
 
@@ -863,11 +869,15 @@ const styles = StyleSheet.create({
   },
   topOverlay: {
     position: 'absolute',
-    left: 16,
-    right: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  bottomLeftOverlay: {
+    position: 'absolute',
+  },
+  bottomPillsContainer: {
+    flexDirection: 'column',
+    gap: 8,
   },
   countPill: {
     flexDirection: 'row',

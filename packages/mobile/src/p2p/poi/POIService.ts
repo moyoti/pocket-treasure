@@ -175,7 +175,7 @@ export class POIService {
   async fetchNearbyPOIs(
     latitude: number,
     longitude: number,
-    radiusMeters: number = 2000
+    radiusMeters: number = 5000
   ): Promise<POI[]> {
     const now = Date.now();
 
