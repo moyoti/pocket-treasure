@@ -42,23 +42,29 @@ export function BackupMnemonicModal({
   const loadMnemonic = async () => {
     try {
       const { identityService } = await import('@/src/p2p/identity/IdentityService');
-      const stored = await identityService.getStoredMnemonic();
+      let stored = await identityService.getStoredMnemonic();
+      
+      console.log('[BackupModal] Loaded mnemonic:', stored ? 'exists' : 'null');
       
       if (stored) {
         setMnemonic(stored);
       } else {
         // Generate new mnemonic
+        console.log('[BackupModal] Generating new mnemonic...');
         const newMnemonic = await identityService.generateAndSaveMnemonic();
+        console.log('[BackupModal] Generated mnemonic:', newMnemonic ? 'success' : 'failed');
         setMnemonic(newMnemonic);
       }
     } catch (error) {
       // Silently handle error and generate new mnemonic
       try {
+        console.log('[BackupModal] Error loading, generating new mnemonic...');
         const { identityService } = await import('@/src/p2p/identity/IdentityService');
         const newMnemonic = await identityService.generateAndSaveMnemonic();
+        console.log('[BackupModal] Generated mnemonic:', newMnemonic ? 'success' : 'failed');
         setMnemonic(newMnemonic);
       } catch (fallbackError) {
-        console.error('[Backup] Failed to generate mnemonic:', fallbackError);
+        console.error('[BackupModal] Failed to generate mnemonic:', fallbackError);
         Alert.alert(t('common.error'), t('backup.loadFailed'));
       }
     } finally {
