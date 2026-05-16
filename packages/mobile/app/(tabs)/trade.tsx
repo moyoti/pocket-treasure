@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,8 +52,53 @@ export default function TradeScreen() {
       return;
     }
 
-    setIsScanning(true);
-    await startTradeDiscovery();
+    try {
+      setIsScanning(true);
+      await startTradeDiscovery();
+    } catch (error: any) {
+      console.error('[Trade] Failed to start discovery:', error);
+      setIsScanning(false);
+      
+      // Check if it's a Bluetooth not enabled error
+      if (error.message && error.message.includes('Bluetooth is not enabled')) {
+        Alert.alert(
+          t('trade.bluetoothRequired'),
+          t('trade.bluetoothRequiredDesc'),
+          [
+            {
+              text: t('common.cancel'),
+              style: 'cancel',
+            },
+            {
+              text: t('trade.openBluetoothSettings'),
+              onPress: async () => {
+                try {
+                  // Try to open Bluetooth settings
+                  if (Platform.OS === 'ios') {
+                    // iOS doesn't allow direct Bluetooth settings access
+                    // Open app settings instead
+                    await Linking.openURL('app-settings:');
+                  } else {
+                    // Android can open Bluetooth settings directly
+                    await Linking.openURL('android.settings.BLUETOOTH_SETTINGS');
+                  }
+                } catch (err) {
+                  console.error('[Trade] Failed to open settings:', err);
+                  // Fallback: open general settings
+                  await Linking.openSettings();
+                }
+              },
+            },
+          ]
+        );
+      } else {
+        // Other errors
+        Alert.alert(
+          t('common.error'),
+          error.message || t('trade.discoveryFailed')
+        );
+      }
+    }
   };
 
   const handleStopScan = () => {
