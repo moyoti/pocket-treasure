@@ -60,20 +60,37 @@ export class TradeService {
       throw new Error('No local identity found');
     }
 
-await this.manager.startDeviceScan(null, {
-      allowDuplicates: false,
-    }, (error: BleError | null, device: Device | null) => {
-      if (error) {
-        console.error('BLE scan error:', error);
-        return;
+    // Check if Bluetooth is enabled and start scanning
+    try {
+      const state = await this.manager.state();
+      console.log('[TradeService] Bluetooth state:', state);
+      
+      if (state !== 'PoweredOn') {
+        throw new Error('Bluetooth is not enabled. Please enable Bluetooth in your device settings.');
       }
-      if (!device) return;
-      this.handleDeviceDiscovered(device, identity);
-    });
 
-    setTimeout(() => {
-      this.stopDiscovery();
-    }, BLE_SCAN_TIMEOUT_MS);
+      await this.manager.startDeviceScan(null, {
+        allowDuplicates: false,
+      }, (error: BleError | null, device: Device | null) => {
+        if (error) {
+          console.error('[TradeService] BLE scan error:', error);
+          this.isScanning = false;
+          return;
+        }
+        if (!device) return;
+        this.handleDeviceDiscovered(device, identity);
+      });
+
+      console.log('[TradeService] Started BLE scanning');
+
+      setTimeout(() => {
+        this.stopDiscovery();
+      }, BLE_SCAN_TIMEOUT_MS);
+    } catch (err) {
+      console.error('[TradeService] Failed to start discovery:', err);
+      this.isScanning = false;
+      throw err;
+    }
   }
 
   private handleDeviceDiscovered(device: Device, identity: LocalIdentity): void {
