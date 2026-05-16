@@ -60,21 +60,19 @@ export class TradeService {
       throw new Error('No local identity found');
     }
 
-    // Check if Bluetooth is enabled and start scanning
+    // Start scanning and handle errors
     try {
-      const state = await this.manager.state();
-      console.log('[TradeService] Bluetooth state:', state);
-      
-      if (state !== 'PoweredOn') {
-        throw new Error('Bluetooth is not enabled. Please enable Bluetooth in your device settings.');
-      }
-
       await this.manager.startDeviceScan(null, {
         allowDuplicates: false,
       }, (error: BleError | null, device: Device | null) => {
         if (error) {
           console.error('[TradeService] BLE scan error:', error);
           this.isScanning = false;
+          
+          // Check for specific Bluetooth errors
+          if (error.errorCode === 1 || error.reason === 'BluetoothUnauthorized' || error.reason === 'BluetoothUnsupported') {
+            throw new Error('Bluetooth is not enabled or authorized. Please enable Bluetooth in your device settings.');
+          }
           return;
         }
         if (!device) return;
