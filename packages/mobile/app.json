@@ -22,6 +22,8 @@
         "NSLocationWhenInUseUsageDescription": "近くの宝を表示するには位置情報が必要です。",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "近くの宝を検出するには位置情報が必要です。",
         "NSLocationAlwaysUsageDescription": "近くの宝を検出するには位置情報が必要です。",
+        "NSBluetoothAlwaysUsageDescription": "近くのトレーダーとトレードするには Bluetooth が必要です。",
+        "NSBluetoothPeripheralUsageDescription": "近くのトレーダーと通信するには Bluetooth が必要です。",
         "UIUserInterfaceStyle": "Light"
       }
     },

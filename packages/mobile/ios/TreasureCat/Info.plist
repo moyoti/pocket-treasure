@@ -57,6 +57,10 @@
     <string>近くの宝を表示するには位置情報が必要です。</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>近くのトレーダーとトレードするには Bluetooth が必要です。</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>近くのトレーダーと通信するには Bluetooth が必要です。</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
