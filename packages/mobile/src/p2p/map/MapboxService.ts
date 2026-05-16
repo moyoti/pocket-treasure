@@ -3,7 +3,7 @@ import { POI, SpawnedTreasure, UserMarker, ItemRarity, RARITY_COLORS } from '../
 import { databaseService } from '../database/DatabaseService';
 
 const MAPBOX_STYLE_URL = 'mapbox://styles/mapbox/streets-v12';
-const OFFLINE_PACK_NAME_PREFIX = 'treasure-hunt-offline-';
+const OFFLINE_PACK_NAME_PREFIX = 'treasure-cat-offline-';
 
 interface OfflinePackStatus {
   name: string;

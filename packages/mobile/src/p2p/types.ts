@@ -539,7 +539,7 @@ export interface SharedMarker extends UserMarker {
 // BLE SERVICE CONSTANTS
 // ============================================
 
-export const BLE_SERVICE_UUID = 'treasure-hunt-trade-v1';
+export const BLE_SERVICE_UUID = 'treasure-cat-trade-v1';
 export const BLE_CHARACTERISTIC_OFFER = 'offer-data';
 export const BLE_CHARACTERISTIC_RESPONSE = 'response-data';
 export const BLE_CHARACTERISTIC_SIGNATURE = 'signature-data';

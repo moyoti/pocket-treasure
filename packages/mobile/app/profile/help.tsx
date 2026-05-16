@@ -41,7 +41,7 @@ export default function HelpScreen() {
   ];
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:support@treasurehunt.com?subject=Treasure%20Hunt%20Feedback');
+    Linking.openURL('mailto:support@treasurecat.com?subject=Treasure%20Hunt%20Feedback');
   };
 
   const toggleFAQ = (index: number) => {

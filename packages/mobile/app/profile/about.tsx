@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next';
 const APP_VERSION = '1.0.0';
 const BUILD_NUMBER = '2024.03.04.1';
 
-const PRIVACY_POLICY_URL = 'https://treasurehunt.com/privacy';
-const TERMS_OF_SERVICE_URL = 'https://treasurehunt.com/terms';
+const PRIVACY_POLICY_URL = 'https://treasurecat.com/privacy';
+const TERMS_OF_SERVICE_URL = 'https://treasurecat.com/terms';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
@@ -35,7 +35,7 @@ export default function AboutScreen() {
   };
 
   const handleOpenWebsite = () => {
-    Linking.openURL('https://treasurehunt.com');
+    Linking.openURL('https://treasurecat.com');
   };
 
   return (

@@ -215,7 +215,7 @@ export class POIService {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json',
-            'User-Agent': 'TreasureHunt/1.0 (React Native App - https://github.com/treasure-hunt)',
+            'User-Agent': 'TreasureCat/1.0 (React Native App - https://github.com/treasure-cat)',
           },
         });
 

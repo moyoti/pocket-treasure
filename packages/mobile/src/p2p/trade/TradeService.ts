@@ -132,7 +132,7 @@ export class TradeService {
     const discoveryMessage = createDiscoveryMessage(
       identity.publicKey,
       identity.displayName,
-      'TreasureHunt'
+      'TreasureCat'
     );
 
     // BLE advertising is handled by the device's advertising payload

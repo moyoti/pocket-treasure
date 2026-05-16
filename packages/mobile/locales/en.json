@@ -420,7 +420,7 @@
   },
   "about": {
     "title": "About",
-    "appName": "Treasure Hunt",
+    "appName": "Treasure Cat",
     "appTagline": "Explore the world, collect treasures",
     "version": "Version",
     "build": "Build",
@@ -428,10 +428,10 @@
     "team": "TEAM",
     "links": "LINKS",
     "openSource": "OPEN SOURCE",
-    "aboutDesc1": "Treasure Hunt is a location-based item collection game inspired by Pokemon GO.",
+    "aboutDesc1": "Treasure Cat is a location-based item collection game inspired by Pokemon GO.",
     "aboutDesc2": "Players explore the real world to discover and collect virtual treasures at landmark locations.",
     "aboutDesc3": "We believe games can make life more fun and exploration an adventure.",
-    "devTeam": "Treasure Hunt Team",
+    "devTeam": "Treasure Cat Team",
     "devRole": "Development & Maintenance",
     "openSourceCommunity": "Open Source Community",
     "contributorRole": "Contributors",
@@ -439,7 +439,7 @@
     "viewSource": "View source code",
     "website": "Website",
     "learnMore": "Learn more",
-    "copyright": "2024 Treasure Hunt Team",
+    "copyright": "2024 Treasure Cat Team",
     "allRightsReserved": "All rights reserved",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
@@ -472,7 +472,7 @@
     "emailSupport": "Email Support",
     "businessHours": "Business Hours",
     "businessHoursTime": "Mon-Fri 9:00-18:00",
-    "thanksForPlaying": "Thanks for playing Treasure Hunt!"
+    "thanksForPlaying": "Thanks for playing Treasure Cat!"
   },
   "init": {
     "initializing": "Initializing..."
@@ -779,7 +779,7 @@
     "loadingTreasures": "Loading treasures..."
   },
   "onboarding": {
-    "welcomeTitle": "Welcome to Treasure Hunt!",
+    "welcomeTitle": "Welcome to Treasure Cat!",
     "welcomeDesc": "Explore the world and collect amazing treasures",
     "mapTitle": "Explore the Map",
     "mapDesc": "Move around to find treasures near you",
