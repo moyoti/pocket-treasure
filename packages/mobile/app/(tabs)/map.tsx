@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
   Modal,
   TextInput,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,7 @@ import MapboxGL from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { AppState, AppStateStatus } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,6 +36,7 @@ import { useP2P } from '@/src/p2p';
 import { SpawnedTreasure, RARITY_COLORS, COLLECTION_RADIUS_METERS } from '@/src/p2p/types';
 import { getItemById } from '@/src/p2p/data/items';
 import { CollectionAnimationModal } from '@/components/animations/CollectionAnimationModal';
+import { LocationPermissionDialog } from '@/components/LocationPermissionDialog';
 import { success as hapticSuccess } from '@/utils/haptics';
 import { MarkerIconType } from '@/src/p2p/types';
 
@@ -95,6 +98,9 @@ export default function MapScreen() {
   const [showEditMarker, setShowEditMarker] = useState(false);
   const [editMarkerName, setEditMarkerName] = useState('');
   const [editMarkerDescription, setEditMarkerDescription] = useState('');
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const appState = useRef<'active' | 'background' | 'unknown'>('unknown');
 
   const sheetTranslateY = useSharedValue(300);
   const sheetOpacity = useSharedValue(0);
@@ -276,22 +282,30 @@ export default function MapScreen() {
     const { status } = await Location.requestForegroundPermissionsAsync();
     console.log('[Map] Permission status:', status);
     if (status !== 'granted') {
-      Alert.alert(t('settings.permissionNeeded'), t('map.tooFar'));
+      setPermissionDenied(true);
+      setShowPermissionDialog(true);
       return;
     }
 
+    setPermissionDenied(false);
+
     console.log('[Map] Getting current position...');
-    const loc = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
-    console.log('[Map] Location obtained:', loc.coords.latitude, loc.coords.longitude);
-    setLocation(loc);
-    setMapRegion({
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-      latitudeDelta: 0.02,
-      longitudeDelta: 0.02,
-    });
+    try {
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      console.log('[Map] Location obtained:', loc.coords.latitude, loc.coords.longitude);
+      setLocation(loc);
+      setMapRegion({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      });
+    } catch (error) {
+      console.error('[Map] Failed to get location:', error);
+      setPermissionDenied(true);
+    }
   };
 
   useFocusEffect(
@@ -344,15 +358,59 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
 }
   }
 
-  if (isLoading || !location) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <View style={styles.loadingContent}>
           <Ionicons name="compass-outline" size={48} color="#D4A017" />
           <ActivityIndicator size="large" color="#D4A017" style={{ marginTop: 16 }} />
-          <Text style={styles.loadingText}>
-            {isLoading ? t('common.loading') : t('settings.findingLocation')}
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (permissionDenied || !location) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingContent}>
+          <Ionicons name="alert-circle-outline" size={48} color="#E91E63" />
+          <Text style={[styles.loadingText, { color: '#999', marginTop: 12, textAlign: 'center', paddingHorizontal: 40 }]}>
+            {permissionDenied ? t('permissions.locationDenied') : t('settings.findingLocation')}
           </Text>
+          <View style={styles.buttonColumn}>
+            <TouchableOpacity 
+              style={styles.retryButton} 
+              onPress={requestLocation}
+            >
+              <Ionicons name="refresh" size={18} color="#FFF" />
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.retryButton, styles.settingsButton]} 
+              onPress={async () => {
+                console.log('[Map] Opening settings...');
+                try {
+                  const canOpen = await Linking.canOpenURL('app-settings:');
+                  console.log('[Map] Can open settings:', canOpen);
+                  if (canOpen) {
+                    await Linking.openURL('app-settings:');
+                  } else {
+                    await Linking.openSettings();
+                  }
+                } catch (err) {
+                  console.error('[Map] Failed to open settings:', err);
+                  Alert.alert(
+                    t('common.error'),
+                    'Please open Settings → Apps → Treasure Cat → Permissions manually'
+                  );
+                }
+              }}
+            >
+              <Ionicons name="settings-outline" size={18} color="#FFF" />
+              <Text style={styles.retryText}>{t('permissions.openSettings')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -609,6 +667,14 @@ const handleCollect = async (spawn: SpawnedTreasure) => {
         autoDismissDelay={2500}
       />
 
+      <LocationPermissionDialog
+        visible={showPermissionDialog}
+        onClose={() => {
+          setShowPermissionDialog(false);
+          setPermissionDenied(false);
+        }}
+      />
+
       {/* Create Marker Modal */}
       <Modal
         visible={showCreateMarker}
@@ -772,10 +838,24 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
     backgroundColor: '#D4A017',
-    borderRadius: 8,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minWidth: 200,
+  },
+  buttonColumn: {
+    flexDirection: 'column',
+    gap: 12,
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  settingsButton: {
+    backgroundColor: '#1A1A1A',
   },
   retryText: {
     color: '#FFF',

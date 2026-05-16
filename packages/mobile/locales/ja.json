@@ -809,5 +809,16 @@
     "recoverWarning": "現在の ID とデータが置き換えられます",
     "notBackedUp": "未バックアップ",
     "backedUp": "バックアップ済み"
+  },
+  "permissions": {
+    "locationRequired": "位置情報権限が必要です",
+    "locationDescription": "マップ上で宝を見つけて収集するには、位置情報へのアクセスが必要です。デバイス設定で位置情報権限を有効にしてください。",
+    "step1": "「設定を開く」をタップ",
+    "step2": "「権限」→「位置情報」を選択",
+    "step3": "「アプリの使用中のみ」を選択",
+    "openSettings": "設定を開く",
+    "locationHint": "宝探しには位置情報が必要です",
+    "locationDenied": "位置情報へのアクセスが拒否されました。設定で有効にしてください。",
+    "openSettingsFailed": "設定を開けませんでした。手動で開いてください。"
   }
 }

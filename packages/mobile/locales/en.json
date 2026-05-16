@@ -836,5 +836,16 @@
     "invalidQR": "Invalid QR code",
     "invalidProfileKey": "This is not a valid profile key",
     "manualEntry": "Enter code manually"
+  },
+  "permissions": {
+    "locationRequired": "Location Permission Required",
+    "locationDescription": "To find and collect treasures on the map, we need access to your location. Please enable location permission in your device settings.",
+    "step1": "Tap \"Open Settings\"",
+    "step2": "Go to \"Permissions\" → \"Location\"",
+    "step3": "Select \"While Using the App\"",
+    "openSettings": "Open Settings",
+    "locationHint": "Treasure hunting requires your location to work",
+    "locationDenied": "Location access denied. Please enable in settings.",
+    "openSettingsFailed": "Failed to open settings. Please open manually."
   }
 }
