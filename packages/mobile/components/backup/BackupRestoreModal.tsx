@@ -309,36 +309,42 @@ export function BackupRestoreModal({
               ) : backups.length === 0 ? (
                 <Text style={styles.emptyText}>No backups found</Text>
               ) : (
-                backups.map((backup, index) => (
-                  <View key={index} style={styles.backupItem}>
-                    <View style={styles.backupInfo}>
-                      <Text style={styles.backupFilename}>{backup.filename}</Text>
-                      <Text style={styles.backupMeta}>
-                        {formatDate(backup.timestamp)} • {formatSize(backup.size)}
-                      </Text>
+                backups.map((backup, index) => {
+                  const isLarge = backup.size > 102400;
+                  return (
+                    <View key={index} style={styles.backupItem}>
+                      <View style={styles.backupInfo}>
+                        <Text style={styles.backupFilename}>{backup.filename}</Text>
+                        <Text style={styles.backupMeta}>
+                          {formatDate(backup.timestamp)} • {formatSize(backup.size)}
+                        </Text>
+                        {isLarge && (
+                          <Text style={styles.largeWarning}>⚠️ Large backup - use file sharing</Text>
+                        )}
+                      </View>
+                      <View style={styles.backupActions}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => shareBackup(backup.path)}
+                        >
+                          <Ionicons name="share-outline" size={20} color="#D4A017" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleRestore(backup.path)}
+                        >
+                          <Ionicons name="refresh-outline" size={20} color="#D4A017" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleDelete(backup.path, backup.filename)}
+                        >
+                          <Ionicons name="trash-outline" size={20} color="#E91E63" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                    <View style={styles.backupActions}>
-                      <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => shareBackup(backup.path)}
-                      >
-                        <Ionicons name="share-outline" size={20} color="#D4A017" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => handleRestore(backup.path)}
-                      >
-                        <Ionicons name="refresh-outline" size={20} color="#D4A017" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => handleDelete(backup.path, backup.filename)}
-                      >
-                        <Ionicons name="trash-outline" size={20} color="#E91E63" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
+                  );
+                })
               )}
             </View>
           </ScrollView>
@@ -453,6 +459,12 @@ const styles = StyleSheet.create({
   backupMeta: {
     fontSize: 12,
     color: '#999',
+  },
+  largeWarning: {
+    fontSize: 11,
+    color: '#f59e0b',
+    fontWeight: '600',
+    marginTop: 4,
   },
   backupActions: {
     flexDirection: 'row',

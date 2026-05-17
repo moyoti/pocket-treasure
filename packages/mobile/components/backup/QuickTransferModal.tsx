@@ -8,11 +8,14 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
+  Platform,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { QRCodeDisplay, QRCodeScanner } from '@/components/qr';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { backupService } from '@/src/p2p/identity/BackupService';
 
 interface QuickTransferModalProps {
@@ -52,29 +55,67 @@ export function QuickTransferModal({
   const handleSend = async (backupPath: string) => {
     try {
       setLoading(true);
-      // 读取备份文件
       const backupJson = await FileSystem.readAsStringAsync(backupPath);
-      
-      // 压缩并编码为 Base64（简化版，实际应该压缩）
       const encoded = btoa(backupJson);
       
-      // 如果数据太大，分段显示
-      if (encoded.length > 2000) {
-        Alert.alert(
-          'Large Backup',
-          'This backup is too large for QR code. Please use file sharing instead.',
-          [{ text: 'OK' }]
-        );
-        return;
+      if (encoded.length <= 2000) {
+        setBackupData(encoded);
+        setSelectedBackup(backupPath);
+      } else if (encoded.length <= 5000) {
+        const compressed = backupJson.replace(/\s+/g, ' ').trim();
+        const encodedCompressed = btoa(compressed);
+        
+        if (encodedCompressed.length <= 2000) {
+          setBackupData(encodedCompressed);
+          setSelectedBackup(backupPath);
+        } else {
+          await showLargeBackupAlert(backupPath, encoded.length);
+        }
+      } else {
+        await showLargeBackupAlert(backupPath, encoded.length);
       }
-
-      setBackupData(encoded);
-      setSelectedBackup(backupPath);
     } catch (error) {
       console.error('[QuickTransfer] Failed to read backup:', error);
       Alert.alert(t('common.error'), 'Failed to read backup');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const showLargeBackupAlert = async (backupPath: string, encodedSize: number) => {
+    const sizeKB = (encodedSize / 1024).toFixed(1);
+    
+    Alert.alert(
+      '⚠️ Large Backup',
+      `This backup is ${sizeKB} KB, which is too large for QR code transfer.\n\n` +
+      'Recommended: Use file sharing (AirDrop, Messages, etc.) instead.\n\n' +
+      'Tip: You can create a smaller backup by clearing old records in Settings.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Share File',
+          onPress: () => shareBackupFile(backupPath),
+        },
+      ]
+    );
+  };
+
+  const shareBackupFile = async (backupPath: string) => {
+    try {
+      if (Platform.OS === 'web') {
+        await Sharing.shareAsync(backupPath);
+      } else {
+        await Share.share({
+          url: backupPath,
+          title: 'Treasure Cat Backup',
+          message: 'Your Treasure Cat game backup file',
+        });
+      }
+    } catch (error) {
+      console.error('[QuickTransfer] Share failed:', error);
     }
   };
 
@@ -117,6 +158,22 @@ export function QuickTransferModal({
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString();
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
+  const getTransferMethod = (size: number): { method: string; icon: string; color: string } => {
+    if (size <= 2000) {
+      return { method: 'QR Code', icon: 'qr-code-outline', color: '#22c55e' };
+    } else if (size <= 5000) {
+      return { method: 'Compressed QR', icon: 'download-outline', color: '#f59e0b' };
+    } else {
+      return { method: 'File Sharing Only', icon: 'share-outline', color: '#ef4444' };
+    }
   };
 
   return (
@@ -165,19 +222,26 @@ export function QuickTransferModal({
                   ) : backups.length === 0 ? (
                     <Text style={styles.emptyText}>No backups found</Text>
                   ) : (
-                    backups.map((backup, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.backupItem}
-                        onPress={() => handleSend(backup.path)}
-                      >
-                        <View style={styles.backupInfo}>
-                          <Text style={styles.backupFilename}>{backup.filename}</Text>
-                          <Text style={styles.backupMeta}>{formatDate(backup.timestamp)}</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#999" />
-                      </TouchableOpacity>
-                    ))
+                    backups.map((backup, index) => {
+                      const transferMethod = getTransferMethod(backup.size);
+                      return (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.backupItem}
+                          onPress={() => handleSend(backup.path)}
+                        >
+                          <View style={styles.backupInfo}>
+                            <Text style={styles.backupFilename}>{backup.filename}</Text>
+                            <Text style={styles.backupMeta}>{formatDate(backup.timestamp)}</Text>
+                            <View style={styles.sizeBadge}>
+                              <Text style={styles.sizeText}>{formatSize(backup.size)}</Text>
+                              <Ionicons name={transferMethod.icon as any} size={12} color={transferMethod.color} />
+                            </View>
+                          </View>
+                          <Ionicons name="chevron-forward" size={20} color="#999" />
+                        </TouchableOpacity>
+                      );
+                    })
                   )}
                 </>
               ) : (
@@ -376,6 +440,17 @@ const styles = StyleSheet.create({
   backupMeta: {
     fontSize: 13,
     color: '#999',
+  },
+  sizeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  sizeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
   },
   backButton: {
     alignItems: 'center',
