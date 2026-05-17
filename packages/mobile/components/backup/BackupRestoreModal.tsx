@@ -153,7 +153,7 @@ export function BackupRestoreModal({
       Alert.alert(
         'Import Backup from Another Device',
         isIOS
-          ? 'To import a backup on iOS:\n\n' +
+          ? ('To import a backup on iOS:\n\n' +
             '1. On your OLD device:\n' +
             '   - Go to "Backup All Data"\n' +
             '   - Tap the Share icon (📤) next to your backup\n' +
@@ -165,8 +165,8 @@ export function BackupRestoreModal({
             'OR manually:\n' +
             '1. Save backup JSON to Files app\n' +
             '2. In this app, tap "Select from Files" (coming soon)\n' +
-            '3. Choose your backup file',
-          : 'To import a backup on Android:\n\n' +
+            '3. Choose your backup file')
+          : ('To import a backup on Android:\n\n' +
             'Method 1 - Direct Copy:\n' +
             '1. Copy backup JSON file to:\n' +
             '   /Android/data/com.treasurecat.app/files/backups/\n\n' +
@@ -175,7 +175,7 @@ export function BackupRestoreModal({
             'Method 2 - Share:\n' +
             '1. On old device, share backup file\n' +
             '2. Send to this device (Bluetooth, messaging, etc.)\n' +
-            '3. Open the file and select "Treasure Cat"',
+            '3. Open the file and select "Treasure Cat"'),
         [
           {
             text: 'Cancel',

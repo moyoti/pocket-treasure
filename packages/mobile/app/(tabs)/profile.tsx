@@ -188,12 +188,6 @@ export default function ProfileScreen() {
       onPress: () => router.push('/profile/stats'),
     },
     {
-      icon: 'map-outline',
-      label: t('exploration.title'),
-      subtitle: `${areaUnlockProgress.unlocked}/${areaUnlockProgress.total} ${t('exploration.unlockedAreas')}`,
-      onPress: () => router.push('/profile/exploration' as any),
-    },
-    {
       icon: 'swap-horizontal-outline',
       label: t('trade.tradeHistory'),
       subtitle: `${tradeHistory.length} ${t('profile.trades')}`,

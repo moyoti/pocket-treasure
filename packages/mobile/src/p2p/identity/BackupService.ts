@@ -27,17 +27,28 @@ interface BackupData {
  * 4. 从备份恢复
  */
 export class BackupService {
-  private static readonly BACKUP_DIR = FileSystem.documentDirectory + 'backups/';
   private static readonly BACKUP_VERSION = '1.0.0';
+
+  /**
+   * 获取备份目录路径
+   */
+  private getBackupDir(): string {
+    const docDir = FileSystem.documentDirectory;
+    if (!docDir) {
+      throw new Error('Document directory not available');
+    }
+    return docDir + 'backups/';
+  }
 
   /**
    * 初始化备份目录
    */
   async initialize(): Promise<void> {
     try {
-      const dirInfo = await FileSystem.getInfoAsync(this.BACKUP_DIR);
+      const backupDir = this.getBackupDir();
+      const dirInfo = await FileSystem.getInfoAsync(backupDir);
       if (!dirInfo.exists) {
-        await FileSystem.makeDirectoryAsync(this.BACKUP_DIR, { intermediates: true });
+        await FileSystem.makeDirectoryAsync(backupDir, { intermediates: true });
       }
     } catch (error) {
       console.error('[BackupService] Failed to initialize backup directory:', error);
@@ -104,7 +115,7 @@ export class BackupService {
         timestamp: Date.now(),
         identity: {
           publicKey: identity.publicKey,
-          encryptedMnemonic: mnemonic, // 简化版：不加密，实际应该加密
+          encryptedMnemonic: mnemonic,
         },
         database: {
           tables,
@@ -115,7 +126,7 @@ export class BackupService {
       // 4. 生成备份文件
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `treasurecat_backup_${timestamp}.json`;
-      const backupPath = this.BACKUP_DIR + filename;
+      const backupPath = this.getBackupDir() + filename;
 
       const jsonString = JSON.stringify(backupData, null, 2);
       await FileSystem.writeAsStringAsync(backupPath, jsonString);
@@ -218,17 +229,18 @@ export class BackupService {
   async listBackups(): Promise<{ filename: string; path: string; timestamp: number; size: number }[]> {
     try {
       const backups: any[] = [];
-      const dirInfo = await FileSystem.getInfoAsync(this.BACKUP_DIR);
+      const backupDir = this.getBackupDir();
+      const dirInfo = await FileSystem.getInfoAsync(backupDir);
       
       if (!dirInfo.exists) {
         return backups;
       }
 
-      const files = await FileSystem.readDirectoryAsync(this.BACKUP_DIR);
+      const files = await FileSystem.readDirectoryAsync(backupDir);
       
       for (const filename of files) {
         if (filename.endsWith('.json')) {
-          const path = this.BACKUP_DIR + filename;
+          const path = backupDir + filename;
           const fileInfo = await FileSystem.getInfoAsync(path);
           
           if (fileInfo.exists && fileInfo.modificationTime) {
