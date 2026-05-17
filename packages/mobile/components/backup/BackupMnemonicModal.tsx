@@ -77,21 +77,23 @@ export function BackupMnemonicModal({
     
     setCreatingBackup(true);
     try {
-      const result = await backupService.createBackup(mnemonic);
+      // Just validate the mnemonic and mark as backed up
+      const isValid = await backupService.validateMnemonic(mnemonic);
       
-      if (result.success) {
-        // Mark as backed up
-        const { identityService } = await import('@/src/p2p/identity/IdentityService');
-        await identityService.markMnemonicBackedUp();
-        
-        Alert.alert(
-          t('common.success'),
-          t('backup.createSuccess'),
-          [{ text: t('common.ok'), onPress: onComplete }]
-        );
-      } else {
-        Alert.alert(t('common.error'), result.error || t('backup.createFailed'));
+      if (!isValid) {
+        Alert.alert(t('common.error'), 'Invalid mnemonic');
+        return;
       }
+      
+      // Mark as backed up
+      const { identityService } = await import('@/src/p2p/identity/IdentityService');
+      await identityService.markMnemonicBackedUp();
+      
+      Alert.alert(
+        t('common.success'),
+        t('backup.createSuccess'),
+        [{ text: t('common.ok'), onPress: onComplete }]
+      );
     } catch (error) {
       console.error('Backup failed:', error);
       Alert.alert(t('common.error'), t('backup.createFailed'));
