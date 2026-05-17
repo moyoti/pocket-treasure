@@ -146,27 +146,64 @@ export function BackupRestoreModal({
   };
 
   const handleImportBackup = async () => {
-    Alert.alert(
-      'Import Backup',
-      'Please select a backup file (.json) from your device storage. Look for files named "treasurecat_backup_*.json".',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: async () => {
-            // For now, show instructions since we don't have document picker
-            Alert.alert(
-              'Manual Import',
-              'To import a backup:\n\n1. Copy the backup JSON file to:\n' + FileSystem.documentDirectory + 'backups/\n\n2. Restart the app\n\n3. The backup will appear in the list above.',
-              [{ text: 'OK' }]
-            );
+    try {
+      // Show platform-specific instructions
+      const isIOS = Platform.OS === 'ios';
+      
+      Alert.alert(
+        'Import Backup from Another Device',
+        isIOS
+          ? 'To import a backup on iOS:\n\n' +
+            '1. On your OLD device:\n' +
+            '   - Go to "Backup All Data"\n' +
+            '   - Tap the Share icon (📤) next to your backup\n' +
+            '   - Send via AirDrop, Messages, or email\n\n' +
+            '2. On this iOS device:\n' +
+            '   - Open the backup file from Messages/email\n' +
+            '   - Tap "Copy to Treasure Cat"\n' +
+            '   - The backup will be imported automatically\n\n' +
+            'OR manually:\n' +
+            '1. Save backup JSON to Files app\n' +
+            '2. In this app, tap "Select from Files" (coming soon)\n' +
+            '3. Choose your backup file',
+          : 'To import a backup on Android:\n\n' +
+            'Method 1 - Direct Copy:\n' +
+            '1. Copy backup JSON file to:\n' +
+            '   /Android/data/com.treasurecat.app/files/backups/\n\n' +
+            '2. Restart the app\n' +
+            '3. Go to "Backup All Data" - backup will appear in list\n\n' +
+            'Method 2 - Share:\n' +
+            '1. On old device, share backup file\n' +
+            '2. Send to this device (Bluetooth, messaging, etc.)\n' +
+            '3. Open the file and select "Treasure Cat"',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
           },
-        },
-      ]
-    );
+          {
+            text: isIOS ? 'Use Files App' : 'Use File Manager',
+            onPress: async () => {
+              try {
+                // For now, provide manual instructions
+                // In future, we can use expo-document-picker
+                Alert.alert(
+                  'Manual Import',
+                  `Please copy your backup JSON file to:\n\n${FileSystem.documentDirectory}backups/\n\nThen restart the app and the backup will appear in the list above.`,
+                  [{ text: 'OK' }]
+                );
+              } catch (error) {
+                console.error('[BackupRestoreModal] Import failed:', error);
+                Alert.alert('Error', 'Failed to import backup');
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('[BackupRestoreModal] Import failed:', error);
+      Alert.alert('Error', 'Failed to import backup');
+    }
   };
 
   const handleDelete = async (backupPath: string, filename: string) => {
