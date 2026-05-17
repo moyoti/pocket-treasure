@@ -8,12 +8,11 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { QRCodeDisplay, QRCodeScanner } from '@/components/qr';
-import * as Clipboard from 'expo-clipboard';
+import * as FileSystem from 'expo-file-system';
 import { backupService } from '@/src/p2p/identity/BackupService';
 
 interface QuickTransferModalProps {
@@ -31,7 +30,6 @@ export function QuickTransferModal({
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
   const [backupData, setBackupData] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     if (visible && mode === 'send') {
@@ -117,13 +115,6 @@ export function QuickTransferModal({
     }
   };
 
-  const copyToClipboard = async () => {
-    if (backupData) {
-      await Clipboard.setStringAsync(backupData);
-      Alert.alert(t('common.success'), 'Backup copied to clipboard!');
-    }
-  };
-
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString();
   };
@@ -206,15 +197,9 @@ export function QuickTransferModal({
                     />
                   </View>
 
-                  <TouchableOpacity
-                    style={styles.clipboardButton}
-                    onPress={copyToClipboard}
-                  >
-                    <Ionicons name="copy-outline" size={20} color="#D4A017" style={{ marginRight: 8 }} />
-                    <Text style={[styles.buttonText, styles.clipboardButtonText]}>
-                      Copy to Clipboard
-                    </Text>
-                  </TouchableOpacity>
+                  <Text style={styles.tipText}>
+                    💡 Tip: Keep devices close for better scanning
+                  </Text>
 
                   <TouchableOpacity
                     style={styles.backButton}
@@ -229,11 +214,11 @@ export function QuickTransferModal({
               )}
             </ScrollView>
           ) : (
-            // Receive Mode
+            // Receive Mode - QR Scanner Only
             <View style={styles.receiveContent}>
               <Text style={styles.sectionTitle}>Scan QR Code</Text>
               <Text style={styles.instructions}>
-                Scan the QR code shown on the other device
+                Point your camera at the QR code shown on the other device
               </Text>
 
               <QRCodeScanner
@@ -243,24 +228,12 @@ export function QuickTransferModal({
                 title="Scan Backup QR"
               />
 
-              <Text style={styles.orText}>— OR —</Text>
-
-              <TouchableOpacity
-                style={styles.pasteButton}
-                onPress={async () => {
-                  const text = await Clipboard.getStringAsync();
-                  if (text) {
-                    handleReceive(text);
-                  } else {
-                    Alert.alert(t('common.error'), 'No data in clipboard');
-                  }
-                }}
-              >
-                <Ionicons name="paste-outline" size={20} color="#D4A017" style={{ marginRight: 8 }} />
-                <Text style={[styles.buttonText, styles.clipboardButtonText]}>
-                  Paste from Clipboard
+              <View style={styles.receiveTip}>
+                <Ionicons name="information-circle-outline" size={20} color="#666" />
+                <Text style={styles.receiveTipText}>
+                  Make sure the QR code is clearly visible and well-lit
                 </Text>
-              </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>
@@ -336,6 +309,21 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  receiveTip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 20,
+    gap: 8,
+  },
+  receiveTipText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -352,6 +340,13 @@ const styles = StyleSheet.create({
   qrContainer: {
     alignItems: 'center',
     marginVertical: 20,
+  },
+  tipText: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 16,
+    fontStyle: 'italic',
   },
   emptyText: {
     fontSize: 14,
@@ -382,37 +377,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
   },
-  clipboardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D4A017',
-    marginTop: 20,
-  },
-  pasteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 30,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D4A017',
-    marginTop: 20,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#D4A017',
-  },
-  clipboardButtonText: {
-    color: '#D4A017',
-  },
   backButton: {
     alignItems: 'center',
     paddingVertical: 16,
@@ -421,10 +385,5 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 15,
     color: '#666',
-  },
-  orText: {
-    fontSize: 14,
-    color: '#999',
-    marginVertical: 20,
   },
 });
