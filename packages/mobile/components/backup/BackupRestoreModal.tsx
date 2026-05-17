@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import { backupService } from '@/src/p2p/identity/BackupService';
 
 interface BackupRestoreModalProps {
@@ -146,22 +146,27 @@ export function BackupRestoreModal({
   };
 
   const handleImportBackup = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/json',
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const backupPath = result.assets[0].uri;
-      await handleRestore(backupPath);
-    } catch (error) {
-      console.error('[BackupRestoreModal] Import failed:', error);
-      Alert.alert(t('common.error'), 'Failed to import backup');
-    }
+    Alert.alert(
+      'Import Backup',
+      'Please select a backup file (.json) from your device storage. Look for files named "treasurecat_backup_*.json".',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            // For now, show instructions since we don't have document picker
+            Alert.alert(
+              'Manual Import',
+              'To import a backup:\n\n1. Copy the backup JSON file to:\n' + FileSystem.documentDirectory + 'backups/\n\n2. Restart the app\n\n3. The backup will appear in the list above.',
+              [{ text: 'OK' }]
+            );
+          },
+        },
+      ]
+    );
   };
 
   const handleDelete = async (backupPath: string, filename: string) => {

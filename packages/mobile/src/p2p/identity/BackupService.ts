@@ -3,7 +3,6 @@ import { Platform } from 'react-native';
 import { mnemonicService } from './MnemonicService';
 import { databaseService } from '../database/DatabaseService';
 import { identityService } from './IdentityService';
-import * as Crypto from 'expo-crypto';
 
 interface BackupData {
   version: string;
