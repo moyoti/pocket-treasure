@@ -4702,6 +4702,16 @@ expo-constants@~17.0.0, expo-constants@~17.0.5, expo-constants@~17.0.8:
     "@expo/config" "~10.0.11"
     "@expo/env" "~0.4.2"
 
+expo-crypto@^55.0.15:
+  version "55.0.15"
+  resolved "https://registry.yarnpkg.com/expo-crypto/-/expo-crypto-55.0.15.tgz#77ad63c227282013943df8f9037150c6731d827c"
+  integrity sha512-nlxLguQyJM4MhDDERL30WZkq68/BujOcAp4QdGk+1pZmUmG1p2M8cF7GeFwYvWwjH0DVsIRtRh4ukeTvOZVTPg==
+
+expo-document-picker@^55.0.13:
+  version "55.0.13"
+  resolved "https://registry.yarnpkg.com/expo-document-picker/-/expo-document-picker-55.0.13.tgz#f580ea88252c3608d23be1cd3fb0c5a08c0898e2"
+  integrity sha512-IhswJElhdzs3fKDEKW8KXYRoFkWGEsXRMYAZT46Yo56zqqy8yQXrczo33RSwD2hFzNQBdLT97SJL9N311UyS3g==
+
 expo-file-system@~18.0.12:
   version "18.0.12"
   resolved "https://registry.npmjs.org/expo-file-system/-/expo-file-system-18.0.12.tgz"

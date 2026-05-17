@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { identityService } from '@/src/p2p';
 import { databaseService } from '@/src/p2p';
 import { BackupMnemonicModal } from '@/components/backup/BackupMnemonicModal';
+import { BackupRestoreModal } from '@/components/backup/BackupRestoreModal';
 import { QRCodeDisplay, QRCodeScanner } from '@/components/qr';
 import { Share } from 'react-native';
 import * as Linking from 'expo-linking';
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
   const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showBackupRestoreModal, setShowBackupRestoreModal] = useState(false);
   const [isBackedUp, setIsBackedUp] = useState(false);
   const [showQRDisplay, setShowQRDisplay] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -44,6 +46,10 @@ export default function ProfileScreen() {
 
   const handleBackup = () => {
     setShowBackupModal(true);
+  };
+
+  const handleBackupRestore = () => {
+    setShowBackupRestoreModal(true);
   };
 
   const handleRecover = () => {
@@ -224,6 +230,12 @@ export default function ProfileScreen() {
       onPress: handleBackup,
     },
     {
+      icon: 'cloud-upload-outline',
+      label: 'Backup All Data',
+      subtitle: 'Backup identity + all game data',
+      onPress: handleBackupRestore,
+    },
+    {
       icon: 'download-outline',
       label: t('backup.recoverIdentity'),
       subtitle: t('backup.recoverInstructions'),
@@ -385,6 +397,15 @@ export default function ProfileScreen() {
         onComplete={() => {
           setShowBackupModal(false);
           checkBackupStatus();
+        }}
+      />
+      
+      <BackupRestoreModal
+        visible={showBackupRestoreModal}
+        onClose={() => setShowBackupRestoreModal(false)}
+        onRestoreComplete={() => {
+          setShowBackupRestoreModal(false);
+          // App needs restart after restore, user will do it manually
         }}
       />
       
