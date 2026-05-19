@@ -2,7 +2,7 @@
   "expo": {
     "name": "Treasure Cat",
     "slug": "treasure-cat",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "treasurecat",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.treasurecat.app",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "CFBundleDisplayName": "宝探し猫",
         "NSLocationWhenInUseUsageDescription": "近くの宝を表示するには位置情報が必要です。",
