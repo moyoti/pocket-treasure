@@ -147,7 +147,7 @@ const getRarityName = (rarity: Rarity): string => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('screens.statistics').toUpperCase()}</Text>
+        <Text style={styles.sectionTitle}>{t('items.screens.statistics').toUpperCase()}</Text>
         <View style={styles.sectionCard}>
           <View style={styles.infoRow}>
             <View style={styles.infoIconRow}>

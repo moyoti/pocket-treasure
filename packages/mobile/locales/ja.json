@@ -230,7 +230,9 @@
     "owned": "所持済み",
     "noSellableItems": "出售可能なアイテムがありません",
     "enterPrice": "価格を入力",
-    "coins": "コイン"
+    "coins": "コイン",
+    "total": "合計",
+    "unique": "ユニーク"
   },
   "profile": {
     "title": "マイページ",

@@ -97,7 +97,7 @@ function RootStack() {
         <Stack.Screen
           name="profile/stats"
           options={{
-            title: t('screens.statistics'),
+            title: t('items.screens.statistics'),
           }}
         />
         <Stack.Screen

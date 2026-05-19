@@ -186,6 +186,8 @@
     "soldQuantity": "Qty: x{quantity}",
     "unitPrice": "Unit Price",
     "saleTime": "Sale Time",
+    "total": "Total",
+    "unique": "Unique",
     "sellItems": "Sell Items",
     "listingForSale": "List for Sale",
     "myListingsEmpty": "No items listed",
