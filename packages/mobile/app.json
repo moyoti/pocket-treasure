@@ -16,9 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.treasurecat.app",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
-        "CFBundleDisplayName": "宝探し猫",
+        "CFBundleDisplayName": "Treasure Cat",
         "NSLocationWhenInUseUsageDescription": "近くの宝を表示するには位置情報が必要です。",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "近くの宝を検出するには位置情報が必要です。",
         "NSLocationAlwaysUsageDescription": "近くの宝を検出するには位置情報が必要です。",
@@ -36,6 +36,12 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_ADVERTISE",
         "INTERNET"
       ]
     },
@@ -50,7 +56,10 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "近くの宝を検出するには位置情報が必要です。"
+          "locationAlwaysAndWhenInUsePermission": "近くの宝を検出するには位置情報が必要です。",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       "expo-sqlite",

@@ -266,12 +266,10 @@ TaskManager.defineTask(GEOFENCE_TASK, async (body: TaskManager.TaskManagerTaskBo
   if (!body.data) return;
 
   const eventData = body.data;
+  const eventType: 'enter' | 'exit' = eventData.eventType === Location.GeofencingEventType.Enter ? 'enter' : 'exit';
+  const event: GeofenceEvent = { type: eventType, region: eventData.region };
 
-  if (eventData.eventType === Location.GeofencingEventType.Enter) {
-    const event: GeofenceEvent = { type: 'enter', region: eventData.region };
-  } else if (eventData.eventType === Location.GeofencingEventType.Exit) {
-    const event: GeofenceEvent = { type: 'exit', region: eventData.region };
-  }
+  await areaService.handleGeofenceEvent(event);
 });
 
 export const GEOFENCE_TASK_NAME = GEOFENCE_TASK;

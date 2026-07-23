@@ -100,7 +100,8 @@ export default function MapScreen() {
   const [editMarkerDescription, setEditMarkerDescription] = useState('');
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const appState = useRef<'active' | 'background' | 'unknown'>('unknown');
+  const appState = useRef<'active' | 'background' | 'unknown'>('active');
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   const sheetTranslateY = useSharedValue(300);
   const sheetOpacity = useSharedValue(0);
@@ -277,6 +278,42 @@ export default function MapScreen() {
     return t(`items.rarity.${rarity}`);
   };
 
+  const updateLocation = (loc: Location.LocationObject) => {
+    setLocation(loc);
+    setMapRegion({
+      latitude: loc.coords.latitude,
+      longitude: loc.coords.longitude,
+      latitudeDelta: 0.02,
+      longitudeDelta: 0.02,
+    });
+  };
+
+  // Download offline map pack for current region (fire and forget)
+  const downloadOfflineMap = async (lat: number, lng: number) => {
+    try {
+      const existingPacks = await MapboxGL.offlineManager.getPacks();
+      const hasPack = existingPacks?.some(p => p.name.startsWith('treasure-cat-offline'));
+      if (!hasPack) {
+        console.log('[Map] No offline map found, downloading for current region...');
+        await MapboxGL.offlineManager.createPack({
+          name: 'treasure-cat-offline-default',
+          styleURL: 'mapbox://styles/mapbox/streets-v12',
+          minZoom: 10,
+          maxZoom: 16,
+          bounds: [[lng - 0.15, lat - 0.1], [lng + 0.15, lat + 0.1]], // ~15km radius
+        }, (progress) => {
+          const pct = ((progress.completedResourceCount / progress.requiredResourceCount) * 100).toFixed(0);
+          console.log('[Map] Offline map download progress:', pct + '%');
+        });
+        console.log('[Map] Offline map download started');
+      } else {
+        console.log('[Map] Offline map already exists');
+      }
+    } catch (error) {
+      console.error('[Map] Failed to download offline map:', error);
+    }
+  };
+
   const requestLocation = async () => {
     console.log('[Map] Requesting location permission...');
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -289,29 +326,91 @@ export default function MapScreen() {
 
     setPermissionDenied(false);
 
+    // Get initial position with timeout
     console.log('[Map] Getting current position...');
     try {
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
       console.log('[Map] Location obtained:', loc.coords.latitude, loc.coords.longitude);
-      setLocation(loc);
-      setMapRegion({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-      });
+      updateLocation(loc);
+      downloadOfflineMap(loc.coords.latitude, loc.coords.longitude);
     } catch (error) {
-      console.error('[Map] Failed to get location:', error);
-      setPermissionDenied(true);
+      console.error('[Map] Failed to get initial location, trying lower accuracy:', error);
+      try {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        console.log('[Map] Location obtained (balanced):', loc.coords.latitude, loc.coords.longitude);
+        updateLocation(loc);
+      } catch (fallbackError) {
+        console.error('[Map] Failed to get location even with balanced accuracy:', fallbackError);
+        setPermissionDenied(true);
+      }
+    }
+
+    // Start continuous location tracking
+    try {
+      // Clean up any existing subscription
+      if (locationSubscription.current) {
+        await locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+
+      locationSubscription.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          distanceInterval: 10, // Update every 10 meters
+          timeInterval: 5000,   // Or every 5 seconds
+        },
+        (newLocation) => {
+          console.log('[Map] Location updated:', newLocation.coords.latitude, newLocation.coords.longitude);
+          updateLocation(newLocation);
+        }
+      );
+      console.log('[Map] Started watching position');
+    } catch (error) {
+      console.error('[Map] Failed to start watching position:', error);
     }
   };
+
+  // AppState listener: refresh when returning to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (appState.current === 'background' && nextAppState === 'active') {
+        console.log('[Map] App returned to foreground, refreshing location...');
+        requestLocation();
+      }
+      appState.current = nextAppState as 'active' | 'background' | 'unknown';
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Cleanup location subscription on unmount
+  useEffect(() => {
+    return () => {
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       console.log('[Map] Tab focused, requesting location...');
       requestLocation();
+
+      return () => {
+        // Cleanup watchPosition when leaving the tab
+        if (locationSubscription.current) {
+          locationSubscription.current.remove();
+          locationSubscription.current = null;
+        }
+      };
     }, [])
   );
 
